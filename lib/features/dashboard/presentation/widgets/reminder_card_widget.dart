@@ -6,12 +6,14 @@ class ReminderCardWidget extends StatelessWidget {
   final ReminderModel reminder;
   final VoidCallback onComplete;
   final DateTime selectedDate;
+  final VoidCallback? onTap;
 
   const ReminderCardWidget({
     super.key,
     required this.reminder,
     required this.onComplete,
     required this.selectedDate,
+    this.onTap,
   });
 
   @override
@@ -37,19 +39,21 @@ class ReminderCardWidget extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border(
-            left: BorderSide(color: hexColor, width: 4),
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border(
+              left: BorderSide(color: hexColor, width: 4),
+            ),
           ),
-        ),
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Pin Icon representing a reminder
-            Container(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Pin Icon representing a reminder
+              Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: hexColor.withOpacity(0.1),
@@ -148,7 +152,8 @@ class ReminderCardWidget extends StatelessWidget {
                   color: AppColors.success,
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

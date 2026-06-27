@@ -12,6 +12,7 @@ import '../../alarms/data/alarm_model.dart';
 import '../../alarms/data/alarm_repository.dart';
 import '../../reminders/data/reminder_repository.dart';
 import 'dashboard_notifier.dart';
+import '../../reminders/presentation/reminder_form_screen.dart';
 import 'widgets/alarm_card_widget.dart';
 import 'widgets/health_banner_widget.dart';
 import 'widgets/reminder_card_widget.dart';
@@ -409,35 +410,77 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildRemindersSection(BuildContext context, DashboardState state, WidgetRef ref) {
-    if (state.reminders.isEmpty) return const SizedBox.shrink();
-
     final repo = ref.read(reminderRepositoryProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(Icons.push_pin_rounded, color: AppColors.secondary, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'Lembretes',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.text,
-              ),
+            Row(
+              children: [
+                Icon(Icons.push_pin_rounded, color: AppColors.secondary, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Lembretes',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              icon: Icon(Icons.add_rounded, color: AppColors.primary),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ReminderFormScreen(),
+                  ),
+                );
+              },
             ),
           ],
         ),
         const SizedBox(height: 10),
-        ...state.reminders.map(
-          (reminder) => ReminderCardWidget(
-            reminder: reminder,
-            selectedDate: state.selectedDate,
-            onComplete: () => repo.completeReminder(reminder.id),
+        if (state.reminders.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.push_pin_outlined, color: AppColors.textMuted, size: 32),
+                const SizedBox(height: 8),
+                const Text(
+                  'Nenhum lembrete ativo para este dia.',
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          )
+        else
+          ...state.reminders.map(
+            (reminder) => ReminderCardWidget(
+              reminder: reminder,
+              selectedDate: state.selectedDate,
+              onComplete: () => repo.completeReminder(reminder.id),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ReminderFormScreen(editReminder: reminder),
+                  ),
+                );
+              },
+            ),
           ),
-        ),
         const SizedBox(height: 16),
       ],
     );
