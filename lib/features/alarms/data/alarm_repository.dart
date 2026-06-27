@@ -10,6 +10,8 @@ import 'alarm_model.dart';
 import '../../pairing/presentation/pairing_notifier.dart';
 import '../../pairing/domain/connection_state.dart';
 
+import '../../history/data/history_repository.dart';
+
 part 'alarm_repository.g.dart';
 
 class AlarmRepository {
@@ -468,6 +470,20 @@ class AlarmRepository {
     }
 
     await _db.update(_db.alarms).replace(_toCompanion(updated));
+
+    final historyRepo = _ref.read(historyRepositoryProvider);
+    await historyRepo.addHistoryEvent(
+      alarmId: alarm.id,
+      medName: alarm.medName.isNotEmpty ? alarm.medName : alarm.name,
+      dosage: alarm.dosage,
+      status: 'TOMADO',
+      type: 'alarm',
+    );
+    await historyRepo.addSystemLog(
+      level: 'INFO',
+      message: 'Medicamento "${alarm.medName.isNotEmpty ? alarm.medName : alarm.name}" marcado como Tomado',
+      source: 'System',
+    );
   }
 
   Future<void> markSkipped(int id) async {
@@ -537,6 +553,20 @@ class AlarmRepository {
     }
 
     await _db.update(_db.alarms).replace(_toCompanion(updated));
+
+    final historyRepo = _ref.read(historyRepositoryProvider);
+    await historyRepo.addHistoryEvent(
+      alarmId: alarm.id,
+      medName: alarm.medName.isNotEmpty ? alarm.medName : alarm.name,
+      dosage: alarm.dosage,
+      status: 'PERDIDO',
+      type: 'alarm',
+    );
+    await historyRepo.addSystemLog(
+      level: 'WARNING',
+      message: 'Medicamento "${alarm.medName.isNotEmpty ? alarm.medName : alarm.name}" marcado como Não Tomado (Perdido)',
+      source: 'System',
+    );
   }
 
   // Bidirectional Synchronization
@@ -680,6 +710,22 @@ class AlarmRepository {
     }
 
     await _db.update(_db.alarms).replace(_toCompanion(updated));
+
+    if (minutes > 0) {
+      final historyRepo = _ref.read(historyRepositoryProvider);
+      await historyRepo.addHistoryEvent(
+        alarmId: alarm.id,
+        medName: alarm.medName.isNotEmpty ? alarm.medName : alarm.name,
+        dosage: alarm.dosage,
+        status: 'SNOOZED',
+        type: 'alarm',
+      );
+      await historyRepo.addSystemLog(
+        level: 'INFO',
+        message: 'Alarme do medicamento "${alarm.medName.isNotEmpty ? alarm.medName : alarm.name}" adiado por $minutes minutos',
+        source: 'System',
+      );
+    }
   }
 
   /// Remove an alarm by ID.

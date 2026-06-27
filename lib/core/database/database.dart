@@ -120,12 +120,42 @@ class Settings extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Alarms, Reminders, Settings])
+class HistoryEvents extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get alarmId => integer().nullable()();
+  IntColumn get reminderId => integer().nullable()();
+  TextColumn get medName => text().nullable()();
+  TextColumn get dosage => text().nullable()();
+  IntColumn get timestamp => integer()();
+  TextColumn get status => text()(); // TOMADO, PERDIDO, SNOOZED, CONCLUIDO
+  TextColumn get type => text()(); // alarm, reminder, system
+  BoolColumn get pendingSync => boolean().withDefault(const Constant(false))();
+}
+
+class SystemLogs extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get timestamp => integer()();
+  TextColumn get level => text()(); // INFO, WARNING, ERROR, DEBUG
+  TextColumn get message => text()();
+  TextColumn get source => text()(); // System, ESP32, WiFi, Database, API
+}
+
+@DriftDatabase(tables: [Alarms, Reminders, Settings, HistoryEvents, SystemLogs])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onUpgrade: (migrator, from, to) async {
+          if (from < 2) {
+            await migrator.createTable(historyEvents);
+            await migrator.createTable(systemLogs);
+          }
+        },
+      );
 }
 
 LazyDatabase _openConnection() {

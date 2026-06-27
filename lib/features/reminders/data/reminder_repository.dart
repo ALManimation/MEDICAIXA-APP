@@ -10,6 +10,8 @@ import 'dart:convert';
 import '../../pairing/presentation/pairing_notifier.dart';
 import '../../pairing/domain/connection_state.dart';
 
+import '../../history/data/history_repository.dart';
+
 part 'reminder_repository.g.dart';
 
 class ReminderRepository {
@@ -285,6 +287,19 @@ class ReminderRepository {
     }
 
     await _db.update(_db.reminders).replace(_toCompanion(updated));
+
+    final historyRepo = _ref.read(historyRepositoryProvider);
+    await historyRepo.addHistoryEvent(
+      reminderId: reminder.id,
+      medName: reminder.title,
+      status: 'CONCLUIDO',
+      type: 'reminder',
+    );
+    await historyRepo.addSystemLog(
+      level: 'INFO',
+      message: 'Lembrete "${reminder.title}" marcado como Concluído',
+      source: 'System',
+    );
   }
 
   Future<void> syncWithDevice() async {

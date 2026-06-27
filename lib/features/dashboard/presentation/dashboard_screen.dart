@@ -13,6 +13,9 @@ import '../../alarms/data/alarm_repository.dart';
 import '../../reminders/data/reminder_repository.dart';
 import 'dashboard_notifier.dart';
 import '../../reminders/presentation/reminder_form_screen.dart';
+import 'package:intl/intl.dart';
+import '../../history/data/history_repository.dart';
+import '../../history/presentation/history_screen.dart';
 import 'widgets/alarm_card_widget.dart';
 import 'widgets/health_banner_widget.dart';
 import 'widgets/reminder_card_widget.dart';
@@ -171,6 +174,19 @@ class DashboardScreen extends ConsumerWidget {
                                 tooltip: 'Sincronizar',
                                 onPressed: state.isLoading ? null : () => notifier.sync(),
                               ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.history_rounded,
+                                  size: 20,
+                                  color: AppColors.textMuted,
+                                ),
+                                tooltip: 'Histórico & Logs',
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (_) => const HistoryScreen()),
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         ],
@@ -238,9 +254,15 @@ class DashboardScreen extends ConsumerWidget {
                       // Right: weekly rhythm sidebar
                       Expanded(
                         flex: 1,
-                        child: WeeklyRhythmWidget(
-                          weekStats: _buildWeekStats(state),
-                          adherencePercent: _calcAdherencePercent(state),
+                        child: StreamBuilder<List<HistoryEvent>>(
+                          stream: ref.watch(historyRepositoryProvider).watchAllHistoryEvents(),
+                          builder: (context, snapshot) {
+                            final events = snapshot.data ?? [];
+                            return WeeklyRhythmWidget(
+                              weekStats: _buildWeekStatsFromHistory(events),
+                              adherencePercent: _calcAdherencePercentFromHistory(events),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -523,29 +545,51 @@ class DashboardScreen extends ConsumerWidget {
     return '${days[date.weekday % 7]}, ${date.day} de ${months[date.month - 1]}';
   }
 
-  /// Builds weekly stats for the rhythm widget.
-  List<DayStat> _buildWeekStats(DashboardState state) {
+  List<DayStat> _buildWeekStatsFromHistory(List<HistoryEvent> events) {
     final now = DateTime.now();
     const dayNames = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
     final stats = <DayStat>[];
 
+    // Map events by date (YYYY-MM-DD)
+    final eventsByDate = <String, List<HistoryEvent>>{};
+    for (final e in events) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(e.timestamp);
+      final dateStr = DateFormat('yyyy-MM-dd').format(dt);
+      eventsByDate.putIfAbsent(dateStr, () => []).add(e);
+    }
+
     for (int i = 6; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       final dow = date.weekday % 7;
-      // For now, simplified — returns empty stats
-      // TODO: Calculate from history/logs when available
+      final dateStr = DateFormat('yyyy-MM-dd').format(date);
+      final dayEvents = eventsByDate[dateStr] ?? [];
+
+      final taken = dayEvents.where((e) => e.status == 'TOMADO' || e.status == 'CONCLUIDO').length;
+      final missed = dayEvents.where((e) => e.status == 'PERDIDO').length;
+      final expected = taken + missed;
+
       stats.add(DayStat(
         dayLabel: dayNames[dow],
-        taken: 0,
-        expected: 0,
+        taken: taken,
+        expected: expected,
       ));
     }
     return stats;
   }
 
-  int _calcAdherencePercent(DashboardState state) {
-    final total = state.takenCount + state.missedCount;
-    if (total == 0) return 0;
-    return ((state.takenCount / total) * 100).round();
+  int _calcAdherencePercentFromHistory(List<HistoryEvent> events) {
+    final now = DateTime.now();
+    final sevenDaysAgo = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 7));
+    final weekEvents = events.where((e) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(e.timestamp);
+      return dt.isAfter(sevenDaysAgo);
+    }).toList();
+
+    final taken = weekEvents.where((e) => e.status == 'TOMADO' || e.status == 'CONCLUIDO').length;
+    final missed = weekEvents.where((e) => e.status == 'PERDIDO').length;
+    final total = taken + missed;
+    
+    if (total == 0) return 100;
+    return ((taken / total) * 100).round();
   }
 }
