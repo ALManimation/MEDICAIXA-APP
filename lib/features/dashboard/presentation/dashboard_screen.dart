@@ -432,6 +432,10 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildRemindersSection(BuildContext context, DashboardState state, WidgetRef ref) {
+    if (state.reminders.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     final repo = ref.read(reminderRepositoryProvider);
 
     return Column(
@@ -467,29 +471,7 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 10),
-        if (state.reminders.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
-              children: [
-                Icon(Icons.push_pin_outlined, color: AppColors.textMuted, size: 32),
-                const SizedBox(height: 8),
-                const Text(
-                  'Nenhum lembrete ativo para este dia.',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          )
-        else
-          ...state.reminders.map(
+        ...state.reminders.map(
             (reminder) => ReminderCardWidget(
               reminder: reminder,
               selectedDate: state.selectedDate,

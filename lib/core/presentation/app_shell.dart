@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_colors.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/alarms/presentation/wizard/alarm_wizard_screen.dart';
+import '../../features/reminders/presentation/reminder_form_screen.dart';
+import '../../features/medications/presentation/medication_form_screen.dart';
+import 'widgets/multi_action_fab.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -18,6 +22,39 @@ class _AppShellState extends ConsumerState<AppShell> {
     const DashboardScreen(),
     const SettingsScreen(),
   ];
+
+  void _openAlarmWizard(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const AlarmWizardScreen(),
+      ),
+    );
+  }
+
+  void _openReminderForm(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const ReminderFormScreen(),
+      ),
+    );
+  }
+
+  void _openMedicationForm(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const MedicationFormScreen(),
+      ),
+    );
+  }
+
+  void _scanQrCode(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Leitura de QR Code via câmera disponível em breve! 📸'),
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +90,17 @@ class _AppShellState extends ConsumerState<AppShell> {
             ),
             VerticalDivider(thickness: 1, width: 1, color: AppColors.border),
             Expanded(
-              child: _screens[_currentIndex],
+              child: Stack(
+                children: [
+                  _screens[_currentIndex],
+                  MultiActionFab(
+                    onAddAlarm: () => _openAlarmWizard(context),
+                    onAddReminder: () => _openReminderForm(context),
+                    onAddMedication: () => _openMedicationForm(context),
+                    onScanQr: () => _scanQrCode(context),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -61,7 +108,17 @@ class _AppShellState extends ConsumerState<AppShell> {
     } else {
       // Mobile Layout: BottomNavigationBar
       return Scaffold(
-        body: _screens[_currentIndex],
+        body: Stack(
+          children: [
+            _screens[_currentIndex],
+            MultiActionFab(
+              onAddAlarm: () => _openAlarmWizard(context),
+              onAddReminder: () => _openReminderForm(context),
+              onAddMedication: () => _openMedicationForm(context),
+              onScanQr: () => _scanQrCode(context),
+            ),
+          ],
+        ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
           backgroundColor: AppColors.surface,
