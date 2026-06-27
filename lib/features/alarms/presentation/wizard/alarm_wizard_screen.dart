@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../data/alarm_model.dart';
 import 'wizard_notifier.dart';
 
 // Steps (we will create these files next)
@@ -13,7 +14,8 @@ import 'steps/step_6_duration.dart';
 import 'steps/step_7_summary.dart';
 
 class AlarmWizardScreen extends ConsumerStatefulWidget {
-  const AlarmWizardScreen({super.key});
+  final AlarmModel? editAlarm;
+  const AlarmWizardScreen({super.key, this.editAlarm});
 
   @override
   ConsumerState<AlarmWizardScreen> createState() => _AlarmWizardScreenState();
@@ -28,6 +30,16 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
     super.initState();
     // Starting at page index 0 which corresponds to Step 1
     _pageController = PageController(initialPage: 0);
+    
+    if (widget.editAlarm != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(wizardNotifierProvider.notifier).loadAlarmForEdit(widget.editAlarm!);
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(wizardNotifierProvider.notifier).reset();
+      });
+    }
   }
 
   @override
@@ -70,7 +82,7 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
         title: Column(
           children: [
             Text(
-              'Passo ${state.step} de 7',
+              state.editingAlarmId != null ? 'Editar Alarme — Passo ${state.step} de 7' : 'Passo ${state.step} de 7',
               style: const TextStyle(
                 color: AppColors.text,
                 fontSize: 16,
@@ -147,8 +159,10 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
                                 await notifier.saveAlarm();
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Remédio cadastrado com sucesso!'),
+                                    SnackBar(
+                                      content: Text(state.editingAlarmId != null
+                                          ? 'Alarme atualizado com sucesso!'
+                                          : 'Remédio cadastrado com sucesso!'),
                                       backgroundColor: AppColors.success,
                                     ),
                                   );
@@ -190,7 +204,9 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
                             ),
                           )
                         : Text(
-                            state.step == 7 ? 'TUDO CERTO! GUARDAR' : 'AVANÇAR',
+                            state.step == 7
+                                ? (state.editingAlarmId != null ? 'SALVAR ALTERAÇÕES' : 'TUDO CERTO! GUARDAR')
+                                : 'AVANÇAR',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                   ),

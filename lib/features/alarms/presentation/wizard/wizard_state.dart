@@ -73,6 +73,9 @@ class WizardState {
   final int removalDelayMins;
   final String siteRotationList;
 
+  // Edit Mode Status
+  final int? editingAlarmId;
+
   const WizardState({
     this.step = 1,
     this.name = '',
@@ -106,6 +109,7 @@ class WizardState {
     this.requiresRemoval = false,
     this.removalDelayMins = 24,
     this.siteRotationList = '',
+    this.editingAlarmId,
   });
 
   WizardState copyWith({
@@ -141,6 +145,7 @@ class WizardState {
     bool? requiresRemoval,
     int? removalDelayMins,
     String? siteRotationList,
+    int? editingAlarmId,
   }) {
     return WizardState(
       step: step ?? this.step,
@@ -175,6 +180,7 @@ class WizardState {
       requiresRemoval: requiresRemoval ?? this.requiresRemoval,
       removalDelayMins: removalDelayMins ?? this.removalDelayMins,
       siteRotationList: siteRotationList ?? this.siteRotationList,
+      editingAlarmId: editingAlarmId ?? this.editingAlarmId,
     );
   }
 }

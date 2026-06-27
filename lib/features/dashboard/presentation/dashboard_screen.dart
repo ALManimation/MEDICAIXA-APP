@@ -452,7 +452,11 @@ class DashboardScreen extends ConsumerWidget {
       onCancelSnooze: () => repo.snoozeAlarm(alarm.id, 0),
       onToggle: (enabled) => repo.toggleAlarm(alarm.id, enabled),
       onEdit: () {
-        // TODO: Open edit form with alarm data pre-filled
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => AlarmWizardScreen(editAlarm: alarm),
+          ),
+        );
       },
       onDelete: () => repo.removeAlarm(alarm.id),
     );

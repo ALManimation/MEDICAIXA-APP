@@ -86,18 +86,213 @@ class WizardNotifier extends _$WizardNotifier {
     state = const WizardState();
   }
 
+  void loadAlarmForEdit(AlarmModel alarm) {
+    // 1. Basic properties
+    final name = alarm.name;
+    final type = alarm.type;
+    final dosage = alarm.dosage ?? '';
+    final color = alarm.color;
+
+    // 2. Use mode
+    String useMode = 'continuous';
+    int prnMaxDailyDoses = 0;
+    int prnMinIntervalHours = 0;
+
+    if (alarm.isPrn == true) {
+      useMode = 'prn';
+      prnMaxDailyDoses = alarm.prnMaxDailyDoses ?? 0;
+      prnMinIntervalHours = alarm.prnMinIntervalHours ?? 0;
+    } else if (alarm.startDate != null && alarm.startDate!.isNotEmpty && alarm.durationDays > 0) {
+      useMode = 'temporary';
+    }
+
+    // 3. Quantity Mode
+    String quantityMode = 'fixed';
+    double fixedQuantity = alarm.quantity;
+    List<double> asymmetricDoses = alarm.daysQuantity;
+    String dynamicParamSelected = 'Glicose';
+    List<WizardDynamicRule> dynamicRules = [];
+
+    if (alarm.isDynamic == true) {
+      quantityMode = 'dynamic';
+      if (alarm.dynamicInstruction != null) {
+        final inst = alarm.dynamicInstruction!;
+        final spaceIdx = inst.indexOf(' ');
+        if (spaceIdx != -1) {
+          dynamicParamSelected = inst.substring(0, spaceIdx);
+          final rulesPart = inst.substring(spaceIdx + 1);
+          final rulesList = rulesPart.split(';');
+          for (final ruleStr in rulesList) {
+            final cleanRule = ruleStr.trim();
+            if (cleanRule.isEmpty) continue;
+            
+            final colonIdx = cleanRule.indexOf(':');
+            if (colonIdx != -1) {
+              final cond = cleanRule.substring(0, colonIdx).trim();
+              final doseAndUnit = cleanRule.substring(colonIdx + 1).trim();
+              
+              String op = 'maior';
+              String limit = '';
+              if (cond.startsWith('>=')) {
+                op = 'maior_igual';
+                limit = cond.substring(2);
+              } else if (cond.startsWith('>')) {
+                op = 'maior';
+                limit = cond.substring(1);
+              } else if (cond.startsWith('<=')) {
+                op = 'menor_igual';
+                limit = cond.substring(2);
+              } else if (cond.startsWith('<')) {
+                op = 'menor';
+                limit = cond.substring(1);
+              } else if (cond.startsWith('=')) {
+                op = 'igual';
+                limit = cond.substring(1);
+              }
+              
+              final numMatch = RegExp(r'^(\d+(?:\.\d+)?)').firstMatch(doseAndUnit);
+              double dose = 1.0;
+              if (numMatch != null) {
+                dose = double.tryParse(numMatch.group(1)!) ?? 1.0;
+              }
+              
+              dynamicRules.add(WizardDynamicRule(
+                operation: op,
+                limit: limit,
+                dose: dose,
+              ));
+            }
+          }
+        }
+      }
+    } else if (alarm.taperStages != null && alarm.taperStages!.isNotEmpty) {
+      quantityMode = 'taper';
+    } else {
+      // Check if asymmetric
+      bool hasAsymmetric = false;
+      for (final q in alarm.daysQuantity) {
+        if (q > 0 && q != alarm.quantity) {
+          hasAsymmetric = true;
+          break;
+        }
+      }
+      if (hasAsymmetric) {
+        quantityMode = 'asymmetric';
+      }
+    }
+
+    // 4. Days Mode
+    String daysMode = 'weekdays';
+    int intervalDays = 8;
+    Set<int> weekdays = {};
+    int alternatingDays = 2;
+    int cycleOnDays = 21;
+    int cycleOffDays = 7;
+    int monthlyDay = 1;
+
+    if (alarm.dayOfMonth != null && alarm.dayOfMonth! > 0) {
+      daysMode = 'monthly';
+      monthlyDay = alarm.dayOfMonth!;
+    } else if (alarm.intervalHours != null && alarm.intervalHours! > 0) {
+      daysMode = 'interval';
+      intervalDays = alarm.intervalHours!;
+    } else if (alarm.cycleOnDays != null && alarm.cycleOnDays! > 0) {
+      daysMode = 'cycle';
+      cycleOnDays = alarm.cycleOnDays!;
+      cycleOffDays = alarm.cycleOffDays ?? 7;
+    } else if (alarm.adjustIntervalDays != null && alarm.adjustIntervalDays! > 0) {
+      daysMode = 'alternating';
+      alternatingDays = alarm.adjustIntervalDays!;
+    } else {
+      final activeDays = alarm.days.where((d) => d).length;
+      if (activeDays == 7) {
+        daysMode = 'everyday';
+      } else {
+        daysMode = 'weekdays';
+        for (int i = 0; i < 7; i++) {
+          if (alarm.days[i]) {
+            int w = i == 0 ? 7 : i;
+            weekdays.add(w);
+          }
+        }
+      }
+    }
+
+    // 5. Time preset and custom times
+    final customTimes = ['${alarm.hour.toString().padLeft(2, '0')}:${alarm.minute.toString().padLeft(2, '0')}'];
+    final timePreset = 'custom';
+
+    // 6. Duration Mode
+    final durationMode = alarm.durationDays > 0 ? 'days' : 'continuous';
+    final durationDays = alarm.durationDays > 0 ? alarm.durationDays : 7;
+
+    String startDateMode = 'today';
+    DateTime? customStartDate;
+    if (alarm.startDate != null && alarm.startDate!.isNotEmpty) {
+      try {
+        final parsedDate = DateTime.parse(alarm.startDate!);
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        final tomorrow = today.add(const Duration(days: 1));
+        final dateToCheck = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+        
+        if (dateToCheck.isAtSameMomentAs(today)) {
+          startDateMode = 'today';
+        } else if (dateToCheck.isAtSameMomentAs(tomorrow)) {
+          startDateMode = 'tomorrow';
+        } else {
+          startDateMode = 'custom';
+          customStartDate = parsedDate;
+        }
+      } catch (_) {
+        startDateMode = 'today';
+      }
+    }
+
+    state = WizardState(
+      step: 1, // Start editing at step 1
+      name: name,
+      type: type,
+      dosage: dosage,
+      color: color,
+      useMode: useMode,
+      prnMaxDailyDoses: prnMaxDailyDoses,
+      prnMinIntervalHours: prnMinIntervalHours,
+      quantityMode: quantityMode,
+      fixedQuantity: fixedQuantity,
+      asymmetricDoses: asymmetricDoses,
+      dynamicParamSelected: dynamicParamSelected,
+      dynamicRules: dynamicRules,
+      taperStages: alarm.taperStages ?? [],
+      taperLoop: alarm.taperLoop ?? false,
+      daysMode: daysMode,
+      intervalDays: intervalDays,
+      weekdays: weekdays,
+      alternatingDays: alternatingDays,
+      cycleOnDays: cycleOnDays,
+      cycleOffDays: cycleOffDays,
+      monthlyDay: monthlyDay,
+      timePreset: timePreset,
+      customTimes: customTimes,
+      durationMode: durationMode,
+      durationDays: durationDays,
+      startDateMode: startDateMode,
+      customStartDate: customStartDate,
+      instruction: alarm.specialInstruction ?? '',
+      requiresRemoval: alarm.requiresRemoval ?? false,
+      removalDelayMins: alarm.removalDelayMins ?? 24,
+      siteRotationList: alarm.siteRotationList ?? '',
+      editingAlarmId: alarm.id,
+    );
+  }
+
   Future<void> saveAlarm() async {
     final repo = ref.read(alarmRepositoryProvider);
     final isPrn = state.useMode == 'prn';
 
-    final List<String> timesToSave;
-    if (!isPrn && state.timePreset == 'custom' && state.daysMode != 'interval') {
-      timesToSave = state.customTimes;
-    } else {
-      timesToSave = state.customTimes.isNotEmpty ? [state.customTimes[0]] : ['08:00'];
-    }
-
-    for (final t in timesToSave) {
+    if (state.editingAlarmId != null) {
+      // In edit mode, we update the single alarm, keeping its ID
+      final t = state.customTimes.isNotEmpty ? state.customTimes[0] : '08:00';
       final parts = t.split(':');
       int h = 8;
       int m = 0;
@@ -106,10 +301,33 @@ class WizardNotifier extends _$WizardNotifier {
         m = int.tryParse(parts[1]) ?? 0;
       }
 
-      final baseModel = constructAlarmModel(0);
+      final baseModel = constructAlarmModel(state.editingAlarmId!);
       final modelWithTime = baseModel.copyWith(hour: h, minute: m);
 
-      await repo.createAlarm(modelWithTime);
+      await repo.updateAlarm(modelWithTime);
+    } else {
+      // In creation mode, we save one or multiple alarms
+      final List<String> timesToSave;
+      if (!isPrn && state.timePreset == 'custom' && state.daysMode != 'interval') {
+        timesToSave = state.customTimes;
+      } else {
+        timesToSave = state.customTimes.isNotEmpty ? [state.customTimes[0]] : ['08:00'];
+      }
+
+      for (final t in timesToSave) {
+        final parts = t.split(':');
+        int h = 8;
+        int m = 0;
+        if (parts.length == 2) {
+          h = int.tryParse(parts[0]) ?? 8;
+          m = int.tryParse(parts[1]) ?? 0;
+        }
+
+        final baseModel = constructAlarmModel(0);
+        final modelWithTime = baseModel.copyWith(hour: h, minute: m);
+
+        await repo.createAlarm(modelWithTime);
+      }
     }
   }
 
