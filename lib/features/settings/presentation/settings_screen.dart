@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -93,36 +92,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
       await repo.updateSettings(updated);
     }
-  }
-
-  List<Map<String, String>> _getProhibitedRanges(Setting settings) {
-    if (settings.prohibitedRanges == null) return [];
-    try {
-      final decoded = json.decode(settings.prohibitedRanges!) as List;
-      return decoded.map((e) => Map<String, String>.from(e as Map)).toList();
-    } catch (_) {
-      return [];
-    }
-  }
-
-  Future<void> _addProhibitedRange(Setting settings, String from, String to) async {
-    final ranges = _getProhibitedRanges(settings);
-    final exists = ranges.any((r) => r['from'] == from && r['to'] == to);
-    if (exists) return;
-    
-    ranges.add({'from': from, 'to': to});
-    final repo = ref.read(settingsRepositoryProvider);
-    final updated = settings.copyWith(prohibitedRanges: Value(json.encode(ranges)));
-    await repo.updateSettings(updated);
-  }
-
-  Future<void> _removeProhibitedRange(Setting settings, int index) async {
-    final ranges = _getProhibitedRanges(settings);
-    if (index < 0 || index >= ranges.length) return;
-    ranges.removeAt(index);
-    final repo = ref.read(settingsRepositoryProvider);
-    final updated = settings.copyWith(prohibitedRanges: Value(json.encode(ranges)));
-    await repo.updateSettings(updated);
   }
 
   void _saveName(Setting currentSettings) async {
@@ -530,121 +499,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               child: const Text('Salvar'),
                             ),
                           ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Prohibited Ranges Section
-                _buildSectionHeader('Faixas Horárias Proibidas'),
-                const SizedBox(height: 8),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Bloquear Horários de Alarmes',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Evita que alarmes toquem nesses períodos. Ex: reuniões diárias ou descanso.',
-                          style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // List of ranges
-                        () {
-                          final ranges = _getProhibitedRanges(settings);
-                          if (ranges.isEmpty) {
-                            return Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                color: AppColors.background.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Center(
-                                child: Text(
-                                  'Nenhuma faixa de bloqueio ativa',
-                                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
-                                ),
-                              ),
-                            );
-                          }
-                          return ListView.separated(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: ranges.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 8),
-                            itemBuilder: (context, index) {
-                              final range = ranges[index];
-                              final from = range['from'] ?? '';
-                              final to = range['to'] ?? '';
-                              return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceVariant.withValues(alpha: 0.3),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(Icons.block_rounded, color: AppColors.missed, size: 16),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Bloqueio: De $from até $to',
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                        ),
-                                      ],
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_rounded, color: AppColors.missed, size: 20),
-                                      onPressed: () => _removeProhibitedRange(settings, index),
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
-                        }(),
-                        
-                        const SizedBox(height: 16),
-                        Center(
-                          child: TextButton.icon(
-                            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-                            icon: const Icon(Icons.add_rounded),
-                            label: const Text('Adicionar Novo Bloqueio'),
-                            onPressed: () async {
-                              final fromTime = await showTimePicker(
-                                context: context,
-                                initialTime: const TimeOfDay(hour: 12, minute: 0),
-                                helpText: 'HORÁRIO DE INÍCIO DO BLOQUEIO',
-                              );
-                              if (fromTime == null) return;
-                              
-                              if (!context.mounted) return;
-                              final toTime = await showTimePicker(
-                                context: context,
-                                initialTime: const TimeOfDay(hour: 13, minute: 0),
-                                helpText: 'HORÁRIO DE FIM DO BLOQUEIO',
-                              );
-                              if (toTime == null) return;
-                              
-                              final fromStr = _formatTimeOfDay(fromTime);
-                              final toStr = _formatTimeOfDay(toTime);
-                              await _addProhibitedRange(settings, fromStr, toStr);
-                            },
-                          ),
                         ),
                       ],
                     ),

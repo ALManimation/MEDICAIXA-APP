@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../../data/alarm_model.dart'; // Para TaperStage se necessário, ou copiamos
 
 class WizardDynamicRule {
