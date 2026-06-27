@@ -7,6 +7,8 @@ import '../../features/alarms/presentation/wizard/alarm_wizard_screen.dart';
 import '../../features/reminders/presentation/reminder_form_screen.dart';
 import '../../features/medications/presentation/medication_form_screen.dart';
 import 'widgets/multi_action_fab.dart';
+import '../../features/history/presentation/history_screen.dart';
+import '../../features/medications/presentation/medications_list_screen.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -20,6 +22,8 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
+    const MedicationsListScreen(),
+    const HistoryScreen(),
     const SettingsScreen(),
   ];
 
@@ -82,6 +86,16 @@ class _AppShellState extends ConsumerState<AppShell> {
                   label: Text('Início'),
                 ),
                 NavigationRailDestination(
+                  icon: Icon(Icons.medication_outlined),
+                  selectedIcon: Icon(Icons.medication_rounded, color: AppColors.primary),
+                  label: Text('Remédios'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.bar_chart_outlined),
+                  selectedIcon: Icon(Icons.bar_chart_rounded, color: AppColors.primary),
+                  label: Text('Relatórios'),
+                ),
+                NavigationRailDestination(
                   icon: Icon(Icons.settings_outlined),
                   selectedIcon: Icon(Icons.settings_rounded, color: AppColors.primary),
                   label: Text('Ajustes'),
@@ -136,6 +150,16 @@ class _AppShellState extends ConsumerState<AppShell> {
               icon: Icon(Icons.dashboard_outlined),
               activeIcon: Icon(Icons.dashboard_rounded),
               label: 'Início',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.medication_outlined),
+              activeIcon: Icon(Icons.medication_rounded),
+              label: 'Remédios',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined),
+              activeIcon: Icon(Icons.bar_chart_rounded),
+              label: 'Relatórios',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings_outlined),
