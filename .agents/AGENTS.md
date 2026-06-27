@@ -89,6 +89,11 @@
 30. **Prevenção de Overflow e Alinhamento em Cards**: Ao implementar grids ou rows de cartões com ícones/emojis e texto, evite fixar a propriedade `height`. Prefira usar `BoxConstraints(minHeight: ...)` associado a `IntrinsicHeight` com `CrossAxisAlignment.stretch` nas fileiras (`Row`) para manter todos os cartões com a mesma altura automaticamente sem quebras de layout.
 31. **Salvamento de Múltiplos Alarmes**: Conforme as lógicas originais do firmware C++, se o usuário configurar o horário como customizado (`custom`) e adicionar múltiplos tempos (ex: 08:00 e 20:00), o sistema deve salvar **alarmes individuais separados** na base local (um para cada horário).
 32. **Verificação de Contexto Assíncrono (mounted)**: Em operações assíncronas dentro de Widgets e telas, use `context.mounted` em vez de apenas `mounted` para silenciar os lints modernos do Flutter SDK (> 3.20) e garantir a segurança do ciclo de vida do widget.
+33. **Ocultação de Lembretes Vazios**: Se a lista de lembretes para a data selecionada no Dashboard estiver vazia, oculte toda a seção de lembretes retornando `const SizedBox.shrink()`. Não exiba cabeçalhos vazios ou placeholders que ocupem espaço visual desnecessariamente.
+34. **Visual Pill-Cards de Medicamentos**: A listagem de medicamentos cadastrados deve renderizar cartões em estilo "pílula", com cantos super arredondados (`BorderRadius.circular(30)`) e bordas externas grossas (`width: 2.5`) correspondentes às cores selecionadas do medicamento, sem traçar botões redundantes.
+35. **Impedir Exclusão de Medicamentos em Uso**: Antes de excluir qualquer medicamento da base de dados, consulte o `AlarmRepository`. Se o medicamento estiver em uso em algum alarme cadastrado, bloqueie a exclusão e alerte o usuário listando os alarmes impeditivos.
+36. **Estrutura Global de 4 Abas**: A navegação principal (`AppShell`) deve expor obrigatoriamente 4 abas: Início (Dashboard), Remédios (Medications), Relatórios (History & Logs) e Ajustes (Settings), replicando a coerência visual da Web UI do Xiaozhi.
+37. **Parâmetros Nulos em copyWith do Drift**: Nas classes geradas de dados do Drift (como `Medication`), os campos opcionais e nulos no `copyWith` esperam `Value<T?>` (ex: `lastModified: Value(timestamp)`), enquanto campos obrigatórios e não-nulos esperam o tipo primitivo plano (ex: `pendingSync: false`).
 
 ---
 
