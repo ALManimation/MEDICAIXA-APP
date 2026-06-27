@@ -140,12 +140,26 @@ class SystemLogs extends Table {
   TextColumn get source => text()(); // System, ESP32, WiFi, Database, API
 }
 
-@DriftDatabase(tables: [Alarms, Reminders, Settings, HistoryEvents, SystemLogs])
+class Medications extends Table {
+  TextColumn get name => text()();
+  TextColumn get color => text()();
+  TextColumn get type => text()(); // comprimido, capsula, gota, xarope, inalador, injetavel, pomada, outro
+  TextColumn get dosage => text().nullable()();
+
+  // Local Sync Fields
+  IntColumn get lastModified => integer().nullable()();
+  BoolColumn get pendingSync => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {name};
+}
+
+@DriftDatabase(tables: [Alarms, Reminders, Settings, HistoryEvents, SystemLogs, Medications])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -153,6 +167,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await migrator.createTable(historyEvents);
             await migrator.createTable(systemLogs);
+          }
+          if (from < 3) {
+            await migrator.createTable(medications);
           }
         },
       );

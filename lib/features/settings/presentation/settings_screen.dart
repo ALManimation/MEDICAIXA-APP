@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,8 @@ import '../../pairing/presentation/pairing_notifier.dart';
 import '../../pairing/presentation/pairing_screen.dart';
 import '../../dashboard/presentation/dashboard_notifier.dart';
 import '../data/settings_repository.dart';
+import '../../medications/data/medication_repository.dart';
+import '../../medications/presentation/medications_list_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -128,10 +131,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final jsonContent = await rootBundle.loadString('test/fixtures/sample_backup.json');
       await ref.read(dashboardNotifierProvider.notifier).loadSampleData(jsonContent);
 
+      // Carregar os medicamentos cadastrados do backup
+      final Map<String, dynamic> data = json.decode(jsonContent);
+      if (data.containsKey('meds') && data['meds'] is List) {
+        final medsList = data['meds'] as List;
+        await ref.read(medicationRepositoryProvider).loadBackupFixture(medsList);
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Backup de teste carregado com 25 alarmes e 6 lembretes! 🎉'),
+            content: Text('Backup de teste carregado com 25 alarmes, 6 lembretes e medicamentos! 🎉'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -592,6 +602,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ],
                     ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Saved Medications Section
+                _buildSectionHeader('Cadastro de Medicamentos'),
+                const SizedBox(height: 8),
+                Card(
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.medication_rounded, color: AppColors.primary),
+                    ),
+                    title: const Text('Medicamentos Cadastrados', style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Visualize, edite ou cadastre novos medicamentos para usar nos alarmes'),
+                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const MedicationsListScreen()),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 32),
