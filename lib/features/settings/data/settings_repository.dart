@@ -80,6 +80,14 @@ class SettingsRepository {
         if (data.breakfastTime != null) payload['breakfast_time'] = data.breakfastTime!;
         if (data.lunchTime != null) payload['lunch_time'] = data.lunchTime!;
         if (data.dinnerTime != null) payload['dinner_time'] = data.dinnerTime!;
+        if (data.geminiApiKey != null) payload['gemini_api_key'] = data.geminiApiKey!;
+        if (data.prohibitedRanges != null) {
+          try {
+            payload['prohibited_ranges'] = json.decode(data.prohibitedRanges!);
+          } catch (e) {
+            debugPrint("Error parsing prohibitedRanges for ESP32 payload: $e");
+          }
+        }
 
         await _dioClient.post('/save_settings', data: payload);
       } catch (e) {
