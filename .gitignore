@@ -1,0 +1,40 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# macOS
+macos/Flutter/ephemeral/
+*.app
+*.dSYM.zip
+*.dSYM
+
+# iOS
+ios/Flutter/ephemeral/
+ios/Pods/
+ios/.symlinks/
+
+# Android
+android/.gradle/
+android/local.properties
+android/key.properties
+*.jks
+
+# Generated files
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Gemini/Antigravity
+.gemini/

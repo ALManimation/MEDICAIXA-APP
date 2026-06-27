@@ -1,0 +1,823 @@
+import 'dart:convert';
+import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/database/database.dart';
+import '../../../core/providers/core_providers.dart';
+import 'alarm_api_client.dart';
+import 'alarm_model.dart';
+import '../../pairing/presentation/pairing_notifier.dart';
+import '../../pairing/domain/connection_state.dart';
+
+part 'alarm_repository.g.dart';
+
+class AlarmRepository {
+  final AppDatabase _db;
+  final AlarmApiClient _apiClient;
+  final Ref _ref;
+
+  AlarmRepository(this._db, this._apiClient, this._ref);
+
+  bool _isConnected() {
+    final connState = _ref.read(pairingNotifierProvider);
+    return connState.status == ConnectionStatus.connected;
+  }
+
+  // Convert Drift entity to AlarmModel
+  AlarmModel _toModel(Alarm driftAlarm) {
+    List<bool> parseBools(String jsonStr) {
+      try {
+        return (json.decode(jsonStr) as List).cast<bool>();
+      } catch (e) {
+        return List.filled(7, true);
+      }
+    }
+
+    List<double> parseDoubles(String jsonStr) {
+      try {
+        return (json.decode(jsonStr) as List).map((e) => (e as num).toDouble()).toList();
+      } catch (e) {
+        return List.filled(7, 0.0);
+      }
+    }
+
+    List<TaperStage>? parseTaperStages(String? jsonStr) {
+      if (jsonStr == null) return null;
+      try {
+        return (json.decode(jsonStr) as List)
+            .map((e) => TaperStage.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } catch (e) {
+        return null;
+      }
+    }
+
+    return AlarmModel(
+      id: driftAlarm.id,
+      hour: driftAlarm.hour,
+      minute: driftAlarm.minute,
+      name: driftAlarm.name,
+      medName: driftAlarm.medName,
+      enabled: driftAlarm.enabled,
+      active: driftAlarm.active,
+      days: parseBools(driftAlarm.days),
+      status: driftAlarm.status,
+      color: driftAlarm.color,
+      quantity: driftAlarm.quantity,
+      daysQuantity: parseDoubles(driftAlarm.daysQuantity),
+      type: driftAlarm.type,
+      dosage: driftAlarm.dosage,
+      lastStatus: driftAlarm.lastStatus,
+      lastStatusDate: driftAlarm.lastStatusDate,
+      snoozeMin: driftAlarm.snoozeMin,
+      startDate: driftAlarm.startDate,
+      durationDays: driftAlarm.durationDays,
+      createdDate: driftAlarm.createdDate,
+      cycleOnDays: driftAlarm.cycleOnDays,
+      cycleOffDays: driftAlarm.cycleOffDays,
+      cycleCurrentDay: driftAlarm.cycleCurrentDay,
+      cycleIsPaused: driftAlarm.cycleIsPaused,
+      isPrn: driftAlarm.isPrn,
+      prnMinIntervalHours: driftAlarm.prnMinIntervalHours,
+      prnMaxDailyDoses: driftAlarm.prnMaxDailyDoses,
+      prnDosesToday: driftAlarm.prnDosesToday,
+      pauseUntil: driftAlarm.pauseUntil,
+      isDynamic: driftAlarm.isDynamic,
+      dynamicInstruction: driftAlarm.dynamicInstruction,
+      taperStageCount: driftAlarm.taperStageCount,
+      taperCurrentStage: driftAlarm.taperCurrentStage,
+      taperDayInStage: driftAlarm.taperDayInStage,
+      taperStages: parseTaperStages(driftAlarm.taperStages),
+      taperLoop: driftAlarm.taperLoop,
+      specialInstruction: driftAlarm.specialInstruction,
+      adjustStep: driftAlarm.adjustStep,
+      adjustIntervalDays: driftAlarm.adjustIntervalDays,
+      adjustLimit: driftAlarm.adjustLimit,
+      requiresRemoval: driftAlarm.requiresRemoval,
+      removalDelayMins: driftAlarm.removalDelayMins,
+      siteRotationList: driftAlarm.siteRotationList,
+      currentSiteIndex: driftAlarm.currentSiteIndex,
+      dayOfMonth: driftAlarm.dayOfMonth,
+      groupId: driftAlarm.groupId,
+      intervalHours: driftAlarm.intervalHours,
+      lastModified: driftAlarm.lastModified,
+      pendingSync: driftAlarm.pendingSync,
+    );
+  }
+
+  // Convert AlarmModel to Drift companion
+  AlarmsCompanion _toCompanion(AlarmModel model) {
+    return AlarmsCompanion(
+      id: Value(model.id),
+      hour: Value(model.hour),
+      minute: Value(model.minute),
+      name: Value(model.name),
+      medName: Value(model.medName),
+      enabled: Value(model.enabled),
+      active: Value(model.active),
+      days: Value(json.encode(model.days)),
+      status: Value(model.status),
+      color: Value(model.color),
+      quantity: Value(model.quantity),
+      daysQuantity: Value(json.encode(model.daysQuantity)),
+      type: Value(model.type),
+      dosage: Value(model.dosage),
+      lastStatus: Value(model.lastStatus),
+      lastStatusDate: Value(model.lastStatusDate),
+      snoozeMin: Value(model.snoozeMin),
+      startDate: Value(model.startDate),
+      durationDays: Value(model.durationDays),
+      createdDate: Value(model.createdDate),
+      cycleOnDays: Value(model.cycleOnDays),
+      cycleOffDays: Value(model.cycleOffDays),
+      cycleCurrentDay: Value(model.cycleCurrentDay),
+      cycleIsPaused: Value(model.cycleIsPaused),
+      isPrn: Value(model.isPrn),
+      prnMinIntervalHours: Value(model.prnMinIntervalHours),
+      prnMaxDailyDoses: Value(model.prnMaxDailyDoses),
+      prnDosesToday: Value(model.prnDosesToday),
+      pauseUntil: Value(model.pauseUntil),
+      isDynamic: Value(model.isDynamic),
+      dynamicInstruction: Value(model.dynamicInstruction),
+      taperStageCount: Value(model.taperStageCount),
+      taperCurrentStage: Value(model.taperCurrentStage),
+      taperDayInStage: Value(model.taperDayInStage),
+      taperStages: Value(model.taperStages != null
+          ? json.encode(model.taperStages!.map((e) => e.toJson()).toList())
+          : null),
+      taperLoop: Value(model.taperLoop),
+      specialInstruction: Value(model.specialInstruction),
+      adjustStep: Value(model.adjustStep),
+      adjustIntervalDays: Value(model.adjustIntervalDays),
+      adjustLimit: Value(model.adjustLimit),
+      requiresRemoval: Value(model.requiresRemoval),
+      removalDelayMins: Value(model.removalDelayMins),
+      siteRotationList: Value(model.siteRotationList),
+      currentSiteIndex: Value(model.currentSiteIndex),
+      dayOfMonth: Value(model.dayOfMonth),
+      groupId: Value(model.groupId),
+      intervalHours: Value(model.intervalHours),
+      lastModified: Value(model.lastModified),
+      pendingSync: Value(model.pendingSync),
+    );
+  }
+
+  Stream<List<AlarmModel>> watchAllAlarms() {
+    return _db.select(_db.alarms).watch().map((list) {
+      return list.map((driftAlarm) => _toModel(driftAlarm)).toList();
+    });
+  }
+
+  Future<List<AlarmModel>> getAllAlarms() async {
+    final list = await _db.select(_db.alarms).get();
+    return list.map((driftAlarm) => _toModel(driftAlarm)).toList();
+  }
+
+  Future<int> _generateLocalId() async {
+    final alarms = await getAllAlarms();
+    if (alarms.isEmpty) return 256;
+    final maxId = alarms.map((e) => e.id).reduce((a, b) => a > b ? a : b);
+    return maxId < 256 ? 256 : maxId + 1;
+  }
+
+  Future<void> createAlarm(AlarmModel alarm) async {
+    int finalId = alarm.id;
+    bool isPending = false;
+
+    if (_isConnected()) {
+      try {
+        finalId = await _apiClient.addAlarm(alarm);
+      } catch (e) {
+        debugPrint("Error sending alarm to ESP32: $e. Saving offline.");
+        finalId = await _generateLocalId();
+        isPending = true;
+      }
+    } else {
+      finalId = await _generateLocalId();
+      isPending = true;
+    }
+
+    final newModel = AlarmModel(
+      id: finalId,
+      hour: alarm.hour,
+      minute: alarm.minute,
+      name: alarm.name,
+      medName: alarm.medName,
+      enabled: alarm.enabled,
+      active: alarm.active,
+      days: alarm.days,
+      status: alarm.status,
+      color: alarm.color,
+      quantity: alarm.quantity,
+      daysQuantity: alarm.daysQuantity,
+      type: alarm.type,
+      dosage: alarm.dosage,
+      lastStatus: alarm.lastStatus,
+      lastStatusDate: alarm.lastStatusDate,
+      snoozeMin: alarm.snoozeMin,
+      startDate: alarm.startDate,
+      durationDays: alarm.durationDays,
+      createdDate: alarm.createdDate ?? DateTime.now().toIso8601String().substring(0, 10),
+      cycleOnDays: alarm.cycleOnDays,
+      cycleOffDays: alarm.cycleOffDays,
+      cycleCurrentDay: alarm.cycleCurrentDay,
+      cycleIsPaused: alarm.cycleIsPaused,
+      isPrn: alarm.isPrn,
+      prnMinIntervalHours: alarm.prnMinIntervalHours,
+      prnMaxDailyDoses: alarm.prnMaxDailyDoses,
+      prnDosesToday: alarm.prnDosesToday,
+      pauseUntil: alarm.pauseUntil,
+      isDynamic: alarm.isDynamic,
+      dynamicInstruction: alarm.dynamicInstruction,
+      taperStageCount: alarm.taperStageCount,
+      taperCurrentStage: alarm.taperCurrentStage,
+      taperDayInStage: alarm.taperDayInStage,
+      taperStages: alarm.taperStages,
+      taperLoop: alarm.taperLoop,
+      specialInstruction: alarm.specialInstruction,
+      adjustStep: alarm.adjustStep,
+      adjustIntervalDays: alarm.adjustIntervalDays,
+      adjustLimit: alarm.adjustLimit,
+      requiresRemoval: alarm.requiresRemoval,
+      removalDelayMins: alarm.removalDelayMins,
+      siteRotationList: alarm.siteRotationList,
+      currentSiteIndex: alarm.currentSiteIndex,
+      dayOfMonth: alarm.dayOfMonth,
+      groupId: alarm.groupId,
+      intervalHours: alarm.intervalHours,
+      lastModified: DateTime.now().millisecondsSinceEpoch,
+      pendingSync: isPending,
+    );
+
+    await _db.into(_db.alarms).insert(_toCompanion(newModel));
+  }
+
+  Future<void> updateAlarm(AlarmModel alarm) async {
+    bool isPending = false;
+
+    if (_isConnected()) {
+      try {
+        await _apiClient.updateAlarm(alarm);
+      } catch (e) {
+        debugPrint("Error updating alarm on ESP32: $e. Marking pending.");
+        isPending = true;
+      }
+    } else {
+      isPending = true;
+    }
+
+    final updatedModel = AlarmModel(
+      id: alarm.id,
+      hour: alarm.hour,
+      minute: alarm.minute,
+      name: alarm.name,
+      medName: alarm.medName,
+      enabled: alarm.enabled,
+      active: alarm.active,
+      days: alarm.days,
+      status: alarm.status,
+      color: alarm.color,
+      quantity: alarm.quantity,
+      daysQuantity: alarm.daysQuantity,
+      type: alarm.type,
+      dosage: alarm.dosage,
+      lastStatus: alarm.lastStatus,
+      lastStatusDate: alarm.lastStatusDate,
+      snoozeMin: alarm.snoozeMin,
+      startDate: alarm.startDate,
+      durationDays: alarm.durationDays,
+      createdDate: alarm.createdDate,
+      cycleOnDays: alarm.cycleOnDays,
+      cycleOffDays: alarm.cycleOffDays,
+      cycleCurrentDay: alarm.cycleCurrentDay,
+      cycleIsPaused: alarm.cycleIsPaused,
+      isPrn: alarm.isPrn,
+      prnMinIntervalHours: alarm.prnMinIntervalHours,
+      prnMaxDailyDoses: alarm.prnMaxDailyDoses,
+      prnDosesToday: alarm.prnDosesToday,
+      pauseUntil: alarm.pauseUntil,
+      isDynamic: alarm.isDynamic,
+      dynamicInstruction: alarm.dynamicInstruction,
+      taperStageCount: alarm.taperStageCount,
+      taperCurrentStage: alarm.taperCurrentStage,
+      taperDayInStage: alarm.taperDayInStage,
+      taperStages: alarm.taperStages,
+      taperLoop: alarm.taperLoop,
+      specialInstruction: alarm.specialInstruction,
+      adjustStep: alarm.adjustStep,
+      adjustIntervalDays: alarm.adjustIntervalDays,
+      adjustLimit: alarm.adjustLimit,
+      requiresRemoval: alarm.requiresRemoval,
+      removalDelayMins: alarm.removalDelayMins,
+      siteRotationList: alarm.siteRotationList,
+      currentSiteIndex: alarm.currentSiteIndex,
+      dayOfMonth: alarm.dayOfMonth,
+      groupId: alarm.groupId,
+      intervalHours: alarm.intervalHours,
+      lastModified: DateTime.now().millisecondsSinceEpoch,
+      pendingSync: isPending,
+    );
+
+    await _db.update(_db.alarms).replace(_toCompanion(updatedModel));
+  }
+
+  Future<void> deleteAlarm(int id) async {
+    if (_isConnected()) {
+      try {
+        await _apiClient.removeAlarm(id);
+      } catch (e) {
+        debugPrint("Error removing alarm on ESP32: $e");
+      }
+    }
+    await (_db.delete(_db.alarms)..where((t) => t.id.equals(id))).go();
+  }
+
+  Future<void> toggleAlarm(int id, bool enabled) async {
+    final alarmList = await (_db.select(_db.alarms)..where((t) => t.id.equals(id))).get();
+    if (alarmList.isEmpty) return;
+
+    final alarm = _toModel(alarmList.first);
+    final updated = AlarmModel(
+      id: alarm.id,
+      hour: alarm.hour,
+      minute: alarm.minute,
+      name: alarm.name,
+      medName: alarm.medName,
+      enabled: enabled,
+      active: enabled, // Active matches enabled state
+      days: alarm.days,
+      status: alarm.status,
+      color: alarm.color,
+      quantity: alarm.quantity,
+      daysQuantity: alarm.daysQuantity,
+      type: alarm.type,
+      dosage: alarm.dosage,
+      lastStatus: alarm.lastStatus,
+      lastStatusDate: alarm.lastStatusDate,
+      snoozeMin: alarm.snoozeMin,
+      startDate: alarm.startDate,
+      durationDays: alarm.durationDays,
+      createdDate: alarm.createdDate,
+      cycleOnDays: alarm.cycleOnDays,
+      cycleOffDays: alarm.cycleOffDays,
+      cycleCurrentDay: alarm.cycleCurrentDay,
+      cycleIsPaused: alarm.cycleIsPaused,
+      isPrn: alarm.isPrn,
+      prnMinIntervalHours: alarm.prnMinIntervalHours,
+      prnMaxDailyDoses: alarm.prnMaxDailyDoses,
+      prnDosesToday: alarm.prnDosesToday,
+      pauseUntil: alarm.pauseUntil,
+      isDynamic: alarm.isDynamic,
+      dynamicInstruction: alarm.dynamicInstruction,
+      taperStageCount: alarm.taperStageCount,
+      taperCurrentStage: alarm.taperCurrentStage,
+      taperDayInStage: alarm.taperDayInStage,
+      taperStages: alarm.taperStages,
+      taperLoop: alarm.taperLoop,
+      specialInstruction: alarm.specialInstruction,
+      adjustStep: alarm.adjustStep,
+      adjustIntervalDays: alarm.adjustIntervalDays,
+      adjustLimit: alarm.adjustLimit,
+      requiresRemoval: alarm.requiresRemoval,
+      removalDelayMins: alarm.removalDelayMins,
+      siteRotationList: alarm.siteRotationList,
+      currentSiteIndex: alarm.currentSiteIndex,
+      dayOfMonth: alarm.dayOfMonth,
+      groupId: alarm.groupId,
+      intervalHours: alarm.intervalHours,
+      lastModified: DateTime.now().millisecondsSinceEpoch,
+      pendingSync: !_isConnected(),
+    );
+
+    if (_isConnected()) {
+      try {
+        await _apiClient.toggleAlarm(id, enabled);
+      } catch (e) {
+        debugPrint("Error toggling alarm on ESP32: $e");
+      }
+    }
+
+    await _db.update(_db.alarms).replace(_toCompanion(updated));
+  }
+
+  Future<void> markTaken(int id) async {
+    final alarmList = await (_db.select(_db.alarms)..where((t) => t.id.equals(id))).get();
+    if (alarmList.isEmpty) return;
+
+    final alarm = _toModel(alarmList.first);
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final updated = AlarmModel(
+      id: alarm.id,
+      hour: alarm.hour,
+      minute: alarm.minute,
+      name: alarm.name,
+      medName: alarm.medName,
+      enabled: alarm.enabled,
+      active: alarm.active,
+      days: alarm.days,
+      status: 'PENDENTE', // ESP32 will reset status.
+      color: alarm.color,
+      quantity: alarm.quantity,
+      daysQuantity: alarm.daysQuantity,
+      type: alarm.type,
+      dosage: alarm.dosage,
+      lastStatus: 'Tomado',
+      lastStatusDate: todayStr,
+      snoozeMin: alarm.snoozeMin,
+      startDate: alarm.startDate,
+      durationDays: alarm.durationDays,
+      createdDate: alarm.createdDate,
+      cycleOnDays: alarm.cycleOnDays,
+      cycleOffDays: alarm.cycleOffDays,
+      cycleCurrentDay: alarm.cycleCurrentDay,
+      cycleIsPaused: alarm.cycleIsPaused,
+      isPrn: alarm.isPrn,
+      prnMinIntervalHours: alarm.prnMinIntervalHours,
+      prnMaxDailyDoses: alarm.prnMaxDailyDoses,
+      prnDosesToday: alarm.prnDosesToday,
+      pauseUntil: alarm.pauseUntil,
+      isDynamic: alarm.isDynamic,
+      dynamicInstruction: alarm.dynamicInstruction,
+      taperStageCount: alarm.taperStageCount,
+      taperCurrentStage: alarm.taperCurrentStage,
+      taperDayInStage: alarm.taperDayInStage,
+      taperStages: alarm.taperStages,
+      taperLoop: alarm.taperLoop,
+      specialInstruction: alarm.specialInstruction,
+      adjustStep: alarm.adjustStep,
+      adjustIntervalDays: alarm.adjustIntervalDays,
+      adjustLimit: alarm.adjustLimit,
+      requiresRemoval: alarm.requiresRemoval,
+      removalDelayMins: alarm.removalDelayMins,
+      siteRotationList: alarm.siteRotationList,
+      currentSiteIndex: alarm.currentSiteIndex,
+      dayOfMonth: alarm.dayOfMonth,
+      groupId: alarm.groupId,
+      intervalHours: alarm.intervalHours,
+      lastModified: DateTime.now().millisecondsSinceEpoch,
+      pendingSync: !_isConnected(),
+    );
+
+    if (_isConnected()) {
+      try {
+        await _apiClient.markTaken(id);
+      } catch (e) {
+        debugPrint("Error marking taken on ESP32: $e");
+      }
+    }
+
+    await _db.update(_db.alarms).replace(_toCompanion(updated));
+  }
+
+  Future<void> markSkipped(int id) async {
+    final alarmList = await (_db.select(_db.alarms)..where((t) => t.id.equals(id))).get();
+    if (alarmList.isEmpty) return;
+
+    final alarm = _toModel(alarmList.first);
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final updated = AlarmModel(
+      id: alarm.id,
+      hour: alarm.hour,
+      minute: alarm.minute,
+      name: alarm.name,
+      medName: alarm.medName,
+      enabled: alarm.enabled,
+      active: alarm.active,
+      days: alarm.days,
+      status: 'PENDENTE',
+      color: alarm.color,
+      quantity: alarm.quantity,
+      daysQuantity: alarm.daysQuantity,
+      type: alarm.type,
+      dosage: alarm.dosage,
+      lastStatus: 'Não Tomado',
+      lastStatusDate: todayStr,
+      snoozeMin: alarm.snoozeMin,
+      startDate: alarm.startDate,
+      durationDays: alarm.durationDays,
+      createdDate: alarm.createdDate,
+      cycleOnDays: alarm.cycleOnDays,
+      cycleOffDays: alarm.cycleOffDays,
+      cycleCurrentDay: alarm.cycleCurrentDay,
+      cycleIsPaused: alarm.cycleIsPaused,
+      isPrn: alarm.isPrn,
+      prnMinIntervalHours: alarm.prnMinIntervalHours,
+      prnMaxDailyDoses: alarm.prnMaxDailyDoses,
+      prnDosesToday: alarm.prnDosesToday,
+      pauseUntil: alarm.pauseUntil,
+      isDynamic: alarm.isDynamic,
+      dynamicInstruction: alarm.dynamicInstruction,
+      taperStageCount: alarm.taperStageCount,
+      taperCurrentStage: alarm.taperCurrentStage,
+      taperDayInStage: alarm.taperDayInStage,
+      taperStages: alarm.taperStages,
+      taperLoop: alarm.taperLoop,
+      specialInstruction: alarm.specialInstruction,
+      adjustStep: alarm.adjustStep,
+      adjustIntervalDays: alarm.adjustIntervalDays,
+      adjustLimit: alarm.adjustLimit,
+      requiresRemoval: alarm.requiresRemoval,
+      removalDelayMins: alarm.removalDelayMins,
+      siteRotationList: alarm.siteRotationList,
+      currentSiteIndex: alarm.currentSiteIndex,
+      dayOfMonth: alarm.dayOfMonth,
+      groupId: alarm.groupId,
+      intervalHours: alarm.intervalHours,
+      lastModified: DateTime.now().millisecondsSinceEpoch,
+      pendingSync: !_isConnected(),
+    );
+
+    if (_isConnected()) {
+      try {
+        await _apiClient.markSkipped(id);
+      } catch (e) {
+        debugPrint("Error marking skipped on ESP32: $e");
+      }
+    }
+
+    await _db.update(_db.alarms).replace(_toCompanion(updated));
+  }
+
+  // Bidirectional Synchronization
+  Future<void> syncWithDevice() async {
+    if (!_isConnected()) return;
+
+    try {
+      // 1. Fetch remote alarms
+      final remoteAlarms = await _apiClient.fetchAlarms();
+      final localAlarms = await getAllAlarms();
+
+      // Create maps for lookup
+      final localMap = {for (final a in localAlarms) a.id: a};
+      final remoteMap = {for (final a in remoteAlarms) a.id: a};
+
+      // 2. Local-only modifications sync (Local -> Device)
+      for (final local in localAlarms) {
+        if (local.pendingSync) {
+          if (local.id >= 256) {
+            // New local alarm offline: Add to device
+            try {
+              final newId = await _apiClient.addAlarm(local);
+              // Update local ID and clear pendingSync
+              await deleteAlarm(local.id);
+              final uploaded = AlarmModel(
+                id: newId,
+                hour: local.hour,
+                minute: local.minute,
+                name: local.name,
+                medName: local.medName,
+                enabled: local.enabled,
+                active: local.active,
+                days: local.days,
+                status: local.status,
+                color: local.color,
+                quantity: local.quantity,
+                daysQuantity: local.daysQuantity,
+                type: local.type,
+                dosage: local.dosage,
+                lastStatus: local.lastStatus,
+                lastStatusDate: local.lastStatusDate,
+                snoozeMin: local.snoozeMin,
+                startDate: local.startDate,
+                durationDays: local.durationDays,
+                createdDate: local.createdDate,
+                cycleOnDays: local.cycleOnDays,
+                cycleOffDays: local.cycleOffDays,
+                cycleCurrentDay: local.cycleCurrentDay,
+                cycleIsPaused: local.cycleIsPaused,
+                isPrn: local.isPrn,
+                prnMinIntervalHours: local.prnMinIntervalHours,
+                prnMaxDailyDoses: local.prnMaxDailyDoses,
+                prnDosesToday: local.prnDosesToday,
+                pauseUntil: local.pauseUntil,
+                isDynamic: local.isDynamic,
+                dynamicInstruction: local.dynamicInstruction,
+                taperStageCount: local.taperStageCount,
+                taperCurrentStage: local.taperCurrentStage,
+                taperDayInStage: local.taperDayInStage,
+                taperStages: local.taperStages,
+                taperLoop: local.taperLoop,
+                specialInstruction: local.specialInstruction,
+                adjustStep: local.adjustStep,
+                adjustIntervalDays: local.adjustIntervalDays,
+                adjustLimit: local.adjustLimit,
+                requiresRemoval: local.requiresRemoval,
+                removalDelayMins: local.removalDelayMins,
+                siteRotationList: local.siteRotationList,
+                currentSiteIndex: local.currentSiteIndex,
+                dayOfMonth: local.dayOfMonth,
+                groupId: local.groupId,
+                intervalHours: local.intervalHours,
+                lastModified: DateTime.now().millisecondsSinceEpoch,
+                pendingSync: false,
+              );
+              await _db.into(_db.alarms).insert(_toCompanion(uploaded));
+            } catch (e) {
+              debugPrint("Failed to upload new local alarm ${local.id}: $e");
+            }
+          } else {
+            // Existing alarm updated offline: Update on device
+            try {
+              await _apiClient.updateAlarm(local);
+              await _db.update(_db.alarms).replace(
+                    _toCompanion(local.copyWith(pendingSync: false)),
+                  );
+            } catch (e) {
+              debugPrint("Failed to update alarm ${local.id} on device: $e");
+            }
+          }
+        }
+      }
+
+      // Refresh local list after pushes
+      final updatedLocalAlarms = await getAllAlarms();
+      final updatedLocalMap = {for (final a in updatedLocalAlarms) a.id: a};
+
+      // 3. Reconcile device changes (Device -> Local)
+      for (final remote in remoteAlarms) {
+        final local = updatedLocalMap[remote.id];
+        if (local == null) {
+          // New alarm on device: Save locally
+          await _db.into(_db.alarms).insert(_toCompanion(remote));
+        } else if (!local.pendingSync) {
+          // Device state wins if local has no pending updates
+          await _db.update(_db.alarms).replace(_toCompanion(remote));
+        }
+      }
+
+      // 4. Clean up deleted alarms (Deleted on device -> Delete locally)
+      for (final local in updatedLocalAlarms) {
+        if (local.id < 256 && !remoteMap.containsKey(local.id) && !local.pendingSync) {
+          await (_db.delete(_db.alarms)..where((t) => t.id.equals(local.id))).go();
+        }
+      }
+    } catch (e) {
+      debugPrint("Error syncing alarms: $e");
+    }
+  }
+
+  /// Snooze an alarm for the given number of minutes.
+  /// Pass 0 to cancel an active snooze.
+  /// Replicates POST /snooze from the Web UI.
+  Future<void> snoozeAlarm(int id, int minutes) async {
+    final alarmList = await (_db.select(_db.alarms)..where((t) => t.id.equals(id))).get();
+    if (alarmList.isEmpty) return;
+
+    final alarm = _toModel(alarmList.first);
+    final updated = alarm.copyWith(
+      snoozeMin: minutes,
+      lastModified: DateTime.now().millisecondsSinceEpoch,
+      pendingSync: !_isConnected(),
+    );
+
+    if (_isConnected()) {
+      try {
+        await _apiClient.snoozeAlarm(id, minutes);
+      } catch (e) {
+        debugPrint("Error snoozing alarm on ESP32: $e");
+      }
+    }
+
+    await _db.update(_db.alarms).replace(_toCompanion(updated));
+  }
+
+  /// Remove an alarm by ID.
+  /// Convenience alias for deleteAlarm that matches the Web UI naming.
+  Future<void> removeAlarm(int id) async {
+    await deleteAlarm(id);
+  }
+
+  // Force loading from real JSON Backup fixture (Carolina's 25 alarms backup)
+  Future<void> loadBackupFixture(String jsonContent) async {
+    try {
+      final Map<String, dynamic> data = json.decode(jsonContent);
+      if (data.containsKey('alarms') && data['alarms'] is List) {
+        final list = data['alarms'] as List;
+        // Clear existing local database
+        await _db.delete(_db.alarms).go();
+        for (final item in list) {
+          final model = AlarmModel.fromJson(item as Map<String, dynamic>);
+          await _db.into(_db.alarms).insert(_toCompanion(model));
+        }
+      }
+    } catch (e) {
+      debugPrint("Error loading backup fixture: $e");
+    }
+  }
+}
+
+@Riverpod(keepAlive: true)
+AlarmRepository alarmRepository(AlarmRepositoryRef ref) {
+  return AlarmRepository(
+    ref.watch(databaseProvider),
+    ref.watch(alarmApiClientProvider),
+    ref,
+  );
+}
+
+extension AlarmModelCopyWith on AlarmModel {
+  AlarmModel copyWith({
+    int? id,
+    int? hour,
+    int? minute,
+    String? name,
+    String? medName,
+    bool? enabled,
+    bool? active,
+    List<bool>? days,
+    String? status,
+    String? color,
+    double? quantity,
+    List<double>? daysQuantity,
+    String? type,
+    String? dosage,
+    String? lastStatus,
+    String? lastStatusDate,
+    int? snoozeMin,
+    String? startDate,
+    int? durationDays,
+    String? createdDate,
+    int? cycleOnDays,
+    int? cycleOffDays,
+    int? cycleCurrentDay,
+    bool? cycleIsPaused,
+    bool? isPrn,
+    int? prnMinIntervalHours,
+    int? prnMaxDailyDoses,
+    int? prnDosesToday,
+    int? pauseUntil,
+    bool? isDynamic,
+    String? dynamicInstruction,
+    int? taperStageCount,
+    int? taperCurrentStage,
+    int? taperDayInStage,
+    List<TaperStage>? taperStages,
+    bool? taperLoop,
+    String? specialInstruction,
+    double? adjustStep,
+    int? adjustIntervalDays,
+    double? adjustLimit,
+    bool? requiresRemoval,
+    int? removalDelayMins,
+    String? siteRotationList,
+    int? currentSiteIndex,
+    int? dayOfMonth,
+    int? groupId,
+    int? intervalHours,
+    int? lastModified,
+    bool? pendingSync,
+  }) {
+    return AlarmModel(
+      id: id ?? this.id,
+      hour: hour ?? this.hour,
+      minute: minute ?? this.minute,
+      name: name ?? this.name,
+      medName: medName ?? this.medName,
+      enabled: enabled ?? this.enabled,
+      active: active ?? this.active,
+      days: days ?? this.days,
+      status: status ?? this.status,
+      color: color ?? this.color,
+      quantity: quantity ?? this.quantity,
+      daysQuantity: daysQuantity ?? this.daysQuantity,
+      type: type ?? this.type,
+      dosage: dosage ?? this.dosage,
+      lastStatus: lastStatus ?? this.lastStatus,
+      lastStatusDate: lastStatusDate ?? this.lastStatusDate,
+      snoozeMin: snoozeMin ?? this.snoozeMin,
+      startDate: startDate ?? this.startDate,
+      durationDays: durationDays ?? this.durationDays,
+      createdDate: createdDate ?? this.createdDate,
+      cycleOnDays: cycleOnDays ?? this.cycleOnDays,
+      cycleOffDays: cycleOffDays ?? this.cycleOffDays,
+      cycleCurrentDay: cycleCurrentDay ?? this.cycleCurrentDay,
+      cycleIsPaused: cycleIsPaused ?? this.cycleIsPaused,
+      isPrn: isPrn ?? this.isPrn,
+      prnMinIntervalHours: prnMinIntervalHours ?? this.prnMinIntervalHours,
+      prnMaxDailyDoses: prnMaxDailyDoses ?? this.prnMaxDailyDoses,
+      prnDosesToday: prnDosesToday ?? this.prnDosesToday,
+      pauseUntil: pauseUntil ?? this.pauseUntil,
+      isDynamic: isDynamic ?? this.isDynamic,
+      dynamicInstruction: dynamicInstruction ?? this.dynamicInstruction,
+      taperStageCount: taperStageCount ?? this.taperStageCount,
+      taperCurrentStage: taperCurrentStage ?? this.taperCurrentStage,
+      taperDayInStage: taperDayInStage ?? this.taperDayInStage,
+      taperStages: taperStages ?? this.taperStages,
+      taperLoop: taperLoop ?? this.taperLoop,
+      specialInstruction: specialInstruction ?? this.specialInstruction,
+      adjustStep: adjustStep ?? this.adjustStep,
+      adjustIntervalDays: adjustIntervalDays ?? this.adjustIntervalDays,
+      adjustLimit: adjustLimit ?? this.adjustLimit,
+      requiresRemoval: requiresRemoval ?? this.requiresRemoval,
+      removalDelayMins: removalDelayMins ?? this.removalDelayMins,
+      siteRotationList: siteRotationList ?? this.siteRotationList,
+      currentSiteIndex: currentSiteIndex ?? this.currentSiteIndex,
+      dayOfMonth: dayOfMonth ?? this.dayOfMonth,
+      groupId: groupId ?? this.groupId,
+      intervalHours: intervalHours ?? this.intervalHours,
+      lastModified: lastModified ?? this.lastModified,
+      pendingSync: pendingSync ?? this.pendingSync,
+    );
+  }
+}

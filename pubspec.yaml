@@ -1,0 +1,55 @@
+name: medicaixa_app
+description: "MediCaixa — App multiplataforma de gerenciamento de medicamentos"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # === Gerência de Estado ===
+  flutter_riverpod: ^2.6.0
+  riverpod_annotation: ^2.4.0
+
+  # === Banco de Dados Local (SQLite type-safe) ===
+  drift: ^2.22.0
+  sqlite3_flutter_libs: ^0.5.0
+  path_provider: ^2.1.0
+  path: ^1.9.0
+
+  # === Comunicação de Rede ===
+  dio: ^5.7.0
+  multicast_dns: ^0.3.2+1
+
+  # === Segurança ===
+  flutter_secure_storage: ^9.2.0
+  crypto: ^3.0.6
+
+  # === UI e Design ===
+  google_fonts: ^6.2.0
+  flutter_local_notifications: ^18.0.0
+  intl: ^0.19.0
+
+  # === Utilidades ===
+  uuid: ^4.5.0
+  connectivity_plus: ^6.1.0
+  mcp_toolkit: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  drift_dev: ^2.22.0
+  build_runner: ^2.4.0
+  riverpod_generator: ^2.4.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/medications_db.json.gz
+    - assets/lang/
+    - test/fixtures/sample_backup.json
