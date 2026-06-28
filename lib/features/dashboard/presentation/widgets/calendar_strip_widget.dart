@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../dashboard_notifier.dart';
 import '../../../alarms/data/alarm_model.dart';
 import '../../../reminders/data/reminder_model.dart';
+import '../../../../core/providers/locale_provider.dart';
 
 abstract class StripItem {}
 
@@ -80,16 +81,24 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
     double offset = 0.0;
     for (int i = 0; i < index; i++) {
       final item = _items[i];
-      if (item is DateItem) offset += _dateItemWidth;
-      else if (item is MonthLabelItem || item is YearLabelItem) offset += _labelItemWidth;
-      else offset += _sparseItemWidth;
+      if (item is DateItem) {
+        offset += _dateItemWidth;
+      } else if (item is MonthLabelItem || item is YearLabelItem) {
+        offset += _labelItemWidth;
+      } else {
+        offset += _sparseItemWidth;
+      }
     }
     
     double itemW = 0;
     final target = _items[index];
-    if (target is DateItem) itemW = _dateItemWidth;
-    else if (target is MonthLabelItem || target is YearLabelItem) itemW = _labelItemWidth;
-    else itemW = _sparseItemWidth;
+    if (target is DateItem) {
+      itemW = _dateItemWidth;
+    } else if (target is MonthLabelItem || target is YearLabelItem) {
+      itemW = _labelItemWidth;
+    } else {
+      itemW = _sparseItemWidth;
+    }
     
     offset = offset - (screenWidth / 2) + (itemW / 2) + 24; // +24 for list padding
     
@@ -128,11 +137,11 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
     if (r.period == 'day') return diffDays % interval == 0;
     if (r.period == 'week') return diffDays % (interval * 7) == 0;
     if (r.period == 'month') {
-      int mDiff = (target.year - sd.year) * 12 + (target.month - sd.month);
+      final int mDiff = (target.year - sd.year) * 12 + (target.month - sd.month);
       return mDiff >= 0 && mDiff % interval == 0 && target.day == sd.day;
     }
     if (r.period == 'year') {
-      int yDiff = target.year - sd.year;
+      final int yDiff = target.year - sd.year;
       return yDiff >= 0 && yDiff % interval == 0 && target.month == sd.month && target.day == sd.day;
     }
     return false;
@@ -145,20 +154,31 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
     List<AlarmModel> alarms, 
     List<ReminderModel> reminders
   ) {
-    bool hasRecurring = alarms.any((a) {
-      if (!a.active || a.startDate != null) return false;
-      int idx = date.weekday % 7; 
+    final bool hasRecurring = alarms.any((a) {
+      if (!a.enabled) return false;
+      final isDated = a.startDate != null && a.startDate!.isNotEmpty && a.durationDays > 0;
+      if (isDated) return false;
+      if (a.createdDate != null && a.createdDate!.isNotEmpty) {
+        try {
+          final cd = DateTime.parse(a.createdDate!);
+          final cdZero = DateTime(cd.year, cd.month, cd.day);
+          final targetZero = DateTime(date.year, date.month, date.day);
+          if (targetZero.isBefore(cdZero)) return false;
+        } catch (_) {}
+      }
+      final int idx = date.weekday % 7; 
       return a.days[idx] == true;
     });
 
-    bool hasDated = alarms.any((a) {
-      if (!a.active || a.startDate == null) return false;
+    final bool hasDated = alarms.any((a) {
+      final isDated = a.startDate != null && a.startDate!.isNotEmpty && a.durationDays > 0;
+      if (!isDated) return false;
       final sd = DateTime.parse(a.startDate!);
-      final ed = sd.add(Duration(days: (a.durationDays > 0 ? a.durationDays : 1) - 1));
+      final ed = sd.add(Duration(days: a.durationDays - 1));
       return !date.isBefore(sd) && !date.isAfter(ed);
     });
 
-    bool hasReminder = reminders.any((r) => _isReminderActiveOnDate(r, date));
+    final bool hasReminder = reminders.any((r) => _isReminderActiveOnDate(r, date));
 
     return DateItem(
       date: date,
@@ -170,7 +190,7 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
     );
   }
 
-  void _calculateItems(List<AlarmModel> alarms, List<ReminderModel> reminders, DateTime selectedDate) {
+  void _calculateItems(List<AlarmModel> alarms, List<ReminderModel> reminders, DateTime selectedDate, String locale) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     
@@ -179,7 +199,7 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
       if (a.createdDate != null) {
         final d = DateTime.parse(a.createdDate!);
         if (oldestDate == null || d.isBefore(oldestDate)) oldestDate = d;
-      } else if (a.startDate != null) {
+      } else if (a.startDate != null && a.startDate!.isNotEmpty) {
         final d = DateTime.parse(a.startDate!);
         if (oldestDate == null || d.isBefore(oldestDate)) oldestDate = d;
       }
@@ -197,14 +217,14 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
       pastDays = diff.clamp(0, 15);
     }
     
-    bool hasActiveRecurring = alarms.any((a) => a.active && a.startDate == null);
+    final bool hasActiveRecurring = alarms.any((a) => a.enabled && a.durationDays == 0);
     int maxFutureDays = 0;
     if (hasActiveRecurring) {
       maxFutureDays = 14;
     } else {
-      for (var a in alarms.where((a) => a.active && a.startDate != null)) {
+      for (var a in alarms.where((a) => a.active && a.startDate != null && a.startDate!.isNotEmpty && a.durationDays > 0)) {
         final sd = DateTime.parse(a.startDate!);
-        final ed = sd.add(Duration(days: (a.durationDays > 0 ? a.durationDays : 1) - 1));
+        final ed = sd.add(Duration(days: a.durationDays - 1));
         final diff = ed.difference(today).inDays;
         if (diff > maxFutureDays) maxFutureDays = diff;
       }
@@ -212,7 +232,7 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
          final sd = DateTime.parse(r.startDate);
          final diff = sd.difference(today).inDays;
          if (diff > 0 && diff <= 14 && diff > maxFutureDays) {
-           maxFutureDays = diff;
+            maxFutureDays = diff;
          }
       }
       maxFutureDays = maxFutureDays.clamp(0, 14);
@@ -227,16 +247,16 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
     for (int i = 0; i < pastDays + 1 + futureDays; i++) {
        final d = today.subtract(Duration(days: pastDays)).add(Duration(days: i));
        
-       bool showYear = d.year != lastYear;
+       final bool showYear = d.year != lastYear;
        if (showYear) {
          lastYear = d.year;
          lastMonth = -1;
          items.add(YearLabelItem(lastYear.toString()));
        }
-       bool showMonth = d.month != lastMonth;
+       final bool showMonth = d.month != lastMonth;
        if (showMonth) {
          lastMonth = d.month;
-         items.add(MonthLabelItem(DateFormat('MMM', 'pt_BR').format(d).toUpperCase()));
+         items.add(MonthLabelItem(DateFormat('MMM', locale).format(d).toUpperCase()));
        }
        
        items.add(_buildDateItem(d, today, selectedDate, alarms, reminders));
@@ -249,16 +269,16 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
     final sparseStart = today.add(Duration(days: futureDays + 1));
     final sparseDatesSet = <DateTime>{};
     
-    for (var a in alarms.where((a) => a.active && a.startDate != null)) {
+    for (var a in alarms.where((a) => a.active && a.startDate != null && a.startDate!.isNotEmpty && a.durationDays > 0)) {
        final sd = DateTime.parse(a.startDate!);
-       final ed = sd.add(Duration(days: (a.durationDays > 0 ? a.durationDays : 1) - 1));
+       final ed = sd.add(Duration(days: a.durationDays - 1));
        if (!sd.isBefore(sparseStart)) sparseDatesSet.add(sd);
        if (!ed.isBefore(sparseStart)) sparseDatesSet.add(ed);
        int added = 0;
        for (var d = sd.isBefore(sparseStart) ? sparseStart : sd; !d.isAfter(ed); d = d.add(const Duration(days: 1))) {
-         sparseDatesSet.add(d);
-         added++;
-         if (added > 200) break;
+          sparseDatesSet.add(d);
+          added++;
+          if (added > 200) break;
        }
     }
     
@@ -295,16 +315,16 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
            }
          }
          
-         bool showYear = d.year != lastYear;
+         final bool showYear = d.year != lastYear;
          if (showYear) {
            lastYear = d.year;
            lastMonth = -1;
            items.add(YearLabelItem(lastYear.toString()));
          }
-         bool showMonth = d.month != lastMonth;
+         final bool showMonth = d.month != lastMonth;
          if (showMonth) {
            lastMonth = d.month;
-           items.add(MonthLabelItem(DateFormat('MMM', 'pt_BR').format(d).toUpperCase()));
+           items.add(MonthLabelItem(DateFormat('MMM', locale).format(d).toUpperCase()));
          }
          
          items.add(_buildDateItem(d, today, selectedDate, alarms, reminders));
@@ -321,8 +341,9 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
     final selectedDate = state.selectedDate;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final locale = ref.watch(appLocaleProvider);
     
-    _calculateItems(state.alarms, state.reminders, selectedDate);
+    _calculateItems(state.allAlarms, state.allReminders, selectedDate, locale);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -343,7 +364,7 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
                     return Container(
                       width: _sparseItemWidth,
                       alignment: Alignment.center,
-                      child: const Text('···', style: TextStyle(color: AppColors.textMuted, fontSize: 16)),
+                      child: Text('···', style: TextStyle(color: AppColors.textMuted, fontSize: 16)),
                     );
                   }
                   
@@ -353,7 +374,7 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
                       alignment: Alignment.center,
                       child: Text(
                         item.label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
@@ -369,7 +390,7 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
                       alignment: Alignment.center,
                       child: Text(
                         item.label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textMuted,
@@ -397,14 +418,14 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
                             ? Border.all(color: AppColors.primary, width: 2) 
                             : null,
                           boxShadow: item.isSelected 
-                            ? [BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 8, offset: const Offset(0, 2))]
+                            ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 2))]
                             : null,
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              DateFormat('E', 'pt_BR').format(item.date).toUpperCase().replaceAll('.', ''),
+                              DateFormat('E', locale).format(item.date).toUpperCase().replaceAll('.', ''),
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
@@ -460,13 +481,13 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
                       gradient: LinearGradient(
                         colors: [
                           AppColors.background,
-                          AppColors.background.withOpacity(0),
+                          AppColors.background.withValues(alpha: 0),
                         ],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),
                     ),
-                    child: const Icon(Icons.chevron_left, color: AppColors.textMuted, size: 20),
+                    child: Icon(Icons.chevron_left, color: AppColors.textMuted, size: 20),
                   ),
                 ),
               ),
@@ -482,14 +503,14 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.background.withOpacity(0),
+                          AppColors.background.withValues(alpha: 0),
                           AppColors.background,
                         ],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),
                     ),
-                    child: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+                    child: Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
                   ),
                 ),
               ),
@@ -535,7 +556,7 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
       width: 5,
       height: 5,
       decoration: BoxDecoration(
-        color: isSelected ? color.withOpacity(0.8) : color,
+        color: isSelected ? color.withValues(alpha: 0.8) : color,
         shape: BoxShape.circle,
       ),
     );

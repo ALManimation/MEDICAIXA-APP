@@ -34,13 +34,13 @@ int _levenshteinDistance(String s1, String s2) {
   if (s1.isEmpty) return s2.length;
   if (s2.isEmpty) return s1.length;
 
-  List<int> v0 = List<int>.generate(s2.length + 1, (i) => i);
-  List<int> v1 = List<int>.filled(s2.length + 1, 0);
+  final List<int> v0 = List<int>.generate(s2.length + 1, (i) => i);
+  final List<int> v1 = List<int>.filled(s2.length + 1, 0);
 
   for (int i = 0; i < s1.length; i++) {
     v1[0] = i + 1;
     for (int j = 0; j < s2.length; j++) {
-      int cost = (s1[i] == s2[j]) ? 0 : 1;
+      final int cost = (s1[i] == s2[j]) ? 0 : 1;
       v1[j + 1] = [v1[j] + 1, v0[j + 1] + 1, v0[j] + cost].reduce((a, b) => a < b ? a : b);
     }
     for (int j = 0; j < v0.length; j++) {
@@ -104,9 +104,9 @@ class MedicationRepository {
       );
 
       _medications = await compute(_parseMedicationsIsolate, bytes);
-      debugPrint("ANVISA Medications database loaded: ${_medications.length} items.");
+      debugPrint('ANVISA Medications database loaded: ${_medications.length} items.');
     } catch (e) {
-      debugPrint("Error loading medications database: $e");
+      debugPrint('Error loading medications database: $e');
     } finally {
       _isLoading = false;
     }
@@ -145,7 +145,7 @@ class MedicationRepository {
       try {
         await _apiClient.addMedication(med);
       } catch (e) {
-        debugPrint("Error sending medication to ESP32: $e. Saving offline.");
+        debugPrint('Error sending medication to ESP32: $e. Saving offline.');
         isPending = true;
       }
     } else {
@@ -167,7 +167,7 @@ class MedicationRepository {
       try {
         await _apiClient.updateMedication(oldName, med);
       } catch (e) {
-        debugPrint("Error updating medication on ESP32: $e. Marking pending.");
+        debugPrint('Error updating medication on ESP32: $e. Marking pending.');
         isPending = true;
       }
     } else {
@@ -191,7 +191,7 @@ class MedicationRepository {
       try {
         await _apiClient.removeMedication(name);
       } catch (e) {
-        debugPrint("Error removing medication on ESP32: $e");
+        debugPrint('Error removing medication on ESP32: $e');
       }
     }
     await (_db.delete(_db.medications)..where((t) => t.name.equals(name))).go();
@@ -204,7 +204,6 @@ class MedicationRepository {
       final remoteMeds = await _apiClient.fetchMedications();
       final localMeds = await getAllMedications();
 
-      final localMap = {for (final m in localMeds) m.name: m};
       final remoteMap = {for (final m in remoteMeds) m.name: m};
 
       // 1. Upload offline modifications
@@ -216,7 +215,7 @@ class MedicationRepository {
                   local.copyWith(pendingSync: false),
                 );
           } catch (e) {
-            debugPrint("Failed to upload medication ${local.name}: $e");
+            debugPrint('Failed to upload medication ${local.name}: $e');
           }
         }
       }
@@ -242,7 +241,7 @@ class MedicationRepository {
         }
       }
     } catch (e) {
-      debugPrint("Error syncing medications: $e");
+      debugPrint('Error syncing medications: $e');
     }
   }
 
@@ -262,7 +261,7 @@ class MedicationRepository {
         }
       }
     } catch (e) {
-      debugPrint("Error loading medications backup fixture: $e");
+      debugPrint('Error loading medications backup fixture: $e');
     }
   }
 }

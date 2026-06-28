@@ -1,0 +1,2081 @@
+Rule 22 Violations Found:
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/core/constants/app_colors.dart
+Line 5:
+--- Block ---
+const`.
+class AppColors {
+  AppColors._();
+
+  // Core Theme Colors (Dark Mode — from Web UI CSS variables)
+  static const Color background = Color(0xFF111827);     // --bg-color dark
+  static const Color surface = Color(0xFF1F2937);         // --surface-color dark
+  static const Color surfaceVariant = Color(0xFF374151);  // --border-color dark
+  static const Color primary = Color(0xFF34D399);         // --primary-color dark
+  static const Color primaryDark = Color(0xFF10B981);     // --primary-dark dark
+  static const Color onPrimary = Colors.white;
+  static const Color secondary = Color(0xFF00ACC1);
+  static const Color onSecondary = Colors.black;
+  static const Color text = Color(0xFFF9FAFB);           // --text-main dark
+  static const Color textMuted = Color(0xFF9CA3AF);       // --text-muted dark
+  static const Color border = Color(0xFF374151);          // --border-color dark
+
+  // Status Colors
+  static const Color success = Color(0xFF10B981);
+  static const Color pending = Color(0xFFFB8C00);
+  static const Color missed = Color(0xFFEF4444);
+
+  // Health Banner Colors (dark mode — from Web UI CSS)
+  static const Color healthOk = Color(0xFF34D399);
+  static const Color healthOkBg = Color(0xFF064E3B);
+  static const Color healthOkBorder = Color(0xFF065F46);
+  static const Color healthWarn = Color(0xFFFBBF24);
+  static const Color healthWarnBg = Color(0xFF422006);
+  static const Color healthWarnBorder = Color(0xFF78350F);
+  static const Color healthRisk = Color(0xFFFB923C);
+  static const Color healthRiskBg = Color(0xFF431407);
+  static const Color healthRiskBorder = Color(0xFF7C2D12);
+  static const Color healthDanger = Color(0xFFF87171);
+  static const Color healthDangerBg = Color(0xFF450A0A);
+  static const Color healthDangerBorder = Color(0xFF7F1D1D);
+
+  // Period Colors (from Web UI)
+  static const Color morningColor = Color(0xFFD97706);    // amber/sun
+  static const Color afternoonColor = Color(0xFF2563EB);  // blue/cloud
+  static const Color nightColor = Color(0xFF4B5563);      // gray/moon
+
+  // MediCaixa Firmware Color Map — 15 colors matching the Web UI COLOR_HEX map
+  static const Map<String, Color> alarmColors = {
+    'white': Color(0xFFFFFFFF),
+    'red': Color(0xFFFF0000),
+    'green': Color(0xFF00FF00),
+    'blue': Color(0xFF0000FF),
+    'yellow': Color(0xFFFFFF00),
+    'magenta': Color(0xFFFF00FF),
+    'cyan': Color(0xFF00FFFF),
+    'orange': Color(0xFFFFA500),
+    'purple': Color(0xFF800080),
+    'pink': Color(0xFFFFC0CB),
+    'brown': Color(0xFFA52A2A),
+    'chartreuse': Color(0xFF7FFF00),
+    'teal': Color(0xFF008080),
+    'coral': Color(0xFFFF7F50),
+    'gold': Color(0xFFFFD700),
+  };
+
+  /// Returns the alarm color for a given name, falling back to primary green.
+  static Color getAlarmColor(String? colorName) {
+    if (colorName == null || colorName.isEmpty) return primary;
+    return alarmColors[colorName.toLowerCase()] ?? primary;
+  }
+}
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/core/theme/app_theme.dart
+Line 12:
+--- Block ---
+const ColorScheme.dark(
+        primary: AppColors.primary,
+        onPrimary: AppColors.onPrimary,
+        secondary: AppColors.secondary,
+        onSecondary: AppColors.onSecondary,
+        surface: AppColors.surface,
+        error: AppColors.missed,
+      )
+-------------
+Line 21:
+--- Block ---
+const AppBarTheme(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: AppColors.text,
+        ),
+      )
+-------------
+Line 36:
+--- Block ---
+const BorderSide(color: AppColors.border, width: 1)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/core/presentation/app_shell.dart
+Line 83:
+--- Block ---
+const NavigationRailDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard_rounded, color: AppColors.primary),
+                  label: Text('Início'),
+                )
+-------------
+Line 88:
+--- Block ---
+const NavigationRailDestination(
+                  icon: Icon(Icons.medication_outlined),
+                  selectedIcon: Icon(Icons.medication_rounded, color: AppColors.primary),
+                  label: Text('Remédios'),
+                )
+-------------
+Line 93:
+--- Block ---
+const NavigationRailDestination(
+                  icon: Icon(Icons.bar_chart_outlined),
+                  selectedIcon: Icon(Icons.bar_chart_rounded, color: AppColors.primary),
+                  label: Text('Relatórios'),
+                )
+-------------
+Line 98:
+--- Block ---
+const NavigationRailDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings_rounded, color: AppColors.primary),
+                  label: Text('Ajustes'),
+                )
+-------------
+Line 105:
+--- Block ---
+const VerticalDivider(thickness: 1, width: 1, color: AppColors.border)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/settings/presentation/settings_screen.dart
+Line 84:
+--- Block ---
+const ColorScheme.dark(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              surface: AppColors.surface,
+              onSurface: AppColors.text,
+            )
+-------------
+Line 139:
+--- Block ---
+const SnackBar(
+          content: Text('Nome do paciente salvo!'),
+          backgroundColor: AppColors.success,
+        )
+-------------
+Line 164:
+--- Block ---
+const SnackBar(
+            content: Text('Backup de teste carregado com 25 alarmes, 6 lembretes e medicamentos! 🎉'),
+            backgroundColor: AppColors.success,
+          )
+-------------
+Line 205:
+--- Block ---
+const SnackBar(content: Text('Backup salvo com sucesso!'), backgroundColor: AppColors.success)
+-------------
+Line 338:
+--- Block ---
+const Text(
+                  'Aguarde enquanto a caixinha reinicia...',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                )
+-------------
+Line 465:
+--- Block ---
+const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: AppColors.primary,
+          letterSpacing: 1.1,
+        )
+-------------
+Line 536:
+--- Block ---
+const Text('Dormir', style: TextStyle(fontSize: 14, color: AppColors.textMuted))
+-------------
+Line 541:
+--- Block ---
+const Icon(Icons.access_time_rounded, color: AppColors.primary)
+-------------
+Line 549:
+--- Block ---
+const Text('Acordar', style: TextStyle(fontSize: 14, color: AppColors.textMuted))
+-------------
+Line 554:
+--- Block ---
+const Icon(Icons.access_time_rounded, color: AppColors.primary)
+-------------
+Line 568:
+--- Block ---
+const Text(
+              'Balizam os atalhos "Antes do café", "Depois do almoço", etc. no alarme.',
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+            )
+-------------
+Line 578:
+--- Block ---
+const Text('Café da Manhã', style: TextStyle(fontSize: 12, color: AppColors.textMuted))
+-------------
+Line 583:
+--- Block ---
+const Icon(Icons.coffee_rounded, size: 18, color: AppColors.primary)
+-------------
+Line 591:
+--- Block ---
+const Text('Almoço', style: TextStyle(fontSize: 12, color: AppColors.textMuted))
+-------------
+Line 596:
+--- Block ---
+const Icon(Icons.restaurant_rounded, size: 18, color: AppColors.primary)
+-------------
+Line 604:
+--- Block ---
+const Text('Jantar', style: TextStyle(fontSize: 12, color: AppColors.textMuted))
+-------------
+Line 609:
+--- Block ---
+const Icon(Icons.dinner_dining_rounded, size: 18, color: AppColors.primary)
+-------------
+Line 714:
+--- Block ---
+const BorderSide(color: AppColors.missed, width: 1.5)
+-------------
+Line 722:
+--- Block ---
+const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, size: 28, color: AppColors.missed),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Configurações da Caixinha Bloqueadas',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ],
+            )
+-------------
+Line 749:
+--- Block ---
+const Icon(Icons.link_rounded, color: AppColors.primary)
+-------------
+Line 750:
+--- Block ---
+const Text(
+                  'Conectar Agora',
+                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                )
+-------------
+Line 768:
+--- Block ---
+const Icon(Icons.wifi_rounded, color: AppColors.primary)
+-------------
+Line 800:
+--- Block ---
+const Icon(Icons.wifi_lock_rounded, color: AppColors.primary)
+-------------
+Line 803:
+--- Block ---
+const Icon(Icons.delete_outline_rounded, color: AppColors.missed)
+-------------
+Line 819:
+--- Block ---
+const Text('Remover', style: TextStyle(color: AppColors.missed))
+-------------
+Line 830:
+--- Block ---
+const SnackBar(content: Text('Rede removida com sucesso!'), backgroundColor: AppColors.success)
+-------------
+Line 898:
+--- Block ---
+const SnackBar(content: Text('Rede Wi-Fi salva com sucesso!'), backgroundColor: AppColors.success)
+-------------
+Line 917:
+--- Block ---
+const Icon(Icons.refresh_rounded, color: AppColors.primary)
+-------------
+Line 940:
+--- Block ---
+const IconData signalIcon = Icons.wifi_rounded;
+
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(signalIcon, color: AppColors.textMuted),
+                  title: Text(net.ssid, style: const TextStyle(fontSize: 14)),
+                  subtitle: Text('Sinal: ${net.rssi ?? -100} dBm | canal ${net.channel ?? 1}', style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                  trailing: isSecure ? const Icon(Icons.lock_rounded, size: 16, color: AppColors.textMuted) : null,
+                  onTap: () {
+                    _wifiSsidController.text = net.ssid;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Rede "${net.ssid}" selecionada. Insira a senha no formulário acima.'),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                )
+-------------
+Line 944:
+--- Block ---
+const Icon(signalIcon, color: AppColors.textMuted)
+-------------
+Line 946:
+--- Block ---
+const TextStyle(color: AppColors.textMuted, fontSize: 12)
+-------------
+Line 947:
+--- Block ---
+const Icon(Icons.lock_rounded, size: 16, color: AppColors.textMuted)
+-------------
+Line 976:
+--- Block ---
+const Icon(Icons.tune_rounded, color: AppColors.primary)
+-------------
+Line 989:
+--- Block ---
+const Icon(Icons.volume_up_rounded, color: AppColors.primary)
+-------------
+Line 1018:
+--- Block ---
+const Icon(Icons.wb_sunny_rounded, color: AppColors.primary)
+-------------
+Line 1152:
+--- Block ---
+const Text('Indisponível no modo offline', style: TextStyle(color: AppColors.textMuted))
+-------------
+Line 1170:
+--- Block ---
+const SnackBar(content: Text('Relógio sincronizado com o celular!'), backgroundColor: AppColors.success)
+-------------
+Line 1191:
+--- Block ---
+const ColorScheme.dark(
+                                primary: AppColors.primary,
+                                onPrimary: Colors.white,
+                                surface: AppColors.surface,
+                                onSurface: AppColors.text,
+                              )
+-------------
+Line 1209:
+--- Block ---
+const ColorScheme.dark(
+                                  primary: AppColors.primary,
+                                  onPrimary: Colors.white,
+                                  surface: AppColors.surface,
+                                  onSurface: AppColors.text,
+                                )
+-------------
+Line 1225:
+--- Block ---
+const SnackBar(content: Text('Horário manual enviado com sucesso!'), backgroundColor: AppColors.success)
+-------------
+Line 1268:
+--- Block ---
+const Icon(Icons.mic_rounded, color: AppColors.primary)
+-------------
+Line 1282:
+--- Block ---
+const Text('Modo Standalone (Sem Assistente de Voz)', style: TextStyle(color: AppColors.textMuted))
+-------------
+Line 1301:
+--- Block ---
+const TextStyle(color: AppColors.textMuted)
+-------------
+Line 1319:
+--- Block ---
+const Text('Código de Ativação do Assistente', style: TextStyle(fontSize: 12, color: AppColors.textMuted))
+-------------
+Line 1326:
+--- Block ---
+const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: AppColors.primary)
+-------------
+Line 1332:
+--- Block ---
+const SnackBar(content: Text('Código copiado para a área de transferência!'), backgroundColor: AppColors.success)
+-------------
+Line 1335:
+--- Block ---
+const Icon(Icons.copy_rounded, color: AppColors.primary)
+-------------
+Line 1386:
+--- Block ---
+const Text(
+          'Necessária para a conversa por voz da caixinha com IA funcionar.',
+          style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+        )
+-------------
+Line 1427:
+--- Block ---
+const SnackBar(
+                    content: Text('Chave API salva com sucesso!'),
+                    backgroundColor: AppColors.success,
+                  )
+-------------
+Line 1443:
+--- Block ---
+const Icon(Icons.construction_rounded, color: AppColors.primary)
+-------------
+Line 1456:
+--- Block ---
+const Icon(Icons.refresh_rounded, color: AppColors.primary)
+-------------
+Line 1459:
+--- Block ---
+const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted)
+-------------
+Line 1493:
+--- Block ---
+const Icon(Icons.download_rounded, color: AppColors.primary)
+-------------
+Line 1496:
+--- Block ---
+const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted)
+-------------
+Line 1502:
+--- Block ---
+const Icon(Icons.upload_rounded, color: AppColors.primary)
+-------------
+Line 1505:
+--- Block ---
+const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted)
+-------------
+Line 1511:
+--- Block ---
+const Icon(Icons.delete_forever_rounded, color: AppColors.missed)
+-------------
+Line 1512:
+--- Block ---
+const Text('Reset de Dados', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.missed, fontSize: 14))
+-------------
+Line 1514:
+--- Block ---
+const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted)
+-------------
+Line 1559:
+--- Block ---
+const SnackBar(content: Text('Dados apagados com sucesso!'), backgroundColor: AppColors.success)
+-------------
+Line 1568:
+--- Block ---
+const Icon(Icons.restart_alt_rounded, color: AppColors.primary)
+-------------
+Line 1571:
+--- Block ---
+const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted)
+-------------
+Line 1605:
+--- Block ---
+const BorderSide(color: AppColors.border)
+-------------
+Line 1612:
+--- Block ---
+const Row(
+              children: [
+                Icon(Icons.bug_report_rounded, color: AppColors.missed),
+                SizedBox(width: 8),
+                Text(
+                  'Testes Offline (Fixture)',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ],
+            )
+-------------
+Line 1636:
+--- Block ---
+const BorderSide(color: AppColors.missed)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/pairing/presentation/pairing_screen.dart
+Line 163:
+--- Block ---
+const TextStyle(color: AppColors.secondary)
+-------------
+Line 175:
+--- Block ---
+const Icon(Icons.error_outline_rounded, color: AppColors.missed)
+-------------
+Line 180:
+--- Block ---
+const TextStyle(color: AppColors.missed)
+-------------
+Line 224:
+--- Block ---
+const BorderSide(color: AppColors.border)
+-------------
+Line 232:
+--- Block ---
+const Row(
+                      children: [
+                        Expanded(child: Divider(color: AppColors.border)),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text(
+                            'OU INSERIR IP MANUAL',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textMuted,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: AppColors.border)),
+                      ],
+                    )
+-------------
+Line 264:
+--- Block ---
+const BorderSide(color: AppColors.border)
+-------------
+Line 268:
+--- Block ---
+const BorderSide(color: AppColors.primary)
+-------------
+Line 271:
+--- Block ---
+const Icon(Icons.arrow_forward_rounded, color: AppColors.primary)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/medications/presentation/medication_form_screen.dart
+Line 95:
+--- Block ---
+const Text('CANCELAR', style: TextStyle(color: AppColors.textMuted))
+-------------
+Line 99:
+--- Block ---
+const Text('EXCLUIR', style: TextStyle(color: AppColors.missed))
+-------------
+Line 157:
+--- Block ---
+const TextStyle(color: AppColors.textMuted)
+-------------
+Line 181:
+--- Block ---
+const TextStyle(color: AppColors.textMuted)
+-------------
+Line 251:
+--- Block ---
+const BorderSide(color: AppColors.missed)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/snooze_modal.dart
+Line 137:
+--- Block ---
+const Text(
+            'Gerenciar Alarme',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+          )
+-------------
+Line 162:
+--- Block ---
+const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text,
+                )
+-------------
+Line 270:
+--- Block ---
+const Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Medicamento com Dose Dinâmica (Glicose / Insulina)',
+                        style: TextStyle(color: AppColors.text, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                )
+-------------
+Line 287:
+--- Block ---
+const Text(
+                    'Dose a tomar: ',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.text),
+                  )
+-------------
+Line 299:
+--- Block ---
+const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.bold)
+-------------
+Line 304:
+--- Block ---
+const BorderSide(color: AppColors.border)
+-------------
+Line 308:
+--- Block ---
+const BorderSide(color: AppColors.primary)
+-------------
+Line 316:
+--- Block ---
+const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted)
+-------------
+Line 322:
+--- Block ---
+const Divider(color: AppColors.border)
+-------------
+Line 328:
+--- Block ---
+const Text(
+            'Adiar por:',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textMuted,
+            ),
+          )
+-------------
+Line 353:
+--- Block ---
+const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.text,
+                  )
+-------------
+Line 368:
+--- Block ---
+const Text(
+            'minutos',
+            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+          )
+-------------
+Line 419:
+--- Block ---
+const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: AppColors.border),
+          )
+-------------
+Line 435:
+--- Block ---
+const BorderSide(color: AppColors.border)
+-------------
+Line 454:
+--- Block ---
+const Text('Excluir Alarme',
+                            style: TextStyle(color: AppColors.text))
+-------------
+Line 457:
+--- Block ---
+const TextStyle(color: AppColors.textMuted)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/alarm_wizard_screen.dart
+Line 77:
+--- Block ---
+const Icon(Icons.close, color: AppColors.text)
+-------------
+Line 87:
+--- Block ---
+const TextStyle(
+                color: AppColors.text,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              )
+-------------
+Line 100:
+--- Block ---
+const AlwaysStoppedAnimation<Color>(AppColors.primary)
+-------------
+Line 130:
+--- Block ---
+const BoxDecoration(
+                color: AppColors.surface,
+                border: Border(top: BorderSide(color: AppColors.surfaceVariant)),
+              )
+-------------
+Line 141:
+--- Block ---
+const Text('VOLTAR', style: TextStyle(color: AppColors.textMuted))
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/wizard_step_dosage.dart
+Line 160:
+--- Block ---
+const Icon(Icons.remove_circle_outline_rounded, size: 28, color: AppColors.primary)
+-------------
+Line 171:
+--- Block ---
+const TextStyle(fontSize: 12, color: AppColors.textMuted)
+-------------
+Line 178:
+--- Block ---
+const Icon(Icons.add_circle_outline_rounded, size: 28, color: AppColors.primary)
+-------------
+Line 205:
+--- Block ---
+const BorderSide(color: AppColors.border)
+-------------
+Line 209:
+--- Block ---
+const BorderSide(color: AppColors.primary)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/wizard_step_options.dart
+Line 169:
+--- Block ---
+const BorderSide(color: AppColors.border)
+-------------
+Line 230:
+--- Block ---
+const Text('Duração em dias: ', style: TextStyle(color: AppColors.textMuted))
+-------------
+Line 275:
+--- Block ---
+const Text('Intervalo mín. (horas)', style: TextStyle(fontSize: 12, color: AppColors.textMuted))
+-------------
+Line 301:
+--- Block ---
+const Text('Máx. doses diárias', style: TextStyle(fontSize: 12, color: AppColors.textMuted))
+-------------
+Line 368:
+--- Block ---
+const TextStyle(fontSize: 12, color: AppColors.textMuted)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_4_days.dart
+Line 21:
+--- Block ---
+const Text(
+            'Em quais dias você precisa usar esse remédio?',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 92:
+--- Block ---
+const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.text,
+                            )
+-------------
+Line 104:
+--- Block ---
+const TextStyle(
+                                fontSize: 9.5,
+                                color: AppColors.textMuted,
+                              )
+-------------
+Line 147:
+--- Block ---
+const Text(
+            'A caixinha deve apitar a cada:',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 163:
+--- Block ---
+const Text(
+            'Horas',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 193:
+--- Block ---
+const Text(
+            'Selecione os dias da semana:',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+          )
+-------------
+Line 268:
+--- Block ---
+const Text(
+            'A caixinha deve apitar a cada:',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 284:
+--- Block ---
+const Text(
+            'Dias',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 294:
+--- Block ---
+const Text(
+            'Exemplo: 2 = Dia sim, dia não. 3 = A cada 3 dias.',
+            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 317:
+--- Block ---
+const Text(
+            'Tomo o remédio seguidamente por:',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 333:
+--- Block ---
+const Text(
+            'Dias (Uso)',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 344:
+--- Block ---
+const Divider(color: AppColors.border)
+-------------
+Line 348:
+--- Block ---
+const Text(
+            'Depois descanso (sem tomar) por:',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 364:
+--- Block ---
+const Text(
+            'Dias (Descanso)',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 390:
+--- Block ---
+const Text(
+            'Em qual dia do mês você vai tomar?',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 396:
+--- Block ---
+const Text(
+            'Todo o dia',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 416:
+--- Block ---
+const Text(
+            'do mês',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 454:
+--- Block ---
+const Text(
+              '-',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+-------------
+Line 470:
+--- Block ---
+const TextStyle(
+              color: AppColors.text,
+              fontSize: 38,
+              fontWeight: FontWeight.w800,
+            )
+-------------
+Line 476:
+--- Block ---
+const pois depende de AppColors nas cores ao redor se aplicadas,
+          // porém como Text aqui não usa AppColors, mantemos padrão seguro.
+        ),
+        const SizedBox(width: 16)
+-------------
+Line 493:
+--- Block ---
+const Text(
+              '+',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_6_duration.dart
+Line 58:
+--- Block ---
+const Text(
+            'Até quando você vai usar esse remédio?',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 105:
+--- Block ---
+const Divider(color: AppColors.border, thickness: 1.5, height: 32)
+-------------
+Line 106:
+--- Block ---
+const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Configurações para Adesivo / Canetinha',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.text,
+                ),
+              ),
+            )
+-------------
+Line 172:
+--- Block ---
+const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: AppColors.text,
+              )
+-------------
+Line 184:
+--- Block ---
+const TextStyle(
+                fontSize: 9.5,
+                color: AppColors.textMuted,
+              )
+-------------
+Line 208:
+--- Block ---
+const Text(
+            'Por quantos dias o médico mandou tomar?',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 243:
+--- Block ---
+const TextStyle(
+                    fontSize: 38,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.text,
+                  )
+-------------
+Line 271:
+--- Block ---
+const Text(
+            'Dias Totais',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          )
+-------------
+Line 295:
+--- Block ---
+const Text(
+            'Quais locais do corpo você deseja revezar?',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+          )
+-------------
+Line 309:
+--- Block ---
+const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            )
+-------------
+Line 317:
+--- Block ---
+const TextStyle(color: AppColors.textMuted, fontSize: 14)
+-------------
+Line 323:
+--- Block ---
+const BorderSide(color: AppColors.border, width: 1.5)
+-------------
+Line 327:
+--- Block ---
+const BorderSide(color: AppColors.border, width: 1.5)
+-------------
+Line 331:
+--- Block ---
+const BorderSide(color: AppColors.primary, width: 1.5)
+-------------
+Line 336:
+--- Block ---
+const Text(
+            'Escreva os locais separados por vírgula para revezamento automático',
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textMuted,
+            ),
+          )
+-------------
+Line 366:
+--- Block ---
+const Text(
+                'Lembra de tirar o adesivo velho?',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.text,
+                ),
+              )
+-------------
+Line 388:
+--- Block ---
+const Text(
+              'Avisar para retirar após:',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textMuted,
+              ),
+            )
+-------------
+Line 425:
+--- Block ---
+const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.text,
+                          )
+-------------
+Line 464:
+--- Block ---
+const Icon(Icons.arrow_drop_down, color: AppColors.textMuted)
+-------------
+Line 465:
+--- Block ---
+const TextStyle(
+                          color: AppColors.text,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_2_mode.dart
+Line 20:
+--- Block ---
+const Text(
+            'Como o médico mandou você usar esse remédio?',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 83:
+--- Block ---
+const Text(
+              'Limites de segurança para o idoso:',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.text,
+              ),
+              textAlign: TextAlign.center,
+            )
+-------------
+Line 105:
+--- Block ---
+const Text(
+                    'Qual o máximo de vezes que pode tomar no mesmo dia?',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                  )
+-------------
+Line 124:
+--- Block ---
+const Text(
+                    '0 = Sem limite diário definido',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                  )
+-------------
+Line 133:
+--- Block ---
+const Divider(color: AppColors.border)
+-------------
+Line 137:
+--- Block ---
+const Text(
+                    'Tem que esperar quantas horas antes de repetir a dose?',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                  )
+-------------
+Line 156:
+--- Block ---
+const Text(
+                    '0 = Pode tomar sem tempo mínimo de espera',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
+                  )
+-------------
+Line 213:
+--- Block ---
+const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.text,
+              )
+-------------
+Line 225:
+--- Block ---
+const TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textMuted,
+                )
+-------------
+Line 262:
+--- Block ---
+const Text(
+              '-',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+-------------
+Line 278:
+--- Block ---
+const TextStyle(
+              color: AppColors.text,
+              fontSize: 38,
+              fontWeight: FontWeight.w800,
+            )
+-------------
+Line 299:
+--- Block ---
+const Text(
+              '+',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_1_name.dart
+Line 121:
+--- Block ---
+const Text(
+            'Qual é o nome do remédio?',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 447:
+--- Block ---
+const Text(
+                'Digitar outra dose...',
+                style: TextStyle(
+                  color: AppColors.text,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_3_qty.dart
+Line 76:
+--- Block ---
+const Text(
+            'Qual a quantidade que você toma por vez?',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 145:
+--- Block ---
+const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.text,
+                            )
+-------------
+Line 157:
+--- Block ---
+const TextStyle(
+                                fontSize: 9.5,
+                                color: AppColors.textMuted,
+                              )
+-------------
+Line 202:
+--- Block ---
+const Text(
+            'Escolha a quantidade de cada tomada:',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+            textAlign: TextAlign.center,
+          )
+-------------
+Line 248:
+--- Block ---
+const Text(
+            'Defina a dose para cada dia:',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+          )
+-------------
+Line 272:
+--- Block ---
+const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.text,
+                        )
+-------------
+Line 303:
+--- Block ---
+const TextStyle(fontSize: 10, color: AppColors.textMuted)
+-------------
+Line 335:
+--- Block ---
+const Text(
+            'Qual aparelho de teste você vai usar?',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+          )
+-------------
+Line 416:
+--- Block ---
+const TextStyle(color: AppColors.text, fontSize: 13)
+-------------
+Line 419:
+--- Block ---
+const TextStyle(color: AppColors.textMuted, fontSize: 13)
+-------------
+Line 425:
+--- Block ---
+const BorderSide(color: AppColors.border, width: 1.5)
+-------------
+Line 429:
+--- Block ---
+const BorderSide(color: AppColors.border, width: 1.5)
+-------------
+Line 433:
+--- Block ---
+const BorderSide(color: AppColors.primary, width: 1.5)
+-------------
+Line 443:
+--- Block ---
+const Text(
+            'Defina a regra da dose:',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+          )
+-------------
+Line 538:
+--- Block ---
+const Text(
+                            'Se estiver',
+                            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          )
+-------------
+Line 568:
+--- Block ---
+const Text(
+                            'do que',
+                            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          )
+-------------
+Line 575:
+--- Block ---
+const Text(
+                            'Tomar',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.text,
+                            ),
+                          )
+-------------
+Line 608:
+--- Block ---
+const TextStyle(fontSize: 10, color: AppColors.textMuted)
+-------------
+Line 688:
+--- Block ---
+const Text(
+            'Etapas de dose do desmame:',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+          )
+-------------
+Line 704:
+--- Block ---
+const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Depois',
+                          style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 4),
+                        Icon(Icons.arrow_forward_rounded, size: 16, color: AppColors.primary),
+                      ],
+                    )
+-------------
+Line 734:
+--- Block ---
+const Text(
+                            'Tomar',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.text,
+                            ),
+                          )
+-------------
+Line 767:
+--- Block ---
+const TextStyle(fontSize: 10, color: AppColors.textMuted)
+-------------
+Line 770:
+--- Block ---
+const Text(
+                            'Por',
+                            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          )
+-------------
+Line 787:
+--- Block ---
+const Text(
+                            'dia(s)',
+                            style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                          )
+-------------
+Line 845:
+--- Block ---
+const Expanded(
+                child: Text(
+                  'Repetir esse ciclo de doses infinitamente?',
+                  style: TextStyle(color: AppColors.text, fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              )
+-------------
+Line 884:
+--- Block ---
+const Text(
+              '-',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+-------------
+Line 900:
+--- Block ---
+const TextStyle(
+              color: AppColors.text,
+              fontSize: 38,
+              fontWeight: FontWeight.w800,
+            )
+-------------
+Line 921:
+--- Block ---
+const Text(
+              '+',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+-------------
+Line 961:
+--- Block ---
+const Text(
+              '-',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+-------------
+Line 977:
+--- Block ---
+const TextStyle(
+              color: AppColors.text,
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+            )
+-------------
+Line 998:
+--- Block ---
+const Text(
+              '+',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_7_summary.dart
+Line 279:
+--- Block ---
+const Divider(color: AppColors.border, thickness: 1.5, height: 32)
+-------------
+Line 293:
+--- Block ---
+const Text(
+                      'RESUMO DO REMÉDIO',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.8,
+                        color: AppColors.textMuted,
+                      ),
+                    )
+-------------
+Line 305:
+--- Block ---
+const TextStyle(
+                        fontSize: 14.5,
+                        color: AppColors.text,
+                        height: 1.5,
+                      )
+-------------
+Line 398:
+--- Block ---
+const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.text,
+                          )
+-------------
+Line 408:
+--- Block ---
+const TextStyle(
+                            fontSize: 9.5,
+                            color: AppColors.textMuted,
+                          )
+-------------
+Line 427:
+--- Block ---
+const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.text,
+                    )
+-------------
+Line 439:
+--- Block ---
+const TextStyle(
+                      fontSize: 9.5,
+                      color: AppColors.textMuted,
+                    )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/wizard_step_schedule.dart
+Line 134:
+--- Block ---
+const Row(
+                      children: [
+                        Icon(Icons.access_time_rounded, color: AppColors.primary, size: 28),
+                        SizedBox(width: 12),
+                        Text(
+                          'Horário do Alarme',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    )
+-------------
+Line 146:
+--- Block ---
+const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      )
+-------------
+Line 159:
+--- Block ---
+const Text(
+              'Atalhos de Horário',
+              style: TextStyle(fontSize: 13, color: AppColors.textMuted, fontWeight: FontWeight.bold),
+            )
+-------------
+Line 294:
+--- Block ---
+const BorderSide(color: AppColors.border)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_5_time.dart
+Line 78:
+--- Block ---
+const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.text,
+                )
+-------------
+Line 147:
+--- Block ---
+const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('🕒', style: TextStyle(fontSize: 26)),
+                              SizedBox(width: 12),
+                              Text(
+                                'Escolher outro horário específico',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.text,
+                                ),
+                              ),
+                            ],
+                          )
+-------------
+Line 232:
+--- Block ---
+const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.text,
+                                      )
+-------------
+Line 259:
+--- Block ---
+const Icon(
+                                        Icons.close_rounded,
+                                        color: AppColors.missed,
+                                        size: 24,
+                                      )
+-------------
+Line 298:
+--- Block ---
+const BorderSide(color: AppColors.border, width: 1.5)
+-------------
+Line 304:
+--- Block ---
+const Icon(Icons.add, size: 18, color: AppColors.primary)
+-------------
+Line 368:
+--- Block ---
+const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.text,
+                    )
+-------------
+Line 380:
+--- Block ---
+const TextStyle(
+                      fontSize: 9.5,
+                      color: AppColors.textMuted,
+                    )
+-------------
+Line 399:
+--- Block ---
+const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.text,
+                          )
+-------------
+Line 410:
+--- Block ---
+const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textMuted,
+                          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/widgets/dynamic_dose_dialog.dart
+Line 179:
+--- Block ---
+const Text(
+        'Dose Dinâmica (Escala Móvel)',
+        style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold, fontSize: 18),
+      )
+-------------
+Line 190:
+--- Block ---
+const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 15)
+-------------
+Line 196:
+--- Block ---
+const Text(
+                'Tabela de Dosagem:',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 13, fontWeight: FontWeight.bold),
+              )
+-------------
+Line 233:
+--- Block ---
+const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w600)
+-------------
+Line 239:
+--- Block ---
+const TextStyle(color: AppColors.text)
+-------------
+Line 247:
+--- Block ---
+const BorderSide(color: AppColors.border)
+-------------
+Line 251:
+--- Block ---
+const BorderSide(color: AppColors.primary)
+-------------
+Line 258:
+--- Block ---
+const Text(
+              'Dose a registrar:',
+              style: TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w600),
+            )
+-------------
+Line 269:
+--- Block ---
+const TextStyle(color: AppColors.text)
+-------------
+Line 276:
+--- Block ---
+const BorderSide(color: AppColors.border)
+-------------
+Line 280:
+--- Block ---
+const BorderSide(color: AppColors.primary)
+-------------
+Line 288:
+--- Block ---
+const TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)
+-------------
+Line 298:
+--- Block ---
+const Text('Cancelar', style: TextStyle(color: AppColors.textMuted))
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/dashboard_screen.dart
+Line 138:
+--- Block ---
+const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.text,
+                                  )
+-------------
+Line 147:
+--- Block ---
+const TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textMuted,
+                                  )
+-------------
+Line 289:
+--- Block ---
+const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                )
+-------------
+Line 393:
+--- Block ---
+const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.text,
+              )
+-------------
+Line 412:
+--- Block ---
+const Center(
+              child: Text(
+                'Nenhum alarme neste período',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+              ),
+            )
+-------------
+Line 469:
+--- Block ---
+const Row(
+              children: [
+                Icon(Icons.push_pin_rounded, color: AppColors.secondary, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Lembretes',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
+              ],
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/weekly_rhythm_widget.dart
+Line 50:
+--- Block ---
+const Row(
+            children: [
+              Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Ritmo Semanal',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text,
+                ),
+              ),
+            ],
+          )
+-------------
+Line 94:
+--- Block ---
+const Text(
+                      'Adesão',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
+                      ),
+                    )
+-------------
+Line 147:
+--- Block ---
+const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
+                    )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/alarm_card_widget.dart
+Line 178:
+--- Block ---
+const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              )
+-------------
+Line 229:
+--- Block ---
+const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.textMuted,
+                              )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/health_banner_widget.dart
+Line 61:
+--- Block ---
+const _HealthResult(
+        level: HealthLevel.ok,
+        label: 'Sua saúde em dia',
+        icon: Icons.spa_rounded,
+        textColor: AppColors.healthOk,
+        bgColor: AppColors.healthOkBg,
+        borderColor: AppColors.healthOkBorder,
+      )
+-------------
+Line 95:
+--- Block ---
+const _HealthResult(
+        level: HealthLevel.ok,
+        label: 'Sua saúde em dia',
+        icon: Icons.spa_rounded,
+        textColor: AppColors.healthOk,
+        bgColor: AppColors.healthOkBg,
+        borderColor: AppColors.healthOkBorder,
+      )
+-------------
+Line 108:
+--- Block ---
+const _HealthResult(
+        level: HealthLevel.ok,
+        label: 'Sua saúde está em dia',
+        icon: Icons.spa_rounded,
+        textColor: AppColors.healthOk,
+        bgColor: AppColors.healthOkBg,
+        borderColor: AppColors.healthOkBorder,
+      )
+-------------
+Line 117:
+--- Block ---
+const _HealthResult(
+        level: HealthLevel.warn,
+        label: 'Sua saúde está em atenção',
+        icon: Icons.warning_rounded,
+        textColor: AppColors.healthWarn,
+        bgColor: AppColors.healthWarnBg,
+        borderColor: AppColors.healthWarnBorder,
+      )
+-------------
+Line 126:
+--- Block ---
+const _HealthResult(
+        level: HealthLevel.risk,
+        label: 'Sua saúde está em risco',
+        icon: Icons.error_rounded,
+        textColor: AppColors.healthRisk,
+        bgColor: AppColors.healthRiskBg,
+        borderColor: AppColors.healthRiskBorder,
+      )
+-------------
+Line 135:
+--- Block ---
+const _HealthResult(
+        level: HealthLevel.danger,
+        label: 'Sua saúde está em alto risco',
+        icon: Icons.heart_broken_rounded,
+        textColor: AppColors.healthDanger,
+        bgColor: AppColors.healthDangerBg,
+        borderColor: AppColors.healthDangerBorder,
+      )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/calendar_strip_widget.dart
+Line 359:
+--- Block ---
+const Text('···', style: TextStyle(color: AppColors.textMuted, fontSize: 16))
+-------------
+Line 369:
+--- Block ---
+const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                          letterSpacing: 0.5,
+                        )
+-------------
+Line 385:
+--- Block ---
+const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textMuted,
+                        )
+-------------
+Line 482:
+--- Block ---
+const Icon(Icons.chevron_left, color: AppColors.textMuted, size: 20)
+-------------
+Line 505:
+--- Block ---
+const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/reports/presentation/reports_screen.dart
+Line 121:
+--- Block ---
+const BorderSide(color: AppColors.border, width: 1)
+-------------
+Line 121:
+--- Block ---
+const due to AppColors reference
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/reports/presentation/widgets/medication_performance.dart
+Line 16:
+--- Block ---
+const Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24.0),
+          child: Text(
+            'Nenhum dado por medicamento.',
+            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
+        ),
+      )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/reports/presentation/widgets/monthly_heatmap.dart
+Line 64:
+--- Block ---
+const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textMuted,
+                  )
+-------------
+Line 90:
+--- Block ---
+const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                      )
+-------------
+Line 145:
+--- Block ---
+const Text(
+                  '0%',
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                )
+-------------
+Line 160:
+--- Block ---
+const Text(
+                  '100%',
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                )
+-------------
+Line 177:
+--- Block ---
+const Text(
+                  'Sem dados',
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/reports/presentation/widgets/streak_dots.dart
+Line 83:
+--- Block ---
+const TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      )
+-------------
+Line 92:
+--- Block ---
+const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textMuted,
+                      )
+-------------
+Line 99:
+--- Block ---
+const Text(
+                  'Sequência Atual',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textMuted,
+                  ),
+                )
+-------------
+Line 134:
+--- Block ---
+const Divider(height: 24, color: AppColors.border)
+-------------
+Line 138:
+--- Block ---
+const Text(
+              'Melhor Sequência:',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textMuted,
+              ),
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/reports/presentation/widgets/period_distribution.dart
+Line 130:
+--- Block ---
+const TextStyle(
+            fontSize: 12,
+            color: AppColors.textMuted,
+          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/reports/presentation/widgets/medication_filter_bar.dart
+Line 20:
+--- Block ---
+const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          top: BorderSide(color: AppColors.border, width: 1),
+        ),
+      )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/reports/presentation/widgets/donut_chart.dart
+Line 134:
+--- Block ---
+const Text(
+                      'Adesão',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textMuted,
+                      ),
+                    )
+-------------
+
+Total violations found: 276

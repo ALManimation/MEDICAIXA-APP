@@ -55,7 +55,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 1. Título Duração
-          const Text(
+          Text(
             'Até quando você vai usar esse remédio?',
             style: TextStyle(
               fontSize: 20,
@@ -103,7 +103,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
           if (showPatchSection) ...[
             const SizedBox(height: 16),
             Divider(color: AppColors.border, thickness: 1.5, height: 32),
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 'Configurações para Adesivo / Canetinha',
@@ -155,7 +155,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.12),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                     blurRadius: 6,
                     spreadRadius: 1,
                   )
@@ -169,7 +169,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.bold,
                 color: AppColors.text,
@@ -181,7 +181,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
             const SizedBox(height: 2),
             Text(
               sub,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 9.5,
                 color: AppColors.textMuted,
               ),
@@ -205,7 +205,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Por quantos dias o médico mandou tomar?',
             style: TextStyle(
               fontSize: 14,
@@ -240,7 +240,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
                 width: 80,
                 child: Text(
                   '$currentDays',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 38,
                     fontWeight: FontWeight.w800,
                     color: AppColors.text,
@@ -268,7 +268,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Dias Totais',
             style: TextStyle(
               fontSize: 14,
@@ -292,7 +292,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Quais locais do corpo você deseja revezar?',
             style: TextStyle(
               fontSize: 14,
@@ -306,7 +306,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
             onChanged: (val) {
               notifier.updateState((s) => s.copyWith(siteRotationList: val));
             },
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppColors.text,
@@ -314,7 +314,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
             textAlign: TextAlign.center,
             decoration: InputDecoration(
               hintText: 'Braço Esquerdo, Braço Direito, Coxa',
-              hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+              hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
               contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               filled: true,
               fillColor: AppColors.background,
@@ -333,7 +333,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Escreva os locais separados por vírgula para revezamento automático',
             style: TextStyle(
               fontSize: 11,
@@ -363,7 +363,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Lembra de tirar o adesivo velho?',
                 style: TextStyle(
                   fontSize: 14,
@@ -373,7 +373,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
               ),
               Switch(
                 value: requiresRemoval,
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 onChanged: (val) {
                   notifier.updateState((s) => s.copyWith(
                         requiresRemoval: val,
@@ -385,7 +385,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
           ),
           if (requiresRemoval) ...[
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Avisar para retirar após:',
               style: TextStyle(
                 fontSize: 13,
@@ -422,7 +422,7 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
                         width: 40,
                         child: Text(
                           '$delayVal',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: AppColors.text,
@@ -461,8 +461,8 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
                       child: DropdownButton<String>(
                         value: delayUnit,
                         dropdownColor: AppColors.surface,
-                        icon: const Icon(Icons.arrow_drop_down, color: AppColors.textMuted),
-                        style: const TextStyle(
+                        icon: Icon(Icons.arrow_drop_down, color: AppColors.textMuted),
+                        style: TextStyle(
                           color: AppColors.text,
                           fontSize: 15,
                           fontWeight: FontWeight.bold,

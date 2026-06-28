@@ -22,7 +22,6 @@ class _WizardStepScheduleState extends ConsumerState<WizardStepSchedule> {
   List<bool> _selectedDays = List.filled(7, true);
 
   final List<String> _weekdayLabels = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
-  final List<String> _weekdayNames = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
 
   @override
   void initState() {
@@ -39,7 +38,7 @@ class _WizardStepScheduleState extends ConsumerState<WizardStepSchedule> {
       builder: (context, child) {
         return Theme(
           data: ThemeData.dark().copyWith(
-            colorScheme: const ColorScheme.dark(
+            colorScheme: ColorScheme.dark(
               primary: AppColors.primary,
               surface: AppColors.surface,
             ),

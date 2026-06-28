@@ -64,6 +64,8 @@ class Alarms extends Table {
   IntColumn get dayOfMonth => integer().nullable()();
   IntColumn get groupId => integer().nullable()();
   IntColumn get intervalHours => integer().nullable()();
+  IntColumn get intervalDays => integer().nullable()();
+  IntColumn get intervalCountdown => integer().nullable()();
 
   // Local Sync Fields
   IntColumn get lastModified => integer().nullable()();
@@ -99,11 +101,11 @@ class Reminders extends Table {
 class Settings extends Table {
   IntColumn get id => integer().withDefault(const Constant(1))();
   TextColumn get deviceIp => text().nullable()();
-  TextColumn get patientName => text().withDefault(const Constant("Paciente"))();
+  TextColumn get patientName => text().withDefault(const Constant('Paciente'))();
   IntColumn get speakerVolume => integer().withDefault(const Constant(20))();
   IntColumn get brightness => integer().withDefault(const Constant(50))();
-  TextColumn get language => text().withDefault(const Constant("pt"))();
-  TextColumn get wakeWord => text().withDefault(const Constant("jarvis"))();
+  TextColumn get language => text().withDefault(const Constant('pt'))();
+  TextColumn get wakeWord => text().withDefault(const Constant('jarvis'))();
   IntColumn get alarmSound => integer().withDefault(const Constant(0))();
   IntColumn get alarmSpacingMs => integer().withDefault(const Constant(10000))();
   BoolColumn get alarmWizardEnabled => boolean().withDefault(const Constant(true))();
@@ -115,6 +117,7 @@ class Settings extends Table {
   TextColumn get dinnerTime => text().nullable()();
   TextColumn get geminiApiKey => text().nullable()();
   TextColumn get prohibitedRanges => text().nullable()(); // JSON serialized List<TimeRange>
+  TextColumn get themeMode => text().withDefault(const Constant('dark'))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -157,9 +160,10 @@ class Medications extends Table {
 @DriftDatabase(tables: [Alarms, Reminders, Settings, HistoryEvents, SystemLogs, Medications])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+  AppDatabase.connect(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -170,6 +174,13 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await migrator.createTable(medications);
+          }
+          if (from < 4) {
+            await migrator.addColumn(alarms, alarms.intervalDays);
+            await migrator.addColumn(alarms, alarms.intervalCountdown);
+          }
+          if (from < 5) {
+            await migrator.addColumn(settings, settings.themeMode);
           }
         },
       );

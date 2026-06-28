@@ -58,7 +58,7 @@ class _WizardStepMedicationState extends ConsumerState<WizardStepMedication> {
     _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
       final repo = ref.read(medicationRepositoryProvider);
       final list = await repo.search(query);
-      if (mounted) {
+      if (context.mounted) {
         setState(() {
           _results = list;
           _searching = false;
@@ -113,7 +113,7 @@ class _WizardStepMedicationState extends ConsumerState<WizardStepMedication> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Busque no banco nacional da ANVISA ou digite o nome completo.',
           style: TextStyle(color: AppColors.textMuted, fontSize: 14),
         ),
@@ -166,10 +166,10 @@ class _WizardStepMedicationState extends ConsumerState<WizardStepMedication> {
           Icon(
             Icons.search_off_rounded,
             size: 48,
-            color: AppColors.textMuted.withOpacity(0.3),
+            color: AppColors.textMuted.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Digite o nome do remédio para iniciar a busca.',
             style: TextStyle(color: AppColors.textMuted),
           ),
@@ -183,7 +183,7 @@ class _WizardStepMedicationState extends ConsumerState<WizardStepMedication> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'Não encontramos este medicamento na busca.',
             style: TextStyle(color: AppColors.textMuted),
           ),
@@ -219,9 +219,9 @@ class _WizardStepMedicationState extends ConsumerState<WizardStepMedication> {
         if (index == _results.length) {
           // Add custom manual add row at the end
           return ListTile(
-            leading: const CircleAvatar(
+            leading: CircleAvatar(
               backgroundColor: AppColors.border,
-              child: Icon(Icons.add_rounded, color: Colors.white),
+              child: const Icon(Icons.add_rounded, color: Colors.white),
             ),
             title: Text('Adicionar "${_searchController.text}" manualmente'),
             onTap: () {

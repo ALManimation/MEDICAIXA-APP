@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 class TaperStage {
   final double quantity;
@@ -100,10 +99,17 @@ class AlarmModel {
   final int? dayOfMonth;
   final int? groupId;
   final int? intervalHours;
+  final int? intervalDays;
+  final int? intervalCountdown;
 
   // Sync Control (local only)
   final int? lastModified;
   final bool pendingSync;
+  final bool isGhost;
+
+  // Computed/Render fields
+  final int? doseNum;
+  final int? doseTotal;
 
   const AlarmModel({
     required this.id,
@@ -153,9 +159,128 @@ class AlarmModel {
     this.dayOfMonth,
     this.groupId,
     this.intervalHours,
+    this.intervalDays,
+    this.intervalCountdown,
     this.lastModified,
     this.pendingSync = false,
+    this.isGhost = false,
+    this.doseNum,
+    this.doseTotal,
   });
+
+  AlarmModel copyWith({
+    int? id,
+    int? hour,
+    int? minute,
+    String? name,
+    String? medName,
+    bool? enabled,
+    bool? active,
+    List<bool>? days,
+    String? status,
+    String? color,
+    double? quantity,
+    List<double>? daysQuantity,
+    String? type,
+    String? dosage,
+    String? lastStatus,
+    String? lastStatusDate,
+    int? snoozeMin,
+    String? startDate,
+    int? durationDays,
+    String? createdDate,
+    int? cycleOnDays,
+    int? cycleOffDays,
+    int? cycleCurrentDay,
+    bool? cycleIsPaused,
+    bool? isPrn,
+    int? prnMinIntervalHours,
+    int? prnMaxDailyDoses,
+    int? prnDosesToday,
+    int? pauseUntil,
+    bool? isDynamic,
+    String? dynamicInstruction,
+    int? taperStageCount,
+    int? taperCurrentStage,
+    int? taperDayInStage,
+    List<TaperStage>? taperStages,
+    bool? taperLoop,
+    String? specialInstruction,
+    double? adjustStep,
+    int? adjustIntervalDays,
+    double? adjustLimit,
+    bool? requiresRemoval,
+    int? removalDelayMins,
+    String? siteRotationList,
+    int? currentSiteIndex,
+    int? dayOfMonth,
+    int? groupId,
+    int? intervalHours,
+    int? intervalDays,
+    int? intervalCountdown,
+    int? lastModified,
+    bool? pendingSync,
+    bool? isGhost,
+    int? doseNum,
+    int? doseTotal,
+  }) {
+    return AlarmModel(
+      id: id ?? this.id,
+      hour: hour ?? this.hour,
+      minute: minute ?? this.minute,
+      name: name ?? this.name,
+      medName: medName ?? this.medName,
+      enabled: enabled ?? this.enabled,
+      active: active ?? this.active,
+      days: days ?? this.days,
+      status: status ?? this.status,
+      color: color ?? this.color,
+      quantity: quantity ?? this.quantity,
+      daysQuantity: daysQuantity ?? this.daysQuantity,
+      type: type ?? this.type,
+      dosage: dosage ?? this.dosage,
+      lastStatus: lastStatus ?? this.lastStatus,
+      lastStatusDate: lastStatusDate ?? this.lastStatusDate,
+      snoozeMin: snoozeMin ?? this.snoozeMin,
+      startDate: startDate ?? this.startDate,
+      durationDays: durationDays ?? this.durationDays,
+      createdDate: createdDate ?? this.createdDate,
+      cycleOnDays: cycleOnDays ?? this.cycleOnDays,
+      cycleOffDays: cycleOffDays ?? this.cycleOffDays,
+      cycleCurrentDay: cycleCurrentDay ?? this.cycleCurrentDay,
+      cycleIsPaused: cycleIsPaused ?? this.cycleIsPaused,
+      isPrn: isPrn ?? this.isPrn,
+      prnMinIntervalHours: prnMinIntervalHours ?? this.prnMinIntervalHours,
+      prnMaxDailyDoses: prnMaxDailyDoses ?? this.prnMaxDailyDoses,
+      prnDosesToday: prnDosesToday ?? this.prnDosesToday,
+      pauseUntil: pauseUntil ?? this.pauseUntil,
+      isDynamic: isDynamic ?? this.isDynamic,
+      dynamicInstruction: dynamicInstruction ?? this.dynamicInstruction,
+      taperStageCount: taperStageCount ?? this.taperStageCount,
+      taperCurrentStage: taperCurrentStage ?? this.taperCurrentStage,
+      taperDayInStage: taperDayInStage ?? this.taperDayInStage,
+      taperStages: taperStages ?? this.taperStages,
+      taperLoop: taperLoop ?? this.taperLoop,
+      specialInstruction: specialInstruction ?? this.specialInstruction,
+      adjustStep: adjustStep ?? this.adjustStep,
+      adjustIntervalDays: adjustIntervalDays ?? this.adjustIntervalDays,
+      adjustLimit: adjustLimit ?? this.adjustLimit,
+      requiresRemoval: requiresRemoval ?? this.requiresRemoval,
+      removalDelayMins: removalDelayMins ?? this.removalDelayMins,
+      siteRotationList: siteRotationList ?? this.siteRotationList,
+      currentSiteIndex: currentSiteIndex ?? this.currentSiteIndex,
+      dayOfMonth: dayOfMonth ?? this.dayOfMonth,
+      groupId: groupId ?? this.groupId,
+      intervalHours: intervalHours ?? this.intervalHours,
+      intervalDays: intervalDays ?? this.intervalDays,
+      intervalCountdown: intervalCountdown ?? this.intervalCountdown,
+      lastModified: lastModified ?? this.lastModified,
+      pendingSync: pendingSync ?? this.pendingSync,
+      isGhost: isGhost ?? this.isGhost,
+      doseNum: doseNum ?? this.doseNum,
+      doseTotal: doseTotal ?? this.doseTotal,
+    );
+  }
 
   factory AlarmModel.fromJson(Map<String, dynamic> json) {
     // Helper to parse double quantity
@@ -244,10 +369,13 @@ class AlarmModel {
       dayOfMonth: json['day_of_month'] as int?,
       groupId: json['group_id'] as int?,
       intervalHours: json['interval_hours'] as int?,
+      intervalDays: json['interval_days'] as int?,
+      intervalCountdown: json['interval_countdown'] as int?,
 
       // Local only
       lastModified: json['last_modified'] as int?,
       pendingSync: json['pending_sync'] == true,
+      isGhost: json['is_ghost'] == true,
     );
   }
 
@@ -336,10 +464,13 @@ class AlarmModel {
     if (dayOfMonth != null && dayOfMonth! > 0) data['day_of_month'] = dayOfMonth;
     if (groupId != null && groupId! > 0) data['group_id'] = groupId;
     if (intervalHours != null && intervalHours! > 0) data['interval_hours'] = intervalHours;
+    if (intervalDays != null && intervalDays! > 0) data['interval_days'] = intervalDays;
+    if (intervalCountdown != null) data['interval_countdown'] = intervalCountdown;
 
     if (includeLocalFields) {
       if (lastModified != null) data['last_modified'] = lastModified;
       data['pending_sync'] = pendingSync;
+      data['is_ghost'] = isGhost;
     }
 
     return data;

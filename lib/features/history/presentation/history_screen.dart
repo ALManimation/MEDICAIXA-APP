@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../data/history_repository.dart';
 import '../../../core/database/database.dart';
+import '../../../core/localization/app_localizations.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -17,17 +18,20 @@ class HistoryScreen extends ConsumerWidget {
 
     final timeStr = DateFormat('HH:mm').format(dt);
     if (eventDay == today) {
-      return 'Hoje às $timeStr';
+      return t('today_at_time', [timeStr]);
     } else if (eventDay == yesterday) {
-      return 'Ontem às $timeStr';
+      return t('yesterday_at_time', [timeStr]);
     } else {
-      return '${DateFormat('dd/MM/yyyy').format(dt)} às $timeStr';
+      final dateStr = DateFormat('dd/MM/yyyy').format(dt);
+      return t('date_at_time', [dateStr, timeStr]);
     }
   }
 
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'TOMADO':
+      case 'TOMADO FORA HORA':
+      case 'TOMADO PRN':
       case 'CONCLUIDO':
         return AppColors.success;
       case 'PERDIDO':
@@ -42,6 +46,8 @@ class HistoryScreen extends ConsumerWidget {
   IconData _getStatusIcon(String status) {
     switch (status.toUpperCase()) {
       case 'TOMADO':
+      case 'TOMADO FORA HORA':
+      case 'TOMADO PRN':
       case 'CONCLUIDO':
         return Icons.check_circle_rounded;
       case 'PERDIDO':
@@ -50,6 +56,25 @@ class HistoryScreen extends ConsumerWidget {
         return Icons.snooze_rounded;
       default:
         return Icons.info_outline_rounded;
+    }
+  }
+
+  String _formatStatusText(String status) {
+    switch (status.toUpperCase()) {
+      case 'TOMADO':
+        return t('badge_taken').toUpperCase();
+      case 'TOMADO FORA HORA':
+        return t('status_taken_late');
+      case 'TOMADO PRN':
+        return t('status_prn_caps');
+      case 'CONCLUIDO':
+        return t('status_completed_caps');
+      case 'PERDIDO':
+        return t('status_missed_caps');
+      case 'SNOOZED':
+        return t('status_snoozed_caps');
+      default:
+        return status.toUpperCase();
     }
   }
 
@@ -76,13 +101,13 @@ class HistoryScreen extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text('Histórico & Logs'),
+          title: Text(t('history_logs_title')),
           backgroundColor: AppColors.background,
           elevation: 0,
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(icon: Icon(Icons.history_rounded), text: 'Eventos'),
-              Tab(icon: Icon(Icons.developer_board_rounded), text: 'Logs do Sistema'),
+              Tab(icon: const Icon(Icons.history_rounded), text: t('history_tab_events')),
+              Tab(icon: const Icon(Icons.developer_board_rounded), text: t('logs_title')),
             ],
             indicatorColor: AppColors.primary,
             labelColor: AppColors.primary,
@@ -100,14 +125,14 @@ class HistoryScreen extends ConsumerWidget {
                 }
                 final events = snapshot.data ?? [];
                 if (events.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.history_rounded, size: 48, color: AppColors.textMuted),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
-                          'Nenhum evento registrado ainda.',
+                          t('history_no_events'),
                           style: TextStyle(color: AppColors.textMuted, fontSize: 14),
                         ),
                       ],
@@ -123,27 +148,27 @@ class HistoryScreen extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '${events.length} eventos registrados',
-                            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                            t('history_events_count', [events.length]),
+                            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                           ),
                           TextButton.icon(
                             style: TextButton.styleFrom(foregroundColor: AppColors.missed),
                             icon: const Icon(Icons.delete_sweep_rounded, size: 18),
-                            label: const Text('Limpar'),
+                            label: Text(t('btn_clear')),
                             onPressed: () async {
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (confirmContext) => AlertDialog(
-                                  title: const Text('Limpar Histórico'),
-                                  content: const Text('Deseja mesmo apagar todo o histórico de eventos?'),
+                                  title: Text(t('dialog_clear_history_title')),
+                                  content: Text(t('dialog_clear_history_desc')),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.of(confirmContext).pop(false),
-                                      child: const Text('CANCELAR', style: TextStyle(color: AppColors.textMuted)),
+                                      child: Text(t('cancel_btn').toUpperCase(), style: TextStyle(color: AppColors.textMuted)),
                                     ),
                                     TextButton(
                                       onPressed: () => Navigator.of(confirmContext).pop(true),
-                                      child: const Text('LIMPAR', style: TextStyle(color: AppColors.missed)),
+                                      child: Text(t('btn_clear_caps'), style: TextStyle(color: AppColors.missed)),
                                     ),
                                   ],
                                 ),
@@ -165,7 +190,7 @@ class HistoryScreen extends ConsumerWidget {
                           final event = events[index];
                           final color = _getStatusColor(event.status);
                           final icon = _getStatusIcon(event.status);
-                          final typeLabel = event.type == 'alarm' ? 'Alarme' : 'Lembrete';
+                          final typeLabel = event.type == 'alarm' ? t('fab_alarm') : t('fab_reminder');
                           
                           return Card(
                             child: ListTile(
@@ -178,7 +203,7 @@ class HistoryScreen extends ConsumerWidget {
                                 child: Icon(icon, color: color, size: 22),
                               ),
                               title: Text(
-                                event.medName ?? 'Evento',
+                                event.medName ?? t('history_default_event'),
                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                               ),
                               subtitle: Column(
@@ -186,13 +211,13 @@ class HistoryScreen extends ConsumerWidget {
                                 children: [
                                   if (event.dosage != null && event.dosage!.isNotEmpty)
                                     Text(
-                                      'Dose: ${event.dosage}',
-                                      style: const TextStyle(fontSize: 13, color: AppColors.textMuted),
+                                      t('dose_label_fmt', [event.dosage]),
+                                      style: TextStyle(fontSize: 13, color: AppColors.textMuted),
                                     ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: 4),
                                   Text(
                                     '$typeLabel · ${_formatTimestamp(event.timestamp)}',
-                                    style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                    style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                                   ),
                                 ],
                               ),
@@ -203,7 +228,7 @@ class HistoryScreen extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  event.status,
+                                  _formatStatusText(event.status),
                                   style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
                                 ),
                               ),
@@ -226,14 +251,14 @@ class HistoryScreen extends ConsumerWidget {
                 }
                 final logs = snapshot.data ?? [];
                 if (logs.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.developer_board_rounded, size: 48, color: AppColors.textMuted),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
-                          'Nenhum log gerado ainda.',
+                          t('logs_empty'),
                           style: TextStyle(color: AppColors.textMuted, fontSize: 14),
                         ),
                       ],
@@ -249,27 +274,27 @@ class HistoryScreen extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '${logs.length} logs registrados',
-                            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                            t('logs_count_fmt', [logs.length]),
+                            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                           ),
                           TextButton.icon(
                             style: TextButton.styleFrom(foregroundColor: AppColors.missed),
                             icon: const Icon(Icons.delete_sweep_rounded, size: 18),
-                            label: const Text('Limpar'),
+                            label: Text(t('btn_clear')),
                             onPressed: () async {
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (confirmContext) => AlertDialog(
-                                  title: const Text('Limpar Logs'),
-                                  content: const Text('Deseja mesmo apagar todos os logs de depuração?'),
+                                  title: Text(t('dialog_clear_logs_title')),
+                                  content: Text(t('dialog_clear_logs_desc')),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.of(confirmContext).pop(false),
-                                      child: const Text('CANCELAR', style: TextStyle(color: AppColors.textMuted)),
+                                      child: Text(t('cancel_btn').toUpperCase(), style: TextStyle(color: AppColors.textMuted)),
                                     ),
                                     TextButton(
                                       onPressed: () => Navigator.of(confirmContext).pop(true),
-                                      child: const Text('LIMPAR', style: TextStyle(color: AppColors.missed)),
+                                      child: Text(t('btn_clear_caps'), style: TextStyle(color: AppColors.missed)),
                                     ),
                                   ],
                                 ),
@@ -320,20 +345,20 @@ class HistoryScreen extends ConsumerWidget {
                                         const SizedBox(width: 8),
                                         Text(
                                           log.source,
-                                          style: const TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w500),
+                                          style: TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w500),
                                         ),
                                       ],
                                     ),
                                     Text(
                                       _formatTimestamp(log.timestamp),
-                                      style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                                      style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
                                   log.message,
-                                  style: const TextStyle(fontSize: 13, color: Colors.white),
+                                  style: TextStyle(fontSize: 13, color: AppColors.text),
                                 ),
                               ],
                             ),

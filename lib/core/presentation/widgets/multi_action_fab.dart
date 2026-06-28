@@ -211,8 +211,8 @@ class _MultiActionFabState extends State<MultiActionFab> with SingleTickerProvid
               ),
               child: Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: AppColors.text,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                 ),

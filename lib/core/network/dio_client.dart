@@ -51,7 +51,7 @@ class DioClient {
   bool get isConfigured => _baseUrl != null;
 
   Future<Response<T>> get<T>(String path, {Map<String, dynamic>? queryParameters}) async {
-    if (!isConfigured) throw Exception("DioClient is not configured with a base URL");
+    if (!isConfigured) throw Exception('DioClient is not configured with a base URL');
     return _lock.synchronized(() async {
       try {
         return await _dio.get<T>(
@@ -65,7 +65,7 @@ class DioClient {
   }
 
   Future<Response<T>> post<T>(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
-    if (!isConfigured) throw Exception("DioClient is not configured with a base URL");
+    if (!isConfigured) throw Exception('DioClient is not configured with a base URL');
     return _lock.synchronized(() async {
       try {
         return await _dio.post<T>(
@@ -80,20 +80,20 @@ class DioClient {
   }
 
   Exception _handleDioError(DioException e) {
-    String message = "Erro de conexão";
+    String message = 'Erro de conexão';
     if (e.type == DioExceptionType.connectionTimeout ||
         e.type == DioExceptionType.receiveTimeout ||
         e.type == DioExceptionType.sendTimeout) {
-      message = "Tempo limite de conexão esgotado";
+      message = 'Tempo limite de conexão esgotado';
     } else if (e.type == DioExceptionType.badResponse) {
       final data = e.response?.data;
       if (data is Map && data.containsKey('error')) {
         message = data['error'].toString();
       } else {
-        message = "Erro no servidor (Código: ${e.response?.statusCode})";
+        message = 'Erro no servidor (Código: ${e.response?.statusCode})';
       }
     } else if (e.type == DioExceptionType.connectionError) {
-      message = "Não foi possível conectar à MediCaixa. Verifique a rede.";
+      message = 'Não foi possível conectar à MediCaixa. Verifique a rede.';
     }
     return Exception(message);
   }

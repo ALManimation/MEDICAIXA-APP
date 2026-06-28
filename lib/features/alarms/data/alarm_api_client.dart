@@ -53,8 +53,12 @@ class AlarmApiClient {
     }
   }
 
-  Future<void> markTaken(int id) async {
-    final response = await _dioClient.post('/mark_taken', data: {'id': id});
+  Future<void> markTaken(int id, {double? qty}) async {
+    final payload = <String, dynamic>{'id': id};
+    if (qty != null) {
+      payload['qty'] = qty;
+    }
+    final response = await _dioClient.post('/mark_taken', data: payload);
     if (response.statusCode != 200 || (response.data is Map && (response.data as Map)['ok'] != true)) {
       throw Exception('Falha ao marcar alarme como tomado no dispositivo');
     }
@@ -64,6 +68,13 @@ class AlarmApiClient {
     final response = await _dioClient.post('/mark_skipped', data: {'id': id});
     if (response.statusCode != 200 || (response.data is Map && (response.data as Map)['ok'] != true)) {
       throw Exception('Falha ao marcar alarme como não tomado no dispositivo');
+    }
+  }
+
+  Future<void> takePrn(int id) async {
+    final response = await _dioClient.post('/take_prn', data: {'id': id});
+    if (response.statusCode != 200 || (response.data is Map && (response.data as Map)['ok'] != true)) {
+      throw Exception('Falha ao registrar dose sob demanda no dispositivo');
     }
   }
 

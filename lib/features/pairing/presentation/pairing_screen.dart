@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/localization/app_localizations.dart';
 import '../../../core/presentation/app_shell.dart';
 import '../domain/connection_state.dart';
 import 'pairing_notifier.dart';
@@ -90,8 +89,8 @@ class _PairingScreenState extends ConsumerState<PairingScreen> with SingleTicker
                             shape: BoxShape.circle,
                             gradient: RadialGradient(
                               colors: [
-                                AppColors.primary.withOpacity(0.3),
-                                AppColors.primary.withOpacity(0.0),
+                                AppColors.primary.withValues(alpha: 0.3),
+                                AppColors.primary.withValues(alpha: 0.0),
                               ],
                             ),
                           ),
@@ -105,12 +104,12 @@ class _PairingScreenState extends ConsumerState<PairingScreen> with SingleTicker
                                 border: Border.all(
                                   color: connectionState.status == ConnectionStatus.connected
                                       ? AppColors.success
-                                      : AppColors.primary.withOpacity(0.5),
+                                      : AppColors.primary.withValues(alpha: 0.5),
                                   width: 2,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.2),
+                                    color: AppColors.primary.withValues(alpha: 0.2),
                                     blurRadius: 15,
                                     spreadRadius: 2,
                                   )
@@ -152,7 +151,7 @@ class _PairingScreenState extends ConsumerState<PairingScreen> with SingleTicker
                   if (connectionState.status == ConnectionStatus.searching) ...[
                     const CircularProgressIndicator(strokeWidth: 3),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       'Buscando MediCaixa na rede local...',
                       style: TextStyle(color: AppColors.primary),
                     ),
@@ -167,9 +166,9 @@ class _PairingScreenState extends ConsumerState<PairingScreen> with SingleTicker
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.missed.withOpacity(0.1),
+                        color: AppColors.missed.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.missed.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.missed.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../localization/app_localizations.dart';
 import '../constants/app_colors.dart';
+import '../providers/theme_provider.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/alarms/presentation/wizard/alarm_wizard_screen.dart';
 import '../../features/reminders/presentation/reminder_form_screen.dart';
 import '../../features/medications/presentation/medication_form_screen.dart';
 import 'widgets/multi_action_fab.dart';
-import '../../features/history/presentation/history_screen.dart';
 import '../../features/medications/presentation/medications_list_screen.dart';
+import 'package:medicaixa_app/features/reports/presentation/reports_screen.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -23,7 +25,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   final List<Widget> _screens = [
     const DashboardScreen(),
     const MedicationsListScreen(),
-    const HistoryScreen(),
+    const ReportsScreen(),
     const SettingsScreen(),
   ];
 
@@ -53,15 +55,16 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   void _scanQrCode(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Leitura de QR Code via câmera disponível em breve! 📸'),
-        duration: Duration(seconds: 3),
+      SnackBar(
+        content: Text(t('nav_qr_scan_soon')),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appThemeNotifierProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 800;
 
     if (isDesktop) {
@@ -72,33 +75,33 @@ class _AppShellState extends ConsumerState<AppShell> {
             NavigationRail(
               selectedIndex: _currentIndex,
               backgroundColor: AppColors.surface,
-              indicatorColor: AppColors.primary.withOpacity(0.2),
+              indicatorColor: AppColors.primary.withValues(alpha: 0.2),
               onDestinationSelected: (index) {
                 setState(() {
                   _currentIndex = index;
                 });
               },
               labelType: NavigationRailLabelType.all,
-              destinations: const [
+              destinations: [
                 NavigationRailDestination(
-                  icon: Icon(Icons.dashboard_outlined),
+                  icon: const Icon(Icons.dashboard_outlined),
                   selectedIcon: Icon(Icons.dashboard_rounded, color: AppColors.primary),
-                  label: Text('Início'),
+                  label: Text(t('nav_home')),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.medication_outlined),
+                  icon: const Icon(Icons.medication_outlined),
                   selectedIcon: Icon(Icons.medication_rounded, color: AppColors.primary),
-                  label: Text('Remédios'),
+                  label: Text(t('nav_meds')),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.bar_chart_outlined),
+                  icon: const Icon(Icons.bar_chart_outlined),
                   selectedIcon: Icon(Icons.bar_chart_rounded, color: AppColors.primary),
-                  label: Text('Relatórios'),
+                  label: Text(t('nav_stats')),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.settings_outlined),
+                  icon: const Icon(Icons.settings_outlined),
                   selectedIcon: Icon(Icons.settings_rounded, color: AppColors.primary),
-                  label: Text('Ajustes'),
+                  label: Text(t('nav_settings')),
                 ),
               ],
             ),
@@ -145,26 +148,26 @@ class _AppShellState extends ConsumerState<AppShell> {
               _currentIndex = index;
             });
           },
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard_rounded),
-              label: 'Início',
+              icon: const Icon(Icons.dashboard_outlined),
+              activeIcon: const Icon(Icons.dashboard_rounded),
+              label: t('nav_home'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.medication_outlined),
-              activeIcon: Icon(Icons.medication_rounded),
-              label: 'Remédios',
+              icon: const Icon(Icons.medication_outlined),
+              activeIcon: const Icon(Icons.medication_rounded),
+              label: t('nav_meds'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart_outlined),
-              activeIcon: Icon(Icons.bar_chart_rounded),
-              label: 'Relatórios',
+              icon: const Icon(Icons.bar_chart_outlined),
+              activeIcon: const Icon(Icons.bar_chart_rounded),
+              label: t('nav_stats'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined),
-              activeIcon: Icon(Icons.settings_rounded),
-              label: 'Ajustes',
+              icon: const Icon(Icons.settings_outlined),
+              activeIcon: const Icon(Icons.settings_rounded),
+              label: t('nav_settings'),
             ),
           ],
         ),

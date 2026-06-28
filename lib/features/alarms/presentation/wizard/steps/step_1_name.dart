@@ -14,6 +14,7 @@ class WizardStep1Name extends ConsumerStatefulWidget {
 
 class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
   bool _showManualDosageInput = false;
+  bool _selectedFromDropdown = false;
   late FocusNode _dosageFocusNode;
   late TextEditingController _dosageController;
 
@@ -91,7 +92,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
         if (dosages.isNotEmpty) {
           if (!dosages.contains(state.dosage)) {
             Future.microtask(() {
-              if (mounted) {
+              if (context.mounted) {
                 ref.read(wizardNotifierProvider.notifier).updateState(
                   (s) => s.copyWith(dosage: dosages.first),
                 );
@@ -117,7 +118,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 1. Nome do remédio
-          const Text(
+          Text(
             'Qual é o nome do remédio?',
             style: TextStyle(
               fontSize: 20,
@@ -130,6 +131,9 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
           Autocomplete<MedicationAnvisa>(
             initialValue: TextEditingValue(text: state.name),
             optionsBuilder: (TextEditingValue textEditingValue) async {
+              if (_selectedFromDropdown) {
+                return const Iterable<MedicationAnvisa>.empty();
+              }
               if (textEditingValue.text.length < 2) {
                 return const Iterable<MedicationAnvisa>.empty();
               }
@@ -140,6 +144,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
             },
             displayStringForOption: (MedicationAnvisa option) => option.name,
             onSelected: (MedicationAnvisa selection) {
+              _selectedFromDropdown = true;
               setState(() {
                 _showManualDosageInput = false;
               });
@@ -150,20 +155,18 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
               ));
             },
             fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-              if (controller.text.isEmpty && state.name.isNotEmpty) {
-                controller.text = state.name;
-              }
               return TextField(
                 controller: controller,
                 focusNode: focusNode,
                 onChanged: (val) {
+                  _selectedFromDropdown = false;
                   notifier.updateState((s) => s.copyWith(name: val));
                 },
                 onEditingComplete: onEditingComplete,
-                style: const TextStyle(color: AppColors.text, fontSize: 18),
+                style: TextStyle(color: AppColors.text, fontSize: 18),
                 decoration: InputDecoration(
                   hintText: 'Digite o nome do remédio',
-                  hintStyle: const TextStyle(color: AppColors.textMuted),
+                  hintStyle: TextStyle(color: AppColors.textMuted),
                   filled: true,
                   fillColor: AppColors.surface,
                   border: OutlineInputBorder(
@@ -190,8 +193,8 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
                       itemBuilder: (context, index) {
                         final option = options.elementAt(index);
                         return ListTile(
-                          title: Text(option.name, style: const TextStyle(color: AppColors.text)),
-                          subtitle: Text('${option.type} • ${option.dosage}', style: const TextStyle(color: AppColors.textMuted)),
+                          title: Text(option.name, style: TextStyle(color: AppColors.text)),
+                          subtitle: Text('${option.type} • ${option.dosage}', style: TextStyle(color: AppColors.textMuted)),
                           onTap: () => onSelected(option),
                         );
                       },
@@ -204,7 +207,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
           const SizedBox(height: 24),
 
           // 2. Como é esse remédio
-          const Text(
+          Text(
             'Como é esse remédio?',
             style: TextStyle(
               fontSize: 20,
@@ -218,7 +221,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
           const SizedBox(height: 24),
 
           // 3. Força / Dosagem
-          const Text(
+          Text(
             'Qual é a força dele? (Dose na caixa)',
             style: TextStyle(
               fontSize: 20,
@@ -228,7 +231,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Exemplo: 50mg, 500mg, 100UI/ml, etc. Se não souber, pode deixar em branco.',
             style: TextStyle(
               fontSize: 13,
@@ -246,7 +249,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
           const SizedBox(height: 24),
 
           // 4. Cor
-          const Text(
+          Text(
             'Escolha uma cor para identificar este remédio:',
             style: TextStyle(
               fontSize: 18,
@@ -256,7 +259,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Isso ajudará a diferenciar visualmente os cartões no painel.',
             style: TextStyle(
               fontSize: 13,
@@ -328,7 +331,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.12),
+                            color: AppColors.primary.withValues(alpha: 0.12),
                             blurRadius: 6,
                             spreadRadius: 1,
                           )
@@ -346,7 +349,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
                     const SizedBox(height: 4),
                     Text(
                       t['label'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: AppColors.text,
@@ -358,7 +361,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
                       padding: const EdgeInsets.symmetric(horizontal: 2.0),
                       child: Text(
                         t['sub'] as String,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9,
                           color: AppColors.textMuted,
                         ),
@@ -389,7 +392,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Escolha a dosagem do remédio:',
             style: TextStyle(
               fontSize: 14,
@@ -441,7 +444,7 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
                 border: Border.all(color: AppColors.border),
               ),
               alignment: Alignment.center,
-              child: const Text(
+              child: Text(
                 'Digitar outra dose...',
                 style: TextStyle(
                   color: AppColors.text,
@@ -462,24 +465,24 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
             focusNode: _dosageFocusNode,
             controller: _dosageController,
             onChanged: onChanged,
-            style: const TextStyle(color: AppColors.text, fontSize: 18),
+            style: TextStyle(color: AppColors.text, fontSize: 18),
             textAlign: TextAlign.center,
             decoration: InputDecoration(
               hintText: 'Ex: 50mg',
-              hintStyle: const TextStyle(color: AppColors.textMuted),
+              hintStyle: TextStyle(color: AppColors.textMuted),
               filled: true,
               fillColor: AppColors.surface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                borderSide: BorderSide(color: AppColors.border, width: 1.5),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                borderSide: BorderSide(color: AppColors.border, width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                borderSide: BorderSide(color: AppColors.primary, width: 1.5),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             ),

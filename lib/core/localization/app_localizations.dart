@@ -7,14 +7,27 @@ class AppLocalizations {
 
   static String get locale => _locale;
 
+  static void loadTestStrings(String jsonContent) {
+    _localizedStrings = json.decode(jsonContent) as Map<String, dynamic>;
+  }
+
+  static String _normalizeLocale(String locale) {
+    final lang = locale.split('_').first.split('-').first.toLowerCase();
+    if (lang == 'en' || lang == 'es') {
+      return lang;
+    }
+    return 'pt';
+  }
+
   static Future<void> load(String languageCode) async {
-    _locale = languageCode;
+    final normalized = _normalizeLocale(languageCode);
+    _locale = normalized;
     try {
-      final jsonString = await rootBundle.loadString('assets/lang/$languageCode.json');
+      final jsonString = await rootBundle.loadString('assets/lang/$normalized.json');
       _localizedStrings = json.decode(jsonString) as Map<String, dynamic>;
     } catch (e) {
       // Fallback to pt if failed to load
-      if (languageCode != 'pt') {
+      if (normalized != 'pt') {
         await load('pt');
       }
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../reminders/data/reminder_model.dart';
+import '../../../../core/localization/app_localizations.dart';
 
 class ReminderCardWidget extends StatelessWidget {
   final ReminderModel reminder;
@@ -35,7 +36,7 @@ class ReminderCardWidget extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isDone ? AppColors.success.withOpacity(0.5) : AppColors.border,
+          color: isDone ? AppColors.success.withValues(alpha: 0.5) : AppColors.border,
           width: 1,
         ),
       ),
@@ -56,7 +57,7 @@ class ReminderCardWidget extends StatelessWidget {
               Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: hexColor.withOpacity(0.1),
+                color: hexColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -79,14 +80,14 @@ class ReminderCardWidget extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AppColors.text,
                           decoration: isDone ? TextDecoration.lineThrough : null,
                         ),
                       ),
                       if (timeStr.isNotEmpty)
                         Text(
                           timeStr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textMuted,
                             fontWeight: FontWeight.normal,
@@ -98,7 +99,7 @@ class ReminderCardWidget extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       reminder.description,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textMuted,
                       ),
@@ -109,20 +110,20 @@ class ReminderCardWidget extends StatelessWidget {
                     children: [
                       Text(
                         freqStr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           color: AppColors.textMuted,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       if (proximityStr.isNotEmpty) ...[
-                        const Text(
+                        Text(
                           ' · ',
                           style: TextStyle(color: AppColors.textMuted, fontSize: 11),
                         ),
                         Text(
                           proximityStr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w500,
@@ -139,14 +140,14 @@ class ReminderCardWidget extends StatelessWidget {
             if (!isDone)
               IconButton(
                 onPressed: onComplete,
-                icon: const Icon(
+                icon: Icon(
                   Icons.check_circle_outline_rounded,
                   color: AppColors.textMuted,
                 ),
               )
             else
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Icon(
                   Icons.check_circle_rounded,
                   color: AppColors.success,
@@ -167,36 +168,36 @@ class ReminderCardWidget extends StatelessWidget {
       final startZero = DateTime(sd.year, sd.month, sd.day);
       final diffDays = startZero.difference(todayZero).inDays;
 
-      if (diffDays == 0) return 'Hoje';
-      if (diffDays == 1) return 'Amanhã';
-      if (diffDays == -1) return 'Ontem';
-      if (diffDays > 1) return 'Em $diffDays dias';
-      if (diffDays < -1) return 'Há ${diffDays.abs()} dias';
+      if (diffDays == 0) return t('today');
+      if (diffDays == 1) return t('proximity_tomorrow');
+      if (diffDays == -1) return t('proximity_yesterday');
+      if (diffDays > 1) return t('proximity_in_days', [diffDays]);
+      if (diffDays < -1) return t('proximity_ago_days', [diffDays.abs()]);
     } catch (_) {}
     return '';
   }
 
   String _getFrequencyString(String period, int interval) {
-    if (period.isEmpty || interval == 0) return 'Vez única';
+    if (period.isEmpty || interval == 0) return t('rem_once_label');
     final String label = _getPeriodLabel(period, interval);
     if (interval == 1) {
       return label;
     }
-    return 'A cada $interval $label';
+    return t('rem_every_interval_fmt', [interval, label]);
   }
 
   String _getPeriodLabel(String period, int interval) {
     switch (period.toLowerCase()) {
       case 'day':
-        return interval == 1 ? 'Diário' : 'dias';
+        return interval == 1 ? t('freq_daily') : t('days_lowercase');
       case 'week':
-        return interval == 1 ? 'Semanal' : 'semanas';
+        return interval == 1 ? t('freq_weekly') : t('weeks_lowercase');
       case 'month':
-        return interval == 1 ? 'Mensal' : 'meses';
+        return interval == 1 ? t('freq_monthly') : t('months_lowercase');
       case 'year':
-        return interval == 1 ? 'Anual' : 'anos';
+        return interval == 1 ? t('freq_yearly') : t('years_lowercase');
       default:
-        return 'período';
+        return t('freq_period_lowercase');
     }
   }
 }

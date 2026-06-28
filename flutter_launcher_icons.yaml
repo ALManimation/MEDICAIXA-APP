@@ -1,0 +1,8 @@
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  macos:
+    generate: true
+    image_path: "assets/images/iconeMedicaixa.png"
+  image_path: "assets/images/iconeMedicaixa.png"
+  remove_alpha_ios: true

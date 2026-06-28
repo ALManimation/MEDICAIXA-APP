@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../alarms/data/alarm_model.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+
 /// Health status level based on adherence percentage.
 /// Replicates the updateHealthBanner() logic from index.html (lines 1318-1377).
 enum HealthLevel { ok, warn, risk, danger }
@@ -60,7 +62,7 @@ class HealthBannerWidget extends StatelessWidget {
     if (!isToday) {
       return _HealthResult(
         level: HealthLevel.ok,
-        label: 'Sua saúde em dia',
+        label: t('health_ok'),
         icon: Icons.spa_rounded,
         textColor: AppColors.healthOk,
         bgColor: AppColors.healthOkBg,
@@ -94,7 +96,7 @@ class HealthBannerWidget extends StatelessWidget {
     if (due == 0) {
       return _HealthResult(
         level: HealthLevel.ok,
-        label: 'Sua saúde em dia',
+        label: t('health_ok'),
         icon: Icons.spa_rounded,
         textColor: AppColors.healthOk,
         bgColor: AppColors.healthOkBg,
@@ -107,7 +109,7 @@ class HealthBannerWidget extends StatelessWidget {
     if (pct >= 0.9) {
       return _HealthResult(
         level: HealthLevel.ok,
-        label: 'Sua saúde está em dia',
+        label: t('health_ok'),
         icon: Icons.spa_rounded,
         textColor: AppColors.healthOk,
         bgColor: AppColors.healthOkBg,
@@ -116,7 +118,7 @@ class HealthBannerWidget extends StatelessWidget {
     } else if (pct >= 0.5) {
       return _HealthResult(
         level: HealthLevel.warn,
-        label: 'Sua saúde está em atenção',
+        label: t('health_warn'),
         icon: Icons.warning_rounded,
         textColor: AppColors.healthWarn,
         bgColor: AppColors.healthWarnBg,
@@ -125,7 +127,7 @@ class HealthBannerWidget extends StatelessWidget {
     } else if (pct >= 0.2) {
       return _HealthResult(
         level: HealthLevel.risk,
-        label: 'Sua saúde está em risco',
+        label: t('health_risk'),
         icon: Icons.error_rounded,
         textColor: AppColors.healthRisk,
         bgColor: AppColors.healthRiskBg,
@@ -134,7 +136,7 @@ class HealthBannerWidget extends StatelessWidget {
     } else {
       return _HealthResult(
         level: HealthLevel.danger,
-        label: 'Sua saúde está em alto risco',
+        label: t('health_danger'),
         icon: Icons.heart_broken_rounded,
         textColor: AppColors.healthDanger,
         bgColor: AppColors.healthDangerBg,

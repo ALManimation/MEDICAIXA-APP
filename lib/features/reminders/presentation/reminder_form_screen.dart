@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:medicaixa_app/features/dashboard/presentation/dashboard_notifier.dart';
 import '../../../core/constants/app_colors.dart';
 import '../data/reminder_model.dart';
 import '../data/reminder_repository.dart';
@@ -69,7 +70,7 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
+            colorScheme: ColorScheme.dark(
               primary: AppColors.primary,
               onPrimary: Colors.white,
               surface: AppColors.surface,
@@ -94,7 +95,7 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
+            colorScheme: ColorScheme.dark(
               primary: AppColors.primary,
               onPrimary: Colors.white,
               surface: AppColors.surface,
@@ -139,6 +140,8 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
       color: _selectedColor,
     );
 
+    final buildContext = context;
+
     try {
       if (isEdit) {
         await repo.updateReminder(model);
@@ -146,18 +149,20 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
         await repo.createReminder(model);
       }
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      ref.invalidate(dashboardNotifierProvider);
+      
+      if (buildContext.mounted) {
+        ScaffoldMessenger.of(buildContext).showSnackBar(
           SnackBar(
             content: Text(isEdit ? 'Lembrete atualizado com sucesso!' : 'Lembrete criado com sucesso!'),
             backgroundColor: AppColors.success,
           ),
         );
-        Navigator.of(context).pop();
+        Navigator.of(buildContext).pop();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (buildContext.mounted) {
+        ScaffoldMessenger.of(buildContext).showSnackBar(
           SnackBar(
             content: Text('Erro ao salvar lembrete: $e'),
             backgroundColor: AppColors.missed,
@@ -176,11 +181,11 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('CANCELAR', style: TextStyle(color: AppColors.textMuted)),
+            child: Text('CANCELAR', style: TextStyle(color: AppColors.textMuted)),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('EXCLUIR', style: TextStyle(color: AppColors.missed)),
+            child: Text('EXCLUIR', style: TextStyle(color: AppColors.missed)),
           ),
         ],
       ),
@@ -188,20 +193,22 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
 
     if (confirmed == true) {
       final repo = ref.read(reminderRepositoryProvider);
+      final buildContext = context;
       try {
         await repo.deleteReminder(widget.editReminder!.id);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Lembrete excluído com sucesso!'),
+        ref.invalidate(dashboardNotifierProvider);
+        if (buildContext.mounted) {
+          ScaffoldMessenger.of(buildContext).showSnackBar(
+            SnackBar(
+              content: const Text('Lembrete excluído com sucesso!'),
               backgroundColor: AppColors.success,
             ),
           );
-          Navigator.of(context).pop();
+          Navigator.of(buildContext).pop();
         }
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+        if (buildContext.mounted) {
+          ScaffoldMessenger.of(buildContext).showSnackBar(
             SnackBar(
               content: Text('Erro ao excluir: $e'),
               backgroundColor: AppColors.missed,
@@ -234,11 +241,11 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
                 // 1. Title
                 TextFormField(
                   controller: _titleController,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  style: TextStyle(color: AppColors.text, fontSize: 18),
                   decoration: InputDecoration(
                     labelText: 'Título do Lembrete',
                     hintText: 'Ex: Consulta Cardiológica, Exame de Sangue',
-                    hintStyle: const TextStyle(color: AppColors.textMuted),
+                    hintStyle: TextStyle(color: AppColors.textMuted),
                     filled: true,
                     fillColor: AppColors.surface,
                     border: OutlineInputBorder(
@@ -259,11 +266,11 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
                 TextFormField(
                   controller: _descController,
                   maxLines: 3,
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  style: TextStyle(color: AppColors.text, fontSize: 15),
                   decoration: InputDecoration(
                     labelText: 'Descrição / Detalhes (Opcional)',
                     hintText: 'Ex: Trazer exames antigos, ir em jejum',
-                    hintStyle: const TextStyle(color: AppColors.textMuted),
+                    hintStyle: TextStyle(color: AppColors.textMuted),
                     filled: true,
                     fillColor: AppColors.surface,
                     border: OutlineInputBorder(
@@ -284,7 +291,7 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
                           contentPadding: EdgeInsets.zero,
                           title: const Text('Definir Hora Específica', style: TextStyle(fontWeight: FontWeight.bold)),
                           value: _hasTime,
-                          activeColor: AppColors.primary,
+                          activeThumbColor: AppColors.primary,
                           onChanged: (val) {
                             setState(() {
                               _hasTime = val;
@@ -295,12 +302,12 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
                           const Divider(),
                           ListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text('Horário do Lembrete', style: TextStyle(color: AppColors.textMuted)),
+                            title: Text('Horário do Lembrete', style: TextStyle(color: AppColors.textMuted)),
                             subtitle: Text(
                               '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.text),
                             ),
-                            trailing: const Icon(Icons.access_time_rounded, color: AppColors.primary),
+                            trailing: Icon(Icons.access_time_rounded, color: AppColors.primary),
                             onTap: _selectTime,
                           ),
                         ],
@@ -320,13 +327,13 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
                         const Text('Frequência', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
-                          value: _selectedPeriod,
+                          initialValue: _selectedPeriod,
                           dropdownColor: AppColors.surface,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
-                          style: const TextStyle(color: Colors.white, fontSize: 15),
+                          style: TextStyle(color: AppColors.text, fontSize: 15),
                           items: const [
                             DropdownMenuItem(value: '', child: Text('Vez única (Sem repetição)')),
                             DropdownMenuItem(value: 'day', child: Text('A cada X Dias')),
@@ -383,23 +390,23 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
                       children: [
                         ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('Data de Início', style: TextStyle(color: AppColors.textMuted)),
+                          title: Text('Data de Início', style: TextStyle(color: AppColors.textMuted)),
                           subtitle: Text(
                             DateFormat('dd/MM/yyyy').format(_selectedStartDate),
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text),
                           ),
-                          trailing: const Icon(Icons.calendar_month_rounded, color: AppColors.primary),
+                          trailing: Icon(Icons.calendar_month_rounded, color: AppColors.primary),
                           onTap: _selectStartDate,
                         ),
                         const Divider(),
                         ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: const Text('Aviso Prévio (Dias)', style: TextStyle(color: AppColors.textMuted)),
+                          title: Text('Aviso Prévio (Dias)', style: TextStyle(color: AppColors.textMuted)),
                           subtitle: const Text('Mostrar lembrete quantos dias antes da data?'),
                           trailing: DropdownButton<int>(
                             value: _notifyDaysBefore,
                             dropdownColor: AppColors.surface,
-                            style: const TextStyle(color: Colors.white, fontSize: 16),
+                            style: TextStyle(color: AppColors.text, fontSize: 16),
                             items: List.generate(8, (i) {
                               return DropdownMenuItem(
                                 value: i,
@@ -439,7 +446,7 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
                           onPressed: _delete,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.missed,
-                            side: const BorderSide(color: AppColors.missed),
+                            side: BorderSide(color: AppColors.missed),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -511,7 +518,7 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),

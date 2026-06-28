@@ -1,0 +1,76 @@
+# Changes Log - Final Code-wide Remediation
+
+This log documents all fixes applied for Rule 22 and Rule 32 compliance, and general warnings/lints clean up.
+
+## 2026-06-28
+- **`lib/core/theme/app_theme.dart`**:
+  - Removed `const` from `ColorScheme.dark`, `AppBarTheme`, and `BorderSide` referencing `AppColors`.
+- **`lib/features/alarms/presentation/wizard/alarm_wizard_screen.dart`**:
+  - Removed `const` from `Icon`, `TextStyle`, `AlwaysStoppedAnimation`, `Border`, and `Text` referencing `AppColors`.
+  - Replaced raw `mounted` with `context.mounted` inside the finally block of the save function.
+- **`lib/features/alarms/presentation/wizard/steps/step_1_name.dart`**:
+  - Removed `const` from multiple `Text` and `TextStyle` widgets, and `BorderSide` instances referencing `AppColors`.
+  - Replaced raw `mounted` with `context.mounted` in the microtask callback.
+- **`lib/features/alarms/presentation/wizard/steps/step_2_mode.dart`**:
+  - Removed `const` from multiple `Text`, `Divider`, `TextStyle` widgets referencing `AppColors`.
+- **`lib/features/alarms/presentation/wizard/steps/step_3_qty.dart`**:
+  - Removed `const` from dozens of `Text`, `TextStyle`, `BorderSide`, and `Expanded` widgets referencing `AppColors`.
+- **`lib/features/alarms/presentation/wizard/steps/step_4_days.dart`**:
+  - Removed `const` from multiple `Text`, `TextStyle`, `Divider` widgets referencing `AppColors`.
+- **`lib/features/alarms/presentation/wizard/steps/step_5_time.dart`**:
+  - Removed `const` from multiple `TextStyle` and `Icon` widgets referencing `AppColors`.
+- **`lib/features/alarms/presentation/wizard/steps/step_6_duration.dart`**:
+  - Removed `const` from multiple `Text`, `Align`, `TextStyle`, and `Icon` widgets referencing `AppColors`.
+- **`lib/features/alarms/presentation/wizard/steps/step_7_summary.dart`**:
+  - Removed `const` from the summary header `Text` widget referencing `AppColors`.
+- **`lib/features/dashboard/presentation/dashboard_screen.dart`**:
+  - Removed `const` from `Text` widgets referencing `AppColors` in dialog buttons.
+- **`lib/features/dashboard/presentation/widgets/calendar_strip_widget.dart`**:
+  - Removed `const` from `Text`, `TextStyle`, and `Icon` widgets referencing `AppColors`.
+- **`lib/features/history/presentation/history_screen.dart`**:
+  - Removed `const` from multiple `Text` and `TextStyle` widgets referencing `AppColors`.
+- **`lib/features/medications/presentation/medication_form_screen.dart`**:
+  - Removed `const` from multiple `Text`, `TextStyle`, and `BorderSide` widgets referencing `AppColors`.
+  - Replaced raw `mounted` with `context.mounted` inside async database methods.
+- **`lib/features/medications/presentation/medications_list_screen.dart`**:
+  - Removed `const` from multiple `Text`, `TextStyle`, `Icon`, `Border`, and `BorderSide` referencing `AppColors`.
+  - Replaced raw `mounted` with `context.mounted` inside action dialogs.
+- **`lib/features/reminders/presentation/reminder_form_screen.dart`**:
+  - Removed `const` from multiple `Text`, `TextStyle`, `Icon`, and `BorderSide` referencing `AppColors`.
+  - Replaced raw `mounted` with `context.mounted` inside save and delete async functions.
+- **`lib/features/alarms/presentation/alarm_active_screen.dart`**:
+  - Replaced raw `mounted` with `context.mounted` in the periodic vibration loop.
+  - Removed unused local variable `pulseScale` in active builder.
+- **`lib/features/alarms/presentation/wizard/steps/wizard_step_medication.dart`**:
+  - Replaced raw `mounted` with `context.mounted` inside the search query debounce callback.
+- **`lib/features/alarms/presentation/wizard/steps/wizard_step_schedule.dart`**:
+  - Removed unused private field `_weekdayNames`.
+- **`lib/features/reports/presentation/reports_notifier.dart`**:
+  - Added `@override` decorator to `stateOrNull` getter.
+- **`lib/core/services/alarm_engine.dart`**:
+  - Removed unused import `database.dart`.
+  - Removed unused local variable `modified`.
+- **`lib/features/alarms/data/alarm_model.dart`**:
+  - Removed unused import `dart:convert`.
+- **`lib/features/alarms/data/alarm_repository.dart`**:
+  - Removed unused local variable `localMap`.
+- **`lib/features/dashboard/presentation/widgets/alarm_card_widget.dart`**:
+  - Removed unused local variables `typeStr` and `freqStr`.
+- **`lib/features/medications/data/medication_repository.dart`**:
+  - Removed unused local variable `localMap` in sync method.
+- **`lib/features/pairing/presentation/pairing_screen.dart`**:
+  - Removed unused import `app_localizations.dart`.
+- **`lib/features/reminders/data/reminder_repository.dart`**:
+  - Removed unused local variable `localMap` in sync method.
+- **`lib/features/settings/data/settings_models.dart`**:
+  - Removed unused import `services.dart`.
+  - Removed redundant `default:` case in VoiceState enum label getter switch statement.
+- **`lib/features/settings/data/wifi_repository.dart`**:
+  - Removed unused import `foundation.dart`.
+- **`lib/features/settings/presentation/settings_screen.dart`**:
+  - Removed unused imports `core_providers.dart` and `medications_list_screen.dart`.
+  - Removed redundant `default:` case in VoiceState builder switch statement.
+- **`lib/core/presentation/app_shell.dart`**:
+  - Replaced deprecated `withOpacity(...)` with `withValues(alpha: ...)` for primary color.
+- **`lib/features/reports/presentation/widgets/monthly_heatmap.dart`**:
+  - Replaced deprecated `withOpacity(...)` with `withValues(alpha: ...)` for textMuted color.

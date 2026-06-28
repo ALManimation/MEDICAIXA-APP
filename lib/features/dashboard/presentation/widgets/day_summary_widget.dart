@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+
 class DaySummaryWidget extends StatelessWidget {
   final int taken;
   final int pending;
@@ -19,7 +21,7 @@ class DaySummaryWidget extends StatelessWidget {
       children: [
         Expanded(
           child: _SummaryCard(
-            title: 'Tomados',
+            title: t('stats_taken'),
             count: taken,
             color: AppColors.success,
             icon: Icons.check_circle_outline_rounded,
@@ -28,7 +30,7 @@ class DaySummaryWidget extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _SummaryCard(
-            title: 'Pendentes',
+            title: t('stats_pending'),
             count: pending,
             color: AppColors.pending,
             icon: Icons.schedule_rounded,
@@ -37,7 +39,7 @@ class DaySummaryWidget extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _SummaryCard(
-            title: 'Perdidos',
+            title: t('stats_missed'),
             count: missed,
             color: AppColors.missed,
             icon: Icons.cancel_outlined,
@@ -71,7 +73,7 @@ class _SummaryCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.05),
+            color: color.withValues(alpha: 0.05),
             blurRadius: 8,
             spreadRadius: 1,
           )
@@ -97,7 +99,7 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textMuted,
               fontSize: 12,
               fontWeight: FontWeight.w500,

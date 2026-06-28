@@ -1,5 +1,4 @@
 import '../../../core/network/dio_client.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/providers/core_providers.dart';
 import '../../../core/database/database.dart';

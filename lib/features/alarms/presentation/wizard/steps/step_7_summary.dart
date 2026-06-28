@@ -152,7 +152,7 @@ class WizardStep7Summary extends ConsumerWidget {
         }();
 
         // Dynamically build recommendation cards based on screen size
-        List<Widget> gridRows = [];
+        final List<Widget> gridRows = [];
         if (width >= 800) {
           // On desktop, 5 items in a single row
           gridRows.add(
@@ -208,7 +208,7 @@ class WizardStep7Summary extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // 1. Data de início
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Você já vai começar a tomar hoje?',
@@ -260,7 +260,7 @@ class WizardStep7Summary extends ConsumerWidget {
               Divider(color: AppColors.border, thickness: 1.5, height: 32),
 
               // 2. Recomendações
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'O médico deixou alguma recomendação?',
@@ -290,7 +290,7 @@ class WizardStep7Summary extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'RESUMO DO REMÉDIO',
                       style: TextStyle(
                         fontSize: 12,
@@ -376,7 +376,7 @@ class WizardStep7Summary extends ConsumerWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.12),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                     blurRadius: 6,
                     spreadRadius: 1,
                   )

@@ -103,6 +103,8 @@ class AlarmRepository {
       dayOfMonth: driftAlarm.dayOfMonth,
       groupId: driftAlarm.groupId,
       intervalHours: driftAlarm.intervalHours,
+      intervalDays: driftAlarm.intervalDays,
+      intervalCountdown: driftAlarm.intervalCountdown,
       lastModified: driftAlarm.lastModified,
       pendingSync: driftAlarm.pendingSync,
     );
@@ -160,6 +162,8 @@ class AlarmRepository {
       dayOfMonth: Value(model.dayOfMonth),
       groupId: Value(model.groupId),
       intervalHours: Value(model.intervalHours),
+      intervalDays: Value(model.intervalDays),
+      intervalCountdown: Value(model.intervalCountdown),
       lastModified: Value(model.lastModified),
       pendingSync: Value(model.pendingSync),
     );
@@ -191,7 +195,7 @@ class AlarmRepository {
       try {
         finalId = await _apiClient.addAlarm(alarm);
       } catch (e) {
-        debugPrint("Error sending alarm to ESP32: $e. Saving offline.");
+        debugPrint('Error sending alarm to ESP32: $e. Saving offline.');
         finalId = await _generateLocalId();
         isPending = true;
       }
@@ -248,6 +252,8 @@ class AlarmRepository {
       dayOfMonth: alarm.dayOfMonth,
       groupId: alarm.groupId,
       intervalHours: alarm.intervalHours,
+      intervalDays: alarm.intervalDays,
+      intervalCountdown: alarm.intervalCountdown ?? (alarm.intervalDays != null && alarm.intervalDays! > 1 ? 0 : null),
       lastModified: DateTime.now().millisecondsSinceEpoch,
       pendingSync: isPending,
     );
@@ -262,7 +268,7 @@ class AlarmRepository {
       try {
         await _apiClient.updateAlarm(alarm);
       } catch (e) {
-        debugPrint("Error updating alarm on ESP32: $e. Marking pending.");
+        debugPrint('Error updating alarm on ESP32: $e. Marking pending.');
         isPending = true;
       }
     } else {
@@ -329,7 +335,7 @@ class AlarmRepository {
       try {
         await _apiClient.removeAlarm(id);
       } catch (e) {
-        debugPrint("Error removing alarm on ESP32: $e");
+        debugPrint('Error removing alarm on ESP32: $e');
       }
     }
     await (_db.delete(_db.alarms)..where((t) => t.id.equals(id))).go();
@@ -396,19 +402,63 @@ class AlarmRepository {
       try {
         await _apiClient.toggleAlarm(id, enabled);
       } catch (e) {
-        debugPrint("Error toggling alarm on ESP32: $e");
+        debugPrint('Error toggling alarm on ESP32: $e');
       }
     }
 
     await _db.update(_db.alarms).replace(_toCompanion(updated));
   }
 
-  Future<void> markTaken(int id) async {
+  Future<void> markTaken(int id, {double? customQty}) async {
     final alarmList = await (_db.select(_db.alarms)..where((t) => t.id.equals(id))).get();
     if (alarmList.isEmpty) return;
 
     final alarm = _toModel(alarmList.first);
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final now = DateTime.now();
+    final todayStr = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+
+    // Calculate delay to distinguish "Tomado" vs "Tomado fora hora"
+    final nowMin = now.hour * 60 + now.minute;
+    final alarmMin = alarm.hour * 60 + alarm.minute;
+    var delayMin = nowMin - alarmMin;
+    if (delayMin < 0) delayMin += 1440;
+
+    final isLate = delayMin > 10;
+    final historyStatus = isLate ? 'TOMADO FORA HORA' : 'TOMADO';
+    final logText = isLate ? 'Tomado fora hora' : 'Tomado';
+
+    // Calculate quantity for the current day of the week
+    final wday = now.weekday % 7;
+    final hasAsymmetric = alarm.daysQuantity.any((q) => q > 0);
+    final double qtyTaken = customQty ?? ((hasAsymmetric && wday < alarm.daysQuantity.length && alarm.daysQuantity[wday] > 0)
+        ? alarm.daysQuantity[wday]
+        : alarm.quantity);
+
+    final qtyStr = qtyTaken == qtyTaken.toInt() ? qtyTaken.toInt().toString() : qtyTaken.toStringAsFixed(1);
+
+    String getUnitText(String type, double qty) {
+      final t = type.toLowerCase();
+      final isPlural = qty > 1;
+      if (t == 'gota') return isPlural ? 'gotas' : 'gota';
+      if (t == 'dose') return 'ml';
+      if (t == 'capsula') return 'cáp.';
+      if (t == 'adesivo') return 'ades.';
+      if (t == 'injetavel') return 'aplic.';
+      return isPlural ? 'comp.' : 'comp.';
+    }
+    final unitText = getUnitText(alarm.type, qtyTaken);
+    final loggedDosage = '$qtyStr $unitText${alarm.dosage != null && alarm.dosage!.isNotEmpty ? ' (${alarm.dosage})' : ''}';
+
+    // Rotate site if removal is required
+    int? nextSiteIndex = alarm.currentSiteIndex;
+    if (alarm.requiresRemoval == true && alarm.siteRotationList != null && alarm.siteRotationList!.isNotEmpty) {
+      final sites = alarm.siteRotationList!.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      if (sites.isNotEmpty) {
+        final currentIndex = alarm.currentSiteIndex ?? 0;
+        nextSiteIndex = (currentIndex + 1) % sites.length;
+      }
+    }
+
     final updated = AlarmModel(
       id: alarm.id,
       hour: alarm.hour,
@@ -453,7 +503,7 @@ class AlarmRepository {
       requiresRemoval: alarm.requiresRemoval,
       removalDelayMins: alarm.removalDelayMins,
       siteRotationList: alarm.siteRotationList,
-      currentSiteIndex: alarm.currentSiteIndex,
+      currentSiteIndex: nextSiteIndex,
       dayOfMonth: alarm.dayOfMonth,
       groupId: alarm.groupId,
       intervalHours: alarm.intervalHours,
@@ -463,9 +513,9 @@ class AlarmRepository {
 
     if (_isConnected()) {
       try {
-        await _apiClient.markTaken(id);
+        await _apiClient.markTaken(id, qty: customQty);
       } catch (e) {
-        debugPrint("Error marking taken on ESP32: $e");
+        debugPrint('Error marking taken on ESP32: $e');
       }
     }
 
@@ -475,13 +525,13 @@ class AlarmRepository {
     await historyRepo.addHistoryEvent(
       alarmId: alarm.id,
       medName: alarm.medName.isNotEmpty ? alarm.medName : alarm.name,
-      dosage: alarm.dosage,
-      status: 'TOMADO',
+      dosage: loggedDosage,
+      status: historyStatus,
       type: 'alarm',
     );
     await historyRepo.addSystemLog(
       level: 'INFO',
-      message: 'Medicamento "${alarm.medName.isNotEmpty ? alarm.medName : alarm.name}" marcado como Tomado',
+      message: 'Medicamento "${alarm.medName.isNotEmpty ? alarm.medName : alarm.name}" ($loggedDosage) marcado como $logText',
       source: 'System',
     );
   }
@@ -491,7 +541,8 @@ class AlarmRepository {
     if (alarmList.isEmpty) return;
 
     final alarm = _toModel(alarmList.first);
-    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    final now = DateTime.now();
+    final todayStr = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
     final updated = AlarmModel(
       id: alarm.id,
       hour: alarm.hour,
@@ -548,7 +599,7 @@ class AlarmRepository {
       try {
         await _apiClient.markSkipped(id);
       } catch (e) {
-        debugPrint("Error marking skipped on ESP32: $e");
+        debugPrint('Error marking skipped on ESP32: $e');
       }
     }
 
@@ -578,8 +629,7 @@ class AlarmRepository {
       final remoteAlarms = await _apiClient.fetchAlarms();
       final localAlarms = await getAllAlarms();
 
-      // Create maps for lookup
-      final localMap = {for (final a in localAlarms) a.id: a};
+      // Create map for lookup
       final remoteMap = {for (final a in remoteAlarms) a.id: a};
 
       // 2. Local-only modifications sync (Local -> Device)
@@ -644,7 +694,7 @@ class AlarmRepository {
               );
               await _db.into(_db.alarms).insert(_toCompanion(uploaded));
             } catch (e) {
-              debugPrint("Failed to upload new local alarm ${local.id}: $e");
+              debugPrint('Failed to upload new local alarm ${local.id}: $e');
             }
           } else {
             // Existing alarm updated offline: Update on device
@@ -654,7 +704,7 @@ class AlarmRepository {
                     _toCompanion(local.copyWith(pendingSync: false)),
                   );
             } catch (e) {
-              debugPrint("Failed to update alarm ${local.id} on device: $e");
+              debugPrint('Failed to update alarm ${local.id} on device: $e');
             }
           }
         }
@@ -683,7 +733,7 @@ class AlarmRepository {
         }
       }
     } catch (e) {
-      debugPrint("Error syncing alarms: $e");
+      debugPrint('Error syncing alarms: $e');
     }
   }
 
@@ -705,7 +755,7 @@ class AlarmRepository {
       try {
         await _apiClient.snoozeAlarm(id, minutes);
       } catch (e) {
-        debugPrint("Error snoozing alarm on ESP32: $e");
+        debugPrint('Error snoozing alarm on ESP32: $e');
       }
     }
 
@@ -728,6 +778,121 @@ class AlarmRepository {
     }
   }
 
+  /// Registra o uso de um medicamento sob demanda (PRN)
+  /// Replicates POST /take_prn from the Web UI.
+  Future<void> takePrn(int id) async {
+    final alarmList = await (_db.select(_db.alarms)..where((t) => t.id.equals(id))).get();
+    if (alarmList.isEmpty) throw Exception('Alarme não encontrado');
+
+    final alarm = _toModel(alarmList.first);
+    if (alarm.isPrn != true) throw Exception('Este alarme não é do tipo Sob Demanda (PRN)');
+
+    final now = DateTime.now();
+    final todayStr = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+
+    int dosesToday = alarm.prnDosesToday ?? 0;
+    // Reset if day changed
+    if (alarm.lastStatusDate != todayStr) {
+      dosesToday = 0;
+    }
+
+    // Check limit
+    if (alarm.prnMaxDailyDoses != null && alarm.prnMaxDailyDoses! > 0) {
+      if (dosesToday >= alarm.prnMaxDailyDoses!) {
+        throw Exception('Limite diário de doses atingido (${alarm.prnMaxDailyDoses} doses)');
+      }
+    }
+
+    // Check minimum interval
+    if (alarm.prnMinIntervalHours != null && alarm.prnMinIntervalHours! > 0) {
+      final historyList = await (_db.select(_db.historyEvents)
+        ..where((t) => t.alarmId.equals(id))
+        ..orderBy([(t) => OrderingTerm(expression: t.timestamp, mode: OrderingMode.desc)])
+        ..limit(1))
+        .get();
+
+      if (historyList.isNotEmpty) {
+        final lastTriggerMs = historyList.first.timestamp;
+        final elapsedMs = now.millisecondsSinceEpoch - lastTriggerMs;
+        final requiredMs = alarm.prnMinIntervalHours! * 3600 * 1000;
+        if (elapsedMs < requiredMs) {
+          final remainingSec = ((requiredMs - elapsedMs) / 1000).ceil();
+          final remainingMin = (remainingSec / 60).ceil();
+          if (remainingMin > 60) {
+            final remainingHours = (remainingMin / 60).toStringAsFixed(1);
+            throw Exception('Intervalo mínimo não respeitado. Aguarde mais $remainingHours horas.');
+          } else {
+            throw Exception('Intervalo mínimo não respeitado. Aguarde mais $remainingMin minutos.');
+          }
+        }
+      }
+    }
+
+    // Take medication
+    final updatedDoses = dosesToday + 1;
+    final updated = alarm.copyWith(
+      prnDosesToday: updatedDoses,
+      status: 'PENDENTE',
+      lastStatus: 'Tomado PRN',
+      lastStatusDate: todayStr,
+      snoozeMin: 0,
+      lastModified: DateTime.now().millisecondsSinceEpoch,
+      pendingSync: !_isConnected(),
+    );
+
+    if (_isConnected()) {
+      try {
+        await _apiClient.takePrn(id);
+      } catch (e) {
+        debugPrint('Error sending take_prn to device: $e');
+      }
+    }
+
+    await _db.update(_db.alarms).replace(_toCompanion(updated));
+
+    // Format detailed message for history/system logs
+    final qtyStr = alarm.quantity == alarm.quantity.toInt() ? alarm.quantity.toInt().toString() : alarm.quantity.toStringAsFixed(1);
+    
+    String getUnitText(String type, double qty) {
+      final t = type.toLowerCase();
+      final isPlural = qty > 1;
+      if (t == 'gota') return isPlural ? 'gotas' : 'gota';
+      if (t == 'dose') return 'ml';
+      if (t == 'capsula') return 'cáp.';
+      if (t == 'adesivo') return 'ades.';
+      if (t == 'injetavel') return 'aplic.';
+      return isPlural ? 'comp.' : 'comp.';
+    }
+    final unitText = getUnitText(alarm.type, alarm.quantity);
+    final loggedDosage = '$qtyStr $unitText${alarm.dosage != null && alarm.dosage!.isNotEmpty ? ' (${alarm.dosage})' : ''}';
+
+    final historyRepo = _ref.read(historyRepositoryProvider);
+    await historyRepo.addHistoryEvent(
+      alarmId: alarm.id,
+      medName: alarm.medName.isNotEmpty ? alarm.medName : alarm.name,
+      dosage: loggedDosage,
+      status: 'TOMADO PRN',
+      type: 'alarm',
+    );
+
+    await historyRepo.addSystemLog(
+      level: 'INFO',
+      message: 'Medicamento Sob Demanda "${alarm.medName.isNotEmpty ? alarm.medName : alarm.name}" ($loggedDosage) registrado. Dose $updatedDoses do dia.',
+      source: 'System',
+    );
+  }
+
+  /// Recupera o horário do último registro de tomada de um alarme PRN
+  Future<DateTime?> getLastPrnTakeTime(int id) async {
+    final historyList = await (_db.select(_db.historyEvents)
+      ..where((t) => t.alarmId.equals(id))
+      ..orderBy([(t) => OrderingTerm(expression: t.timestamp, mode: OrderingMode.desc)])
+      ..limit(1))
+      .get();
+    if (historyList.isEmpty) return null;
+    return DateTime.fromMillisecondsSinceEpoch(historyList.first.timestamp);
+  }
+
   /// Remove an alarm by ID.
   /// Convenience alias for deleteAlarm that matches the Web UI naming.
   Future<void> removeAlarm(int id) async {
@@ -748,7 +913,7 @@ class AlarmRepository {
         }
       }
     } catch (e) {
-      debugPrint("Error loading backup fixture: $e");
+      debugPrint('Error loading backup fixture: $e');
     }
   }
 }
@@ -811,8 +976,11 @@ extension AlarmModelCopyWith on AlarmModel {
     int? dayOfMonth,
     int? groupId,
     int? intervalHours,
+    int? intervalDays,
+    int? intervalCountdown,
     int? lastModified,
     bool? pendingSync,
+    bool? isGhost,
   }) {
     return AlarmModel(
       id: id ?? this.id,
@@ -862,8 +1030,11 @@ extension AlarmModelCopyWith on AlarmModel {
       dayOfMonth: dayOfMonth ?? this.dayOfMonth,
       groupId: groupId ?? this.groupId,
       intervalHours: intervalHours ?? this.intervalHours,
+      intervalDays: intervalDays ?? this.intervalDays,
+      intervalCountdown: intervalCountdown ?? this.intervalCountdown,
       lastModified: lastModified ?? this.lastModified,
       pendingSync: pendingSync ?? this.pendingSync,
+      isGhost: isGhost ?? this.isGhost,
     );
   }
 }

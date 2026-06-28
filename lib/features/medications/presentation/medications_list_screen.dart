@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/database/database.dart';
 import '../../alarms/data/alarm_repository.dart';
@@ -39,22 +40,22 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
   String _formatType(String type) {
     switch (type.toLowerCase()) {
       case 'comprimido':
-        return 'Comprimido';
+        return t('med_type_tablet');
       case 'capsula':
-        return 'Cápsula';
+        return t('med_type_capsule');
       case 'gota':
-        return 'Gotas';
+        return t('med_type_drops');
       case 'xarope':
-        return 'Xarope';
+        return t('med_type_syrup');
       case 'inalador':
-        return 'Inalador';
+        return t('med_type_inhaler');
       case 'injetavel':
-        return 'Injetável';
+        return t('med_type_injectable');
       case 'pomada':
-        return 'Pomada';
+        return t('med_type_ointment');
       case 'outro':
       default:
-        return 'Outro';
+        return t('med_type_other');
     }
   }
 
@@ -93,20 +94,20 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
       }
     }
 
-    if (inUseList.isNotEmpty && mounted) {
+    final buildContext = context;
+
+    if (inUseList.isNotEmpty && buildContext.mounted) {
       showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Não é possível excluir'),
+        context: buildContext,
+        builder: (dialogCtx) => AlertDialog(
+          title: Text(t('dialog_delete_blocked_title')),
           content: Text(
-            'Não é possível excluir medicamentos em uso por alarmes:\n\n'
-            '${inUseList.join('\n')}\n\n'
-            'Exclua os alarmes primeiro.'
+            t('dialog_delete_blocked_desc', [inUseList.join('\n')])
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK', style: TextStyle(color: AppColors.primary)),
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: Text(t('ok_btn'), style: TextStyle(color: AppColors.primary)),
             ),
           ],
         ),
@@ -115,44 +116,48 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
     }
 
     // Confirmar exclusão
-    if (mounted) {
+    if (buildContext.mounted) {
       final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Confirmar Exclusão'),
-          content: Text('Excluir ${_selectedMeds.length} medicamento(s)?\n\nEsta ação não pode ser desfeita.'),
+        context: buildContext,
+        builder: (dialogCtx) => AlertDialog(
+          title: Text(t('dialog_confirm_delete_title')),
+          content: Text(t('dialog_confirm_delete_meds_desc', [_selectedMeds.length])),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('CANCELAR', style: TextStyle(color: AppColors.textMuted)),
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              child: Text(t('cancel_btn').toUpperCase(), style: TextStyle(color: AppColors.textMuted)),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('EXCLUIR', style: TextStyle(color: AppColors.missed)),
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              child: Text(t('btn_delete_caps'), style: TextStyle(color: AppColors.missed)),
             ),
           ],
         ),
       );
 
-      if (confirmed == true && mounted) {
+      if (confirmed == true) {
         try {
           for (final name in _selectedMeds) {
             await medRepo.deleteMedication(name);
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Medicamentos excluídos com sucesso!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          _clearSelection();
+          if (buildContext.mounted) {
+            ScaffoldMessenger.of(buildContext).showSnackBar(
+              SnackBar(
+                content: Text(t('meds_deleted_success')),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            _clearSelection();
+          }
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao excluir: $e'),
-              backgroundColor: AppColors.missed,
-            ),
-          );
+          if (buildContext.mounted) {
+            ScaffoldMessenger.of(buildContext).showSnackBar(
+              SnackBar(
+                content: Text(t('meds_delete_error', [e])),
+                backgroundColor: AppColors.missed,
+              ),
+            );
+          }
         }
       }
     }
@@ -186,17 +191,17 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Remédios',
+                          Text(
+                            t('nav_meds'),
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppColors.text,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Gerenciar Medicamentos',
+                          Text(
+                            t('meds_subtitle'),
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textMuted,
@@ -216,8 +221,8 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                             });
                           },
                           child: Text(
-                            _isSelectionMode ? 'Cancelar' : 'Selecionar',
-                            style: const TextStyle(
+                            _isSelectionMode ? t('cancel_btn') : t('meds_select'),
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primary,
@@ -233,9 +238,9 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   child: Text(
                     allMeds.length == 1
-                        ? '1 medicamento'
-                        : '${allMeds.length} medicamentos',
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                        ? '1 ${t('meds_count_singular')}'
+                        : t('meds_count_plural', [allMeds.length]),
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                   ),
                 ),
 
@@ -244,13 +249,13 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   child: TextField(
                     controller: _searchController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: AppColors.text),
                     decoration: InputDecoration(
-                      labelText: 'Pesquisar medicamentos...',
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textMuted),
+                      labelText: t('search_meds_placeholder'),
+                      prefixIcon: Icon(Icons.search_rounded, color: AppColors.textMuted),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear_rounded, color: AppColors.textMuted),
+                              icon: Icon(Icons.clear_rounded, color: AppColors.textMuted),
                               onPressed: () => _searchController.clear(),
                             )
                           : null,
@@ -275,13 +280,13 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.medication_rounded, size: 48, color: AppColors.textMuted),
+                                  Icon(Icons.medication_rounded, size: 48, color: AppColors.textMuted),
                                   const SizedBox(height: 12),
                                   Text(
                                     _searchQuery.isNotEmpty
-                                        ? 'Nenhum medicamento correspondente.'
-                                        : 'Nenhum medicamento cadastrado.',
-                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+                                        ? t('meds_search_no_results')
+                                        : t('meds_list_empty'),
+                                    style: TextStyle(color: AppColors.textMuted, fontSize: 14),
                                   ),
                                 ],
                               ),
@@ -311,7 +316,7 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? color.withOpacity(0.08)
+                                          ? color.withValues(alpha: 0.08)
                                           : AppColors.surface,
                                       borderRadius: BorderRadius.circular(30),
                                       border: Border.all(
@@ -343,8 +348,8 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                                                   Flexible(
                                                     child: Text(
                                                       med.name,
-                                                      style: const TextStyle(
-                                                        color: Colors.white,
+                                                      style: TextStyle(
+                                                        color: AppColors.text,
                                                         fontSize: 16,
                                                         fontWeight: FontWeight.bold,
                                                       ),
@@ -356,7 +361,7 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                                                     const SizedBox(width: 8),
                                                     Text(
                                                       med.dosage!,
-                                                      style: const TextStyle(
+                                                      style: TextStyle(
                                                         color: AppColors.textMuted,
                                                         fontSize: 14,
                                                       ),
@@ -367,7 +372,7 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                                               const SizedBox(height: 4),
                                               Text(
                                                 typeLabel,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   color: AppColors.textMuted,
                                                   fontSize: 12.5,
                                                 ),
@@ -376,7 +381,7 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                                           ),
                                         ),
                                         if (!_isSelectionMode && med.pendingSync)
-                                          const Icon(
+                                          Icon(
                                             Icons.cloud_upload_rounded,
                                             color: AppColors.pending,
                                             size: 20,
@@ -399,7 +404,7 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
           ? Container(
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                border: const Border(top: BorderSide(color: AppColors.border, width: 1)),
+                border: Border(top: BorderSide(color: AppColors.border, width: 1)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
@@ -408,12 +413,12 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                     child: OutlinedButton(
                       onPressed: _clearSelection,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: AppColors.border),
+                        foregroundColor: AppColors.text,
+                        side: BorderSide(color: AppColors.border),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text('Limpar Seleção'),
+                      child: Text(t('meds_clear_selection')),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -426,7 +431,7 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: Text('Excluir (${_selectedMeds.length})'),
+                      child: Text(t('btn_delete_count_fmt', [_selectedMeds.length])),
                     ),
                   ),
                 ],

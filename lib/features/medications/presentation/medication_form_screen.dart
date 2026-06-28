@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/database/database.dart';
 import '../data/medication_repository.dart';
@@ -55,6 +56,8 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
       pendingSync: false,
     );
 
+    final buildContext = context;
+
     try {
       if (isEdit) {
         await repo.updateMedication(widget.editMedication!.name, med);
@@ -62,20 +65,20 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
         await repo.createMedication(med);
       }
       
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (buildContext.mounted) {
+        ScaffoldMessenger.of(buildContext).showSnackBar(
           SnackBar(
-            content: Text(isEdit ? 'Medicamento atualizado com sucesso!' : 'Medicamento cadastrado com sucesso!'),
+            content: Text(isEdit ? t('meds_updated_toast') : t('meds_added_toast')),
             backgroundColor: AppColors.success,
           ),
         );
-        Navigator.of(context).pop();
+        Navigator.of(buildContext).pop();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (buildContext.mounted) {
+        ScaffoldMessenger.of(buildContext).showSnackBar(
           SnackBar(
-            content: Text('Erro ao salvar medicamento: $e'),
+            content: Text(t('meds_save_error', [e])),
             backgroundColor: AppColors.missed,
           ),
         );
@@ -87,16 +90,16 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Excluir Medicamento'),
-        content: const Text('Deseja mesmo excluir este medicamento do cadastro?'),
+        title: Text(t('med_delete_btn')),
+        content: Text(t('dialog_delete_med_desc')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('CANCELAR', style: TextStyle(color: AppColors.textMuted)),
+            child: Text(t('cancel_btn').toUpperCase(), style: TextStyle(color: AppColors.textMuted)),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('EXCLUIR', style: TextStyle(color: AppColors.missed)),
+            child: Text(t('btn_delete_caps'), style: TextStyle(color: AppColors.missed)),
           ),
         ],
       ),
@@ -104,22 +107,23 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
 
     if (confirmed == true) {
       final repo = ref.read(medicationRepositoryProvider);
+      final buildContext = context;
       try {
         await repo.deleteMedication(widget.editMedication!.name);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Medicamento excluído com sucesso!'),
+        if (buildContext.mounted) {
+          ScaffoldMessenger.of(buildContext).showSnackBar(
+            SnackBar(
+              content: Text(t('med_deleted_toast')),
               backgroundColor: AppColors.success,
             ),
           );
-          Navigator.of(context).pop();
+          Navigator.of(buildContext).pop();
         }
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+        if (buildContext.mounted) {
+          ScaffoldMessenger.of(buildContext).showSnackBar(
             SnackBar(
-              content: Text('Erro ao excluir: $e'),
+              content: Text(t('med_delete_error', [e])),
               backgroundColor: AppColors.missed,
             ),
           );
@@ -135,7 +139,7 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(isEdit ? 'Editar Medicamento' : 'Cadastrar Medicamento'),
+        title: Text(isEdit ? t('edit_med_title') : t('new_med_title')),
         backgroundColor: AppColors.background,
         elevation: 0,
       ),
@@ -150,11 +154,11 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
                 // 1. Name
                 TextFormField(
                   controller: _nameController,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  style: TextStyle(color: AppColors.text, fontSize: 18),
                   decoration: InputDecoration(
-                    labelText: 'Nome do Medicamento',
-                    hintText: 'Ex: Paracetamol, Ibuprofeno',
-                    hintStyle: const TextStyle(color: AppColors.textMuted),
+                    labelText: t('med_name_label_clean'),
+                    hintText: t('med_name_hint'),
+                    hintStyle: TextStyle(color: AppColors.textMuted),
                     filled: true,
                     fillColor: AppColors.surface,
                     border: OutlineInputBorder(
@@ -164,7 +168,7 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
                   ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
-                      return 'O nome é obrigatório';
+                      return t('meds_name_required');
                     }
                     return null;
                   },
@@ -174,11 +178,11 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
                 // 2. Dosage
                 TextFormField(
                   controller: _dosageController,
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  style: TextStyle(color: AppColors.text, fontSize: 15),
                   decoration: InputDecoration(
-                    labelText: 'Dosagem padrão (Opcional)',
-                    hintText: 'Ex: 500mg, 1 comprimido',
-                    hintStyle: const TextStyle(color: AppColors.textMuted),
+                    labelText: t('med_dosage_label_optional'),
+                    hintText: t('med_dosage_placeholder'),
+                    hintStyle: TextStyle(color: AppColors.textMuted),
                     filled: true,
                     fillColor: AppColors.surface,
                     border: OutlineInputBorder(
@@ -196,25 +200,25 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Forma de Apresentação (Tipo)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        Text(t('med_type_card_title'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
-                          value: _selectedType,
+                          initialValue: _selectedType,
                           dropdownColor: AppColors.surface,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
-                          style: const TextStyle(color: Colors.white, fontSize: 15),
-                          items: const [
-                            DropdownMenuItem(value: 'comprimido', child: Text('Comprimido')),
-                            DropdownMenuItem(value: 'capsula', child: Text('Cápsula')),
-                            DropdownMenuItem(value: 'gota', child: Text('Gotas')),
-                            DropdownMenuItem(value: 'xarope', child: Text('Xarope')),
-                            DropdownMenuItem(value: 'inalador', child: Text('Inalador')),
-                            DropdownMenuItem(value: 'injetavel', child: Text('Injetável')),
-                            DropdownMenuItem(value: 'pomada', child: Text('Pomada')),
-                            DropdownMenuItem(value: 'outro', child: Text('Outro')),
+                          style: TextStyle(color: AppColors.text, fontSize: 15),
+                          items: [
+                            DropdownMenuItem(value: 'comprimido', child: Text(t('med_type_tablet'))),
+                            DropdownMenuItem(value: 'capsula', child: Text(t('med_type_capsule'))),
+                            DropdownMenuItem(value: 'gota', child: Text(t('med_type_drops'))),
+                            DropdownMenuItem(value: 'xarope', child: Text(t('med_type_syrup'))),
+                            DropdownMenuItem(value: 'inalador', child: Text(t('med_type_inhaler'))),
+                            DropdownMenuItem(value: 'injetavel', child: Text(t('med_type_injectable'))),
+                            DropdownMenuItem(value: 'pomada', child: Text(t('med_type_ointment'))),
+                            DropdownMenuItem(value: 'outro', child: Text(t('med_type_other'))),
                           ],
                           onChanged: (val) {
                             if (val != null) {
@@ -231,9 +235,9 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
                 const SizedBox(height: 20),
 
                 // 4. Color Picker
-                const Text(
-                  'Identificação Visual (Cor)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                Text(
+                  t('meds_form_color_label'),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text),
                 ),
                 const SizedBox(height: 12),
                 _buildColorPicker(),
@@ -248,12 +252,12 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
                           onPressed: _delete,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.missed,
-                            side: const BorderSide(color: AppColors.missed),
+                            side: BorderSide(color: AppColors.missed),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           icon: const Icon(Icons.delete_rounded),
-                          label: const Text('EXCLUIR', style: TextStyle(fontWeight: FontWeight.bold)),
+                          label: Text(t('btn_delete_caps'), style: const TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -268,7 +272,7 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(
-                          isEdit ? 'SALVAR ALTERAÇÕES' : 'CADASTRAR',
+                          isEdit ? t('btn_save_changes_caps') : t('btn_register_caps'),
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                         ),
                       ),
@@ -317,7 +321,7 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
               color: colorVal,
               shape: BoxShape.circle,
               border: Border.all(
-                color: isSelected ? Colors.white.withOpacity(0.8) : Colors.transparent,
+                color: isSelected ? Colors.white.withValues(alpha: 0.8) : Colors.transparent,
                 width: 3,
               ),
               boxShadow: [

@@ -1,0 +1,587 @@
+Found 49 violations of Rule 22:
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/settings/presentation/settings_screen.dart:1623
+--- Block ---
+const Text(
+              'Carregue a fixture com 25 alarmes e 6 lembretes reais para testar a interface com volume realista de dados.',
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/pairing/presentation/pairing_screen.dart:154
+--- Block ---
+const Text(
+                      'Buscando MediCaixa na rede local...',
+                      style: TextStyle(color: AppColors.primary),
+                    )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/medications/presentation/medications_list_screen.dart:143
+--- Block ---
+const SnackBar(
+              content: Text('Medicamentos excluídos com sucesso!'),
+              backgroundColor: AppColors.success,
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/medications/presentation/medications_list_screen.dart:198
+--- Block ---
+const Text(
+                            'Gerenciar Medicamentos',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textMuted,
+                            ),
+                          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/medications/presentation/medications_list_screen.dart:220
+--- Block ---
+const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/medications/presentation/medications_list_screen.dart:272
+--- Block ---
+const Center(child: CircularProgressIndicator())
+                      : filteredList.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.medication_rounded, size: 48, color: AppColors.textMuted),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _searchQuery.isNotEmpty
+                                        ? 'Nenhum medicamento correspondente.'
+                                        : 'Nenhum medicamento cadastrado.',
+                                    style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
+                              itemCount: filteredList.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 16),
+                              itemBuilder: (context, index) {
+                                final med = filteredList[index];
+                                final color = AppColors.getAlarmColor(med.color);
+                                final typeLabel = _formatType(med.type);
+                                final isSelected = _selectedMeds.contains(med.name);
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    if (_isSelectionMode) {
+                                      _toggleSelection(med.name);
+                                    } else {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => MedicationFormScreen(editMedication: med),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? color.withOpacity(0.08)
+                                          : AppColors.surface,
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: Border.all(
+                                        color: color,
+                                        width: 2.5,
+                                      ),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                                    child: Row(
+                                      children: [
+                                        if (_isSelectionMode) ...[
+                                          Icon(
+                                            isSelected
+                                                ? Icons.check_circle_rounded
+                                                : Icons.radio_button_unchecked_rounded,
+                                            color: color,
+                                            size: 24,
+                                          ),
+                                          const SizedBox(width: 16),
+                                        ],
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                                textBaseline: TextBaseline.alphabetic,
+                                                children: [
+                                                  Flexible(
+                                                    child: Text(
+                                                      med.name,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 16,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  if (med.dosage != null && med.dosage!.isNotEmpty) ...[
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      med.dosage!,
+                                                      style: const TextStyle(
+                                                        color: AppColors.textMuted,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                typeLabel,
+                                                style: const TextStyle(
+                                                  color: AppColors.textMuted,
+                                                  fontSize: 12.5,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (!_isSelectionMode && med.pendingSync)
+                                          const Icon(
+                                            Icons.cloud_upload_rounded,
+                                            color: AppColors.pending,
+                                            size: 20,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/medications/presentation/medications_list_screen.dart:359
+--- Block ---
+const TextStyle(
+                                                        color: AppColors.textMuted,
+                                                        fontSize: 14,
+                                                      )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/medications/presentation/medications_list_screen.dart:370
+--- Block ---
+const TextStyle(
+                                                  color: AppColors.textMuted,
+                                                  fontSize: 12.5,
+                                                )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/medications/presentation/medications_list_screen.dart:379
+--- Block ---
+const Icon(
+                                            Icons.cloud_upload_rounded,
+                                            color: AppColors.pending,
+                                            size: 20,
+                                          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/medications/presentation/medication_form_screen.dart:111
+--- Block ---
+const SnackBar(
+              content: Text('Medicamento excluído com sucesso!'),
+              backgroundColor: AppColors.success,
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/alarm_active_screen.dart:241
+--- Block ---
+const TextStyle(
+                      fontSize: 18,
+                      color: AppColors.textMuted,
+                    )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_1_name.dart:210
+--- Block ---
+const Text(
+            'Como é esse remédio?',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_1_name.dart:224
+--- Block ---
+const Text(
+            'Qual é a força dele? (Dose na caixa)',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_1_name.dart:234
+--- Block ---
+const Text(
+            'Exemplo: 50mg, 500mg, 100UI/ml, etc. Se não souber, pode deixar em branco.',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_1_name.dart:252
+--- Block ---
+const Text(
+            'Escolha uma cor para identificar este remédio:',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_1_name.dart:262
+--- Block ---
+const Text(
+            'Isso ajudará a diferenciar visualmente os cartões no painel.',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_1_name.dart:352
+--- Block ---
+const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.text,
+                      )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_1_name.dart:364
+--- Block ---
+const TextStyle(
+                          fontSize: 9,
+                          color: AppColors.textMuted,
+                        )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_1_name.dart:395
+--- Block ---
+const Text(
+            'Escolha a dosagem do remédio:',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textMuted,
+            ),
+          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_3_qty.dart:481
+--- Block ---
+const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 2.0),
+                        child: Text(
+                          'por',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textMuted,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_3_qty.dart:622
+--- Block ---
+const Icon(
+                              Icons.close,
+                              size: 16,
+                              color: AppColors.textMuted,
+                            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_3_qty.dart:660
+--- Block ---
+const BorderSide(color: AppColors.primary)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_3_qty.dart:803
+--- Block ---
+const Icon(
+                              Icons.close,
+                              size: 16,
+                              color: AppColors.textMuted,
+                            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_3_qty.dart:830
+--- Block ---
+const BorderSide(color: AppColors.primary)
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_7_summary.dart:211
+--- Block ---
+const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Você já vai começar a tomar hoje?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.text,
+                  ),
+                ),
+              )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/step_7_summary.dart:263
+--- Block ---
+const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'O médico deixou alguma recomendação?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.text,
+                  ),
+                ),
+              )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/wizard_step_schedule.dart:41
+--- Block ---
+const ColorScheme.dark(
+              primary: AppColors.primary,
+              surface: AppColors.surface,
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/wizard_step_medication.dart:116
+--- Block ---
+const Text(
+          'Busque no banco nacional da ANVISA ou digite o nome completo.',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+        )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/wizard_step_medication.dart:172
+--- Block ---
+const Text(
+            'Digite o nome do remédio para iniciar a busca.',
+            style: TextStyle(color: AppColors.textMuted),
+          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/wizard_step_medication.dart:186
+--- Block ---
+const Text(
+            'Não encontramos este medicamento na busca.',
+            style: TextStyle(color: AppColors.textMuted),
+          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/alarms/presentation/wizard/steps/wizard_step_medication.dart:222
+--- Block ---
+const CircleAvatar(
+              backgroundColor: AppColors.border,
+              child: Icon(Icons.add_rounded, color: Colors.white),
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/dashboard_screen.dart:181
+--- Block ---
+const Icon(
+                                  Icons.history_rounded,
+                                  size: 20,
+                                  color: AppColors.textMuted,
+                                )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/dashboard_screen.dart:539
+--- Block ---
+const SnackBar(
+              content: Text('Medicamento registrado com sucesso!'),
+              backgroundColor: AppColors.success,
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/alarm_card_widget.dart:170
+--- Block ---
+const Color(0xFF60A5FA)
+                                  : AppColors.text
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/alarm_card_widget.dart:488
+--- Block ---
+const Color(0xFF3B82F6) : AppColors.surface
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/day_summary_widget.dart:100
+--- Block ---
+const TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/reminder_card_widget.dart:89
+--- Block ---
+const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                            fontWeight: FontWeight.normal,
+                          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/reminder_card_widget.dart:101
+--- Block ---
+const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                      )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/reminder_card_widget.dart:112
+--- Block ---
+const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.w500,
+                        )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/reminder_card_widget.dart:119
+--- Block ---
+const Text(
+                          ' · ',
+                          style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+                        )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/reminder_card_widget.dart:125
+--- Block ---
+const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500,
+                          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/reminder_card_widget.dart:142
+--- Block ---
+const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: AppColors.textMuted,
+                )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/reminder_card_widget.dart:148
+--- Block ---
+const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12.0),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.success,
+                ),
+              )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/history/presentation/history_screen.dart:105
+--- Block ---
+const TabBar(
+            tabs: [
+              Tab(icon: Icon(Icons.history_rounded), text: 'Eventos'),
+              Tab(icon: Icon(Icons.developer_board_rounded), text: 'Logs do Sistema'),
+            ],
+            indicatorColor: AppColors.primary,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textMuted,
+          )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/history/presentation/history_screen.dart:126
+--- Block ---
+const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.history_rounded, size: 48, color: AppColors.textMuted),
+                        SizedBox(height: 12),
+                        Text(
+                          'Nenhum evento registrado ainda.',
+                          style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/history/presentation/history_screen.dart:252
+--- Block ---
+const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.developer_board_rounded, size: 48, color: AppColors.textMuted),
+                        SizedBox(height: 12),
+                        Text(
+                          'Nenhum log gerado ainda.',
+                          style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/reminders/presentation/reminder_form_screen.dart:72
+--- Block ---
+const ColorScheme.dark(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              surface: AppColors.surface,
+              onSurface: AppColors.text,
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/reminders/presentation/reminder_form_screen.dart:97
+--- Block ---
+const ColorScheme.dark(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              surface: AppColors.surface,
+              onSurface: AppColors.text,
+            )
+-------------
+
+File: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/lib/features/reminders/presentation/reminder_form_screen.dart:195
+--- Block ---
+const SnackBar(
+              content: Text('Lembrete excluído com sucesso!'),
+              backgroundColor: AppColors.success,
+            )
+-------------

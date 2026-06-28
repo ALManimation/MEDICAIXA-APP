@@ -134,7 +134,7 @@ class _WizardStepOptionsState extends ConsumerState<WizardStepOptions> {
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: colorVal.withOpacity(0.6),
+                                  color: colorVal.withValues(alpha: 0.6),
                                   blurRadius: 10,
                                   spreadRadius: 2,
                                 )
@@ -155,7 +155,7 @@ class _WizardStepOptionsState extends ConsumerState<WizardStepOptions> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String?>(
-                value: _specialInstruction,
+                initialValue: _specialInstruction,
                 dropdownColor: AppColors.surface,
                 decoration: InputDecoration(
                   filled: true,
@@ -197,7 +197,9 @@ class _WizardStepOptionsState extends ConsumerState<WizardStepOptions> {
                     child: RadioListTile<int>(
                       title: const Text('Contínuo', style: TextStyle(fontSize: 14)),
                       value: 0,
+                      // ignore: deprecated_member_use
                       groupValue: _durationDays == 0 ? 0 : 1,
+                      // ignore: deprecated_member_use
                       onChanged: (_) {
                         setState(() {
                           _durationDays = 0;
@@ -211,7 +213,9 @@ class _WizardStepOptionsState extends ConsumerState<WizardStepOptions> {
                     child: RadioListTile<int>(
                       title: const Text('Temporário', style: TextStyle(fontSize: 14)),
                       value: 1,
+                      // ignore: deprecated_member_use
                       groupValue: _durationDays == 0 ? 0 : 1,
+                      // ignore: deprecated_member_use
                       onChanged: (_) {
                         setState(() {
                           _durationDays = 7; // Default 7 days
@@ -275,7 +279,7 @@ class _WizardStepOptionsState extends ConsumerState<WizardStepOptions> {
                           Text('Intervalo mín. (horas)', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                           const SizedBox(height: 6),
                           DropdownButtonFormField<int>(
-                            value: _prnIntervalHours,
+                            initialValue: _prnIntervalHours,
                             dropdownColor: AppColors.surface,
                             decoration: InputDecoration(
                               filled: true,
@@ -301,7 +305,7 @@ class _WizardStepOptionsState extends ConsumerState<WizardStepOptions> {
                           Text('Máx. doses diárias', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                           const SizedBox(height: 6),
                           DropdownButtonFormField<int>(
-                            value: _prnMaxDoses,
+                            initialValue: _prnMaxDoses,
                             dropdownColor: AppColors.surface,
                             decoration: InputDecoration(
                               filled: true,

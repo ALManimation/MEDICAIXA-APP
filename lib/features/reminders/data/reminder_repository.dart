@@ -124,7 +124,7 @@ class ReminderRepository {
         return yDiff >= 0 && yDiff % interval == 0 && target.month == start.month && target.day == start.day;
       }
     } catch (e) {
-      debugPrint("Error parsing start_date: ${r.startDate}");
+      debugPrint('Error parsing start_date: ${r.startDate}');
     }
     return false;
   }
@@ -144,7 +144,7 @@ class ReminderRepository {
       try {
         finalId = await _apiClient.addReminder(reminder);
       } catch (e) {
-        debugPrint("Error sending reminder to ESP32: $e. Saving offline.");
+        debugPrint('Error sending reminder to ESP32: $e. Saving offline.');
         finalId = await _generateLocalId();
         isPending = true;
       }
@@ -181,7 +181,7 @@ class ReminderRepository {
       try {
         await _apiClient.updateReminder(reminder);
       } catch (e) {
-        debugPrint("Error updating reminder on ESP32: $e. Marking pending.");
+        debugPrint('Error updating reminder on ESP32: $e. Marking pending.');
         isPending = true;
       }
     } else {
@@ -214,7 +214,7 @@ class ReminderRepository {
       try {
         await _apiClient.removeReminder(id);
       } catch (e) {
-        debugPrint("Error removing reminder on ESP32: $e");
+        debugPrint('Error removing reminder on ESP32: $e');
       }
     }
     await (_db.delete(_db.reminders)..where((t) => t.id.equals(id))).go();
@@ -247,7 +247,7 @@ class ReminderRepository {
       try {
         await _apiClient.toggleReminder(id, enabled);
       } catch (e) {
-        debugPrint("Error toggling reminder on ESP32: $e");
+        debugPrint('Error toggling reminder on ESP32: $e');
       }
     }
 
@@ -282,7 +282,7 @@ class ReminderRepository {
       try {
         await _apiClient.completeReminder(id);
       } catch (e) {
-        debugPrint("Error completing reminder on ESP32: $e");
+        debugPrint('Error completing reminder on ESP32: $e');
       }
     }
 
@@ -309,7 +309,6 @@ class ReminderRepository {
       final remoteReminders = await _apiClient.fetchReminders();
       final localReminders = await getAllReminders();
 
-      final localMap = {for (final r in localReminders) r.id: r};
       final remoteMap = {for (final r in remoteReminders) r.id: r};
 
       // 1. Upload offline modifications
@@ -338,7 +337,7 @@ class ReminderRepository {
               );
               await _db.into(_db.reminders).insert(_toCompanion(uploaded));
             } catch (e) {
-              debugPrint("Failed to upload new local reminder ${local.id}: $e");
+              debugPrint('Failed to upload new local reminder ${local.id}: $e');
             }
           } else {
             try {
@@ -347,7 +346,7 @@ class ReminderRepository {
                     _toCompanion(local.copyWith(pendingSync: false)),
                   );
             } catch (e) {
-              debugPrint("Failed to update reminder ${local.id} on device: $e");
+              debugPrint('Failed to update reminder ${local.id} on device: $e');
             }
           }
         }
@@ -374,7 +373,7 @@ class ReminderRepository {
         }
       }
     } catch (e) {
-      debugPrint("Error syncing reminders: $e");
+      debugPrint('Error syncing reminders: $e');
     }
   }
 
@@ -390,7 +389,7 @@ class ReminderRepository {
         }
       }
     } catch (e) {
-      debugPrint("Error loading reminders backup fixture: $e");
+      debugPrint('Error loading reminders backup fixture: $e');
     }
   }
 }

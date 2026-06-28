@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'wizard_state.dart';
 import '../../data/alarm_model.dart';
@@ -108,10 +107,10 @@ class WizardNotifier extends _$WizardNotifier {
 
     // 3. Quantity Mode
     String quantityMode = 'fixed';
-    double fixedQuantity = alarm.quantity;
-    List<double> asymmetricDoses = alarm.daysQuantity;
+    final double fixedQuantity = alarm.quantity;
+    final List<double> asymmetricDoses = alarm.daysQuantity;
     String dynamicParamSelected = 'Glicose';
-    List<WizardDynamicRule> dynamicRules = [];
+    final List<WizardDynamicRule> dynamicRules = [];
 
     if (alarm.isDynamic == true) {
       quantityMode = 'dynamic';
@@ -184,7 +183,7 @@ class WizardNotifier extends _$WizardNotifier {
     // 4. Days Mode
     String daysMode = 'weekdays';
     int intervalDays = 8;
-    Set<int> weekdays = {};
+    final Set<int> weekdays = {};
     int alternatingDays = 2;
     int cycleOnDays = 21;
     int cycleOffDays = 7;
@@ -200,9 +199,9 @@ class WizardNotifier extends _$WizardNotifier {
       daysMode = 'cycle';
       cycleOnDays = alarm.cycleOnDays!;
       cycleOffDays = alarm.cycleOffDays ?? 7;
-    } else if (alarm.adjustIntervalDays != null && alarm.adjustIntervalDays! > 0) {
+    } else if ((alarm.intervalDays != null && alarm.intervalDays! > 0) || (alarm.adjustIntervalDays != null && alarm.adjustIntervalDays! > 0)) {
       daysMode = 'alternating';
-      alternatingDays = alarm.adjustIntervalDays!;
+      alternatingDays = alarm.intervalDays ?? alarm.adjustIntervalDays!;
     } else {
       final activeDays = alarm.days.where((d) => d).length;
       if (activeDays == 7) {
@@ -211,7 +210,7 @@ class WizardNotifier extends _$WizardNotifier {
         daysMode = 'weekdays';
         for (int i = 0; i < 7; i++) {
           if (alarm.days[i]) {
-            int w = i == 0 ? 7 : i;
+            final int w = i == 0 ? 7 : i;
             weekdays.add(w);
           }
         }
@@ -220,7 +219,7 @@ class WizardNotifier extends _$WizardNotifier {
 
     // 5. Time preset and custom times
     final customTimes = ['${alarm.hour.toString().padLeft(2, '0')}:${alarm.minute.toString().padLeft(2, '0')}'];
-    final timePreset = 'custom';
+    const timePreset = 'custom';
 
     // 6. Duration Mode
     final durationMode = alarm.durationDays > 0 ? 'days' : 'continuous';
@@ -333,7 +332,7 @@ class WizardNotifier extends _$WizardNotifier {
 
   AlarmModel constructAlarmModel(int nextId) {
     // 1. Basic
-    String finalMedName = state.name.trim();
+    final String finalMedName = state.name.trim();
     String finalDosage = state.dosage.trim();
     
     // Auto-append unit to dosage if missing
@@ -346,7 +345,7 @@ class WizardNotifier extends _$WizardNotifier {
       }
     }
 
-    bool isPrn = state.useMode == 'prn';
+    final bool isPrn = state.useMode == 'prn';
     
     // Days logic
     List<bool> finalDays = List.filled(7, true);
@@ -361,7 +360,7 @@ class WizardNotifier extends _$WizardNotifier {
           // Flutter i=0 -> Dom (weekday=7)
           // Flutter i=1 -> Seg (weekday=1)
           // i=2 -> Ter(2), etc.
-          int w = i == 0 ? 7 : i; 
+          final int w = i == 0 ? 7 : i; 
           return state.weekdays.contains(w);
         });
       }
@@ -380,7 +379,7 @@ class WizardNotifier extends _$WizardNotifier {
       finalStartDate = "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
     }
 
-    int duration = (state.durationMode == 'days') ? state.durationDays : 0;
+    final int duration = (state.durationMode == 'days') ? state.durationDays : 0;
     
     // Cycle logic
     int? cycleOn, cycleOff;
@@ -390,7 +389,7 @@ class WizardNotifier extends _$WizardNotifier {
     }
 
     // Interval logic
-    int? adjustIntervalDays = state.daysMode == 'alternating' ? state.alternatingDays : null;
+    final int? intervalDays = state.daysMode == 'alternating' ? state.alternatingDays : null;
 
     int? dayOfMonth;
     if (state.daysMode == 'monthly') dayOfMonth = state.monthlyDay;
@@ -434,6 +433,7 @@ class WizardNotifier extends _$WizardNotifier {
       cycleOnDays: cycleOn,
       cycleOffDays: cycleOff,
       intervalHours: state.daysMode == 'interval' ? state.intervalDays : null, 
+      intervalDays: intervalDays,
       dayOfMonth: dayOfMonth,
 
       // Dynamics
@@ -470,7 +470,7 @@ class WizardNotifier extends _$WizardNotifier {
       
       specialInstruction: state.instruction,
       
-      adjustIntervalDays: adjustIntervalDays,
+      adjustIntervalDays: null,
       
       requiresRemoval: state.requiresRemoval,
       removalDelayMins: state.removalDelayMins,

@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../alarms/data/alarm_model.dart';
 import '../../alarms/data/alarm_repository.dart';
 import '../../reminders/data/reminder_model.dart';
 import '../../reminders/data/reminder_repository.dart';
+import '../../history/data/history_repository.dart';
+import '../../../core/database/database.dart';
 
 part 'dashboard_notifier.g.dart';
 
@@ -12,6 +15,7 @@ class DashboardState {
   final List<AlarmModel> alarms;
   final List<AlarmModel> allAlarms;
   final List<ReminderModel> reminders;
+  final List<ReminderModel> allReminders;
   final int takenCount;
   final int pendingCount;
   final int missedCount;
@@ -22,6 +26,7 @@ class DashboardState {
     required this.alarms,
     required this.allAlarms,
     required this.reminders,
+    required this.allReminders,
     required this.takenCount,
     required this.pendingCount,
     required this.missedCount,
@@ -33,6 +38,7 @@ class DashboardState {
     List<AlarmModel>? alarms,
     List<AlarmModel>? allAlarms,
     List<ReminderModel>? reminders,
+    List<ReminderModel>? allReminders,
     int? takenCount,
     int? pendingCount,
     int? missedCount,
@@ -43,6 +49,7 @@ class DashboardState {
       alarms: alarms ?? this.alarms,
       allAlarms: allAlarms ?? this.allAlarms,
       reminders: reminders ?? this.reminders,
+      allReminders: allReminders ?? this.allReminders,
       takenCount: takenCount ?? this.takenCount,
       pendingCount: pendingCount ?? this.pendingCount,
       missedCount: missedCount ?? this.missedCount,
@@ -74,6 +81,7 @@ class DashboardNotifier extends _$DashboardNotifier {
       alarms: [],
       allAlarms: [],
       reminders: [],
+      allReminders: [],
       takenCount: 0,
       pendingCount: 0,
       missedCount: 0,
@@ -92,6 +100,8 @@ class DashboardNotifier extends _$DashboardNotifier {
     _resetInactivityTimer();
   }
 
+  void refresh() => _updateData();
+
   void resetToToday() {
     _inactivityTimer?.cancel();
     _inactivityTimer = null;
@@ -108,7 +118,7 @@ class DashboardNotifier extends _$DashboardNotifier {
                     state.selectedDate.day == now.day;
                     
     if (!isToday) {
-      _inactivityTimer = Timer(const Duration(seconds: 30), () {
+      _inactivityTimer = Timer(const Duration(minutes: 3), () {
         resetToToday();
       });
     }
@@ -135,6 +145,125 @@ class DashboardNotifier extends _$DashboardNotifier {
     final allAlarms = await _alarmRepo.getAllAlarms();
     final filteredAlarms = allAlarms.where((a) => _isAlarmActiveOnDate(a, date)).toList();
 
+    // Check for ghost alarms (past dates only)
+    final now = DateTime.now();
+    final todayZero = DateTime(now.year, now.month, now.day);
+    final targetZero = DateTime(date.year, date.month, date.day);
+    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+    final dateFormatted = "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+    
+    if (targetZero.isBefore(todayZero)) {
+      try {
+        final historyRepo = ref.read(historyRepositoryProvider);
+        final allHistory = await historyRepo.getAllHistoryEvents();
+        final dateEvents = allHistory.where((e) {
+          final dt = DateTime.fromMillisecondsSinceEpoch(e.timestamp);
+          return dt.year == date.year && dt.month == date.month && dt.day == date.day;
+        }).toList();
+
+        // Update existing alarms with historical status
+        for (int i = 0; i < filteredAlarms.length; i++) {
+          final alarm = filteredAlarms[i];
+          HistoryEvent? event;
+          for (final e in dateEvents) {
+            if (e.alarmId == alarm.id && e.type == 'alarm') {
+              event = e;
+              break;
+            }
+          }
+          if (event != null) {
+            final isTaken = event.status == 'TOMADO' || event.status == 'TOMADO FORA HORA' || event.status == 'TOMADO PRN';
+            final isMissed = event.status == 'PERDIDO';
+            filteredAlarms[i] = alarm.copyWith(
+              lastStatus: isTaken ? 'Tomado' : (isMissed ? 'Não Tomado' : ''),
+              lastStatusDate: dateFormatted,
+            );
+          } else {
+            // Past date, no event recorded = not taken (missed)
+            filteredAlarms[i] = alarm.copyWith(
+              lastStatus: '',
+              lastStatusDate: '',
+            );
+          }
+        }
+
+        // Add ghost alarms
+        for (final e in dateEvents) {
+          if (e.type == 'alarm' && e.alarmId != null) {
+            final exists = filteredAlarms.any((a) => a.id == e.alarmId);
+            if (!exists) {
+              final dt = DateTime.fromMillisecondsSinceEpoch(e.timestamp);
+              final isTaken = e.status == 'TOMADO' || e.status == 'TOMADO FORA HORA' || e.status == 'TOMADO PRN';
+              final isMissed = e.status == 'PERDIDO';
+              
+              // Look up original alarm for metadata fallback
+              AlarmModel? orig;
+              for (final a in allAlarms) {
+                if (a.id == e.alarmId || a.medName == e.medName || a.name == e.medName) {
+                  orig = a;
+                  break;
+                }
+              }
+
+              final ghostAlarm = AlarmModel(
+                id: e.alarmId!,
+                hour: orig?.hour ?? dt.hour,
+                minute: orig?.minute ?? dt.minute,
+                name: e.medName ?? orig?.name ?? '',
+                medName: e.medName ?? orig?.medName ?? '',
+                enabled: false,
+                active: false,
+                days: orig?.days ?? List.filled(7, true),
+                status: isTaken ? 'TOMADO' : 'PENDENTE',
+                color: orig?.color ?? 'grey',
+                quantity: orig?.quantity ?? 1.0,
+                daysQuantity: orig?.daysQuantity ?? List.filled(7, 0.0),
+                type: orig?.type ?? 'comprimido',
+                dosage: e.dosage ?? orig?.dosage,
+                lastStatus: isTaken ? 'Tomado' : (isMissed ? 'Não Tomado' : ''),
+                lastStatusDate: dateFormatted,
+                snoozeMin: 0,
+                durationDays: 0,
+                isGhost: true, // Mark as ghost
+              );
+              filteredAlarms.add(ghostAlarm);
+            }
+          }
+        }
+      } catch (err) {
+        debugPrint('Error loading ghost alarms: $err');
+      }
+    }
+
+    // Compute dose number and total dose for interval alarms
+    for (int i = 0; i < filteredAlarms.length; i++) {
+      final alarm = filteredAlarms[i];
+      int? doseNum;
+      int? doseTotal;
+
+      if (alarm.intervalDays != null && alarm.intervalDays! > 1) {
+        if (alarm.startDate != null && alarm.startDate!.isNotEmpty) {
+          try {
+            final sd = DateTime.parse(alarm.startDate!);
+            final sdZero = DateTime(sd.year, sd.month, sd.day);
+            final diffDays = targetZero.difference(sdZero).inDays;
+            doseNum = (diffDays ~/ alarm.intervalDays!) + 1;
+            doseTotal = ((alarm.durationDays > 0 ? alarm.durationDays : 1) ~/ alarm.intervalDays!) + 1;
+          } catch (_) {}
+        } else if (alarm.createdDate != null && alarm.createdDate!.isNotEmpty) {
+          try {
+            final cd = DateTime.parse(alarm.createdDate!);
+            final cdZero = DateTime(cd.year, cd.month, cd.day);
+            final diffDays = targetZero.difference(cdZero).inDays;
+            doseNum = (diffDays ~/ alarm.intervalDays!) + 1;
+          } catch (_) {}
+        }
+      }
+      if (doseNum != null || doseTotal != null) {
+        filteredAlarms[i] = alarm.copyWith(doseNum: doseNum, doseTotal: doseTotal);
+      }
+    }
+
     // Sort by hour/minute
     filteredAlarms.sort((a, b) {
       final hourComp = a.hour.compareTo(b.hour);
@@ -147,38 +276,34 @@ class DashboardNotifier extends _$DashboardNotifier {
     final filteredReminders = allReminders.where((r) => _reminderRepo.isReminderActiveOnDate(r, date)).toList();
 
     // Calculate summary
-    int taken = 0;
-    int pending = 0;
-    int missed = 0;
-
-    final now = DateTime.now();
-    final isSelectedToday = date.year == now.year && date.month == now.month && date.day == now.day;
-    final dateFormatted = "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+    int takenCount = 0;
+    int pendingCount = 0;
+    int missedCount = 0;
 
     for (final alarm in filteredAlarms) {
       final isTakenToday = alarm.lastStatusDate == dateFormatted && alarm.lastStatus == 'Tomado';
       final isSkippedToday = alarm.lastStatusDate == dateFormatted && alarm.lastStatus == 'Não Tomado';
 
       if (isTakenToday) {
-        taken++;
+        takenCount++;
       } else if (isSkippedToday) {
-        missed++;
+        missedCount++;
       } else {
         // Not taken or skipped yet
-        if (isSelectedToday) {
+        if (isToday) {
           // Check if alarm time has passed today
           final alarmTime = DateTime(now.year, now.month, now.day, alarm.hour, alarm.minute);
           if (now.isAfter(alarmTime)) {
-            missed++; // Missed since time passed and not marked taken
+            missedCount++; // Missed since time passed and not marked taken
           } else {
-            pending++;
+            pendingCount++;
           }
-        } else if (date.isBefore(DateTime(now.year, now.month, now.day))) {
+        } else if (targetZero.isBefore(todayZero)) {
           // Date in the past, if not taken, it is missed
-          missed++;
+          missedCount++;
         } else {
           // Date in the future, it is pending
-          pending++;
+          pendingCount++;
         }
       }
     }
@@ -188,38 +313,69 @@ class DashboardNotifier extends _$DashboardNotifier {
       alarms: filteredAlarms,
       allAlarms: allAlarms,
       reminders: filteredReminders,
-      takenCount: taken,
-      pendingCount: pending,
-      missedCount: missed,
+      allReminders: allReminders,
+      takenCount: takenCount,
+      pendingCount: pendingCount,
+      missedCount: missedCount,
       isLoading: false,
     );
   }
 
   bool _isAlarmActiveOnDate(AlarmModel alarm, DateTime dateObj) {
-    if (!alarm.enabled) return false;
     final target = DateTime(dateObj.year, dateObj.month, dateObj.day);
+
+    // Filter by creation date: alarm only starts on/after created_date
+    if (alarm.createdDate != null && alarm.createdDate!.isNotEmpty) {
+      try {
+        final created = DateTime.parse(alarm.createdDate!);
+        final createdZero = DateTime(created.year, created.month, created.day);
+        if (target.isBefore(createdZero)) return false;
+      } catch (_) {}
+    }
+
+    // 1. Verifica frequência de intervalo de dias ("a cada N dias")
+    if (alarm.intervalDays != null && alarm.intervalDays! > 1) {
+      final today = DateTime.now();
+      final todayZero = DateTime(today.year, today.month, today.day);
+      final isToday = target.isAtSameMomentAs(todayZero);
+
+      if (isToday) {
+        if (alarm.intervalCountdown != null && alarm.intervalCountdown! > 0) {
+          return false;
+        }
+      } else {
+        final startStr = alarm.startDate ?? alarm.createdDate;
+        if (startStr != null && startStr.isNotEmpty) {
+          try {
+            final start = DateTime.parse(startStr);
+            final startZero = DateTime(start.year, start.month, start.day);
+            final diffDays = target.difference(startZero).inDays;
+            if (diffDays < 0 || diffDays % alarm.intervalDays! != 0) {
+              return false;
+            }
+          } catch (_) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+    }
 
     // Alarme mensal fixo
     if (alarm.dayOfMonth != null && alarm.dayOfMonth! > 0) {
       if (target.day != alarm.dayOfMonth) return false;
-      if (alarm.createdDate != null && alarm.createdDate!.isNotEmpty) {
-        try {
-          final created = DateTime.parse(alarm.createdDate!);
-          final createdZero = DateTime(created.year, created.month, created.day);
-          if (target.isBefore(createdZero)) return false;
-        } catch (_) {}
-      }
       return true;
     }
 
     // Alarme com data específica de início
-    if (alarm.startDate != null && alarm.startDate!.isNotEmpty) {
+    if (alarm.startDate != null && alarm.startDate!.isNotEmpty && alarm.durationDays > 0) {
       try {
         final start = DateTime.parse(alarm.startDate!);
         final startZero = DateTime(start.year, start.month, start.day);
         
         // Verifica duração
-        final endZero = startZero.add(Duration(days: (alarm.durationDays > 0 ? alarm.durationDays : 1) - 1));
+        final endZero = startZero.add(Duration(days: alarm.durationDays - 1));
         if (target.isBefore(startZero) || target.isAfter(endZero)) return false;
 
         // Verifica intervalo de horas/dias (se existir)

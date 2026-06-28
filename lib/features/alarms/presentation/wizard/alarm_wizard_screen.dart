@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/alarm_model.dart';
+import '../../../dashboard/presentation/dashboard_notifier.dart';
 import 'wizard_notifier.dart';
 
 // Steps (we will create these files next)
@@ -73,7 +74,7 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: AppColors.text),
+          icon: Icon(Icons.close, color: AppColors.text),
           onPressed: () {
             notifier.reset();
             Navigator.of(context).pop();
@@ -83,7 +84,7 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
           children: [
             Text(
               state.editingAlarmId != null ? 'Editar Alarme — Passo ${state.step} de 7' : 'Passo ${state.step} de 7',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.text,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -96,7 +97,7 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
               child: LinearProgressIndicator(
                 value: state.step / 7,
                 backgroundColor: AppColors.surfaceVariant,
-                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                 minHeight: 4,
               ),
             ),
@@ -128,7 +129,7 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                border: const Border(top: BorderSide(color: AppColors.surfaceVariant)),
+                border: Border(top: BorderSide(color: AppColors.surfaceVariant)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -137,7 +138,7 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
                   if (state.step > 1)
                     TextButton(
                       onPressed: _isSaving ? null : () => notifier.prevStep(),
-                      child: const Text('VOLTAR', style: TextStyle(color: AppColors.textMuted)),
+                      child: Text('VOLTAR', style: TextStyle(color: AppColors.textMuted)),
                     )
                   else
                     const SizedBox.shrink(), // placeholder to keep flex alignment
@@ -158,6 +159,7 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
                               try {
                                 await notifier.saveAlarm();
                                 if (context.mounted) {
+                                  ref.invalidate(dashboardNotifierProvider);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(state.editingAlarmId != null
@@ -178,7 +180,7 @@ class _AlarmWizardScreenState extends ConsumerState<AlarmWizardScreen> {
                                   );
                                 }
                               } finally {
-                                if (mounted) {
+                                if (context.mounted) {
                                   setState(() => _isSaving = false);
                                 }
                               }

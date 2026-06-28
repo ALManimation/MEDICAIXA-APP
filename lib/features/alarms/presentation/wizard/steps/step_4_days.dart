@@ -18,7 +18,7 @@ class WizardStep4Days extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 1. Título
-          const Text(
+          Text(
             'Em quais dias você precisa usar esse remédio?',
             style: TextStyle(
               fontSize: 20,
@@ -33,8 +33,8 @@ class WizardStep4Days extends ConsumerWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth;
-              int crossAxisCount = width >= 800 ? 6 : (width >= 500 ? 3 : 2);
-              double childAspectRatio = width >= 800 ? 1.2 : (width >= 500 ? 1.3 : 1.15);
+              final int crossAxisCount = width >= 800 ? 6 : (width >= 500 ? 3 : 2);
+              final double childAspectRatio = width >= 800 ? 1.2 : (width >= 500 ? 1.3 : 1.15);
 
               final modes = [
                 {'id': 'everyday', 'icon': '📅', 'title': 'Todos os dias', 'sub': 'Sem faltar nenhum dia'},
@@ -75,7 +75,7 @@ class WizardStep4Days extends ConsumerWidget {
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.12),
+                                  color: AppColors.primary.withValues(alpha: 0.12),
                                   blurRadius: 6,
                                   spreadRadius: 1,
                                 )
@@ -89,7 +89,7 @@ class WizardStep4Days extends ConsumerWidget {
                           const SizedBox(height: 6),
                           Text(
                             m['title']!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: AppColors.text,
@@ -101,7 +101,7 @@ class WizardStep4Days extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 4.0),
                             child: Text(
                               m['sub']!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 9.5,
                                 color: AppColors.textMuted,
                               ),
@@ -144,7 +144,7 @@ class WizardStep4Days extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'A caixinha deve apitar a cada:',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
             textAlign: TextAlign.center,
@@ -160,7 +160,7 @@ class WizardStep4Days extends ConsumerWidget {
             step: 2,
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Horas',
             style: TextStyle(
               fontSize: 18,
@@ -190,7 +190,7 @@ class WizardStep4Days extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Selecione os dias da semana:',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
           ),
@@ -265,7 +265,7 @@ class WizardStep4Days extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'A caixinha deve apitar a cada:',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
             textAlign: TextAlign.center,
@@ -281,7 +281,7 @@ class WizardStep4Days extends ConsumerWidget {
             step: 1,
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Dias',
             style: TextStyle(
               fontSize: 18,
@@ -291,7 +291,7 @@ class WizardStep4Days extends ConsumerWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Exemplo: 2 = Dia sim, dia não. 3 = A cada 3 dias.',
             style: TextStyle(fontSize: 11, color: AppColors.textMuted),
             textAlign: TextAlign.center,
@@ -314,7 +314,7 @@ class WizardStep4Days extends ConsumerWidget {
       child: Column(
         children: [
           // Stepper de Uso
-          const Text(
+          Text(
             'Tomo o remédio seguidamente por:',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
             textAlign: TextAlign.center,
@@ -330,7 +330,7 @@ class WizardStep4Days extends ConsumerWidget {
             step: 1,
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Dias (Uso)',
             style: TextStyle(
               fontSize: 16,
@@ -341,11 +341,11 @@ class WizardStep4Days extends ConsumerWidget {
           ),
 
           const SizedBox(height: 24),
-          const Divider(color: AppColors.border),
+          Divider(color: AppColors.border),
           const SizedBox(height: 24),
 
           // Stepper de Descanso
-          const Text(
+          Text(
             'Depois descanso (sem tomar) por:',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
             textAlign: TextAlign.center,
@@ -361,7 +361,7 @@ class WizardStep4Days extends ConsumerWidget {
             step: 1,
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Dias (Descanso)',
             style: TextStyle(
               fontSize: 16,
@@ -387,13 +387,13 @@ class WizardStep4Days extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Em qual dia do mês você vai tomar?',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Todo o dia',
             style: TextStyle(
               fontSize: 16,
@@ -413,7 +413,7 @@ class WizardStep4Days extends ConsumerWidget {
             step: 1,
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'do mês',
             style: TextStyle(
               fontSize: 16,
@@ -451,7 +451,7 @@ class WizardStep4Days extends ConsumerWidget {
               border: Border.all(color: AppColors.primary, width: 2),
             ),
             alignment: Alignment.center,
-            child: const Text(
+            child: Text(
               '-',
               style: TextStyle(
                 color: AppColors.primary,
@@ -467,7 +467,7 @@ class WizardStep4Days extends ConsumerWidget {
           alignment: Alignment.center,
           child: Text(
             '$value',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.text,
               fontSize: 38,
               fontWeight: FontWeight.w800,
@@ -490,7 +490,7 @@ class WizardStep4Days extends ConsumerWidget {
               border: Border.all(color: AppColors.primary, width: 2),
             ),
             alignment: Alignment.center,
-            child: const Text(
+            child: Text(
               '+',
               style: TextStyle(
                 color: AppColors.primary,

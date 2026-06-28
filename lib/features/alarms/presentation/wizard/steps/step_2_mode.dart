@@ -17,7 +17,7 @@ class WizardStep2Mode extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 1. Título
-          const Text(
+          Text(
             'Como o médico mandou você usar esse remédio?',
             style: TextStyle(
               fontSize: 20,
@@ -80,7 +80,7 @@ class WizardStep2Mode extends ConsumerWidget {
           // 3. Travas de Segurança (Apenas para PRN)
           if (state.useMode == 'prn') ...[
             const SizedBox(height: 32),
-            const Text(
+            Text(
               'Limites de segurança para o idoso:',
               style: TextStyle(
                 fontSize: 16,
@@ -102,7 +102,7 @@ class WizardStep2Mode extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Limite diário (Dose Máxima)
-                  const Text(
+                  Text(
                     'Qual o máximo de vezes que pode tomar no mesmo dia?',
                     style: TextStyle(
                       fontSize: 14,
@@ -121,7 +121,7 @@ class WizardStep2Mode extends ConsumerWidget {
                     max: 24,
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     '0 = Sem limite diário definido',
                     style: TextStyle(
                       fontSize: 11,
@@ -130,11 +130,11 @@ class WizardStep2Mode extends ConsumerWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  const Divider(color: AppColors.border),
+                  Divider(color: AppColors.border),
                   const SizedBox(height: 24),
 
                   // Intervalo Mínimo
-                  const Text(
+                  Text(
                     'Tem que esperar quantas horas antes de repetir a dose?',
                     style: TextStyle(
                       fontSize: 14,
@@ -153,7 +153,7 @@ class WizardStep2Mode extends ConsumerWidget {
                     max: 24,
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     '0 = Pode tomar sem tempo mínimo de espera',
                     style: TextStyle(
                       fontSize: 11,
@@ -192,7 +192,7 @@ class WizardStep2Mode extends ConsumerWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.12),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                     blurRadius: 6,
                     spreadRadius: 1,
                   )
@@ -210,7 +210,7 @@ class WizardStep2Mode extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AppColors.text,
@@ -222,7 +222,7 @@ class WizardStep2Mode extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   color: AppColors.textMuted,
                 ),
@@ -259,7 +259,7 @@ class WizardStep2Mode extends ConsumerWidget {
               border: Border.all(color: AppColors.primary, width: 2),
             ),
             alignment: Alignment.center,
-            child: const Text(
+            child: Text(
               '-',
               style: TextStyle(
                 color: AppColors.primary,
@@ -275,7 +275,7 @@ class WizardStep2Mode extends ConsumerWidget {
           alignment: Alignment.center,
           child: Text(
             '$value',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.text,
               fontSize: 38,
               fontWeight: FontWeight.w800,
@@ -296,7 +296,7 @@ class WizardStep2Mode extends ConsumerWidget {
               border: Border.all(color: AppColors.primary, width: 2),
             ),
             alignment: Alignment.center,
-            child: const Text(
+            child: Text(
               '+',
               style: TextStyle(
                 color: AppColors.primary,

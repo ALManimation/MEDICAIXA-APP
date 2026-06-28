@@ -75,7 +75,7 @@ class WizardStep5Time extends ConsumerWidget {
               // 1. Título
               Text(
                 titleText,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: AppColors.text,
@@ -137,7 +137,7 @@ class WizardStep5Time extends ConsumerWidget {
                             boxShadow: state.timePreset == 'custom'
                                 ? [
                                     BoxShadow(
-                                      color: AppColors.primary.withOpacity(0.12),
+                                      color: AppColors.primary.withValues(alpha: 0.12),
                                       blurRadius: 6,
                                       spreadRadius: 1,
                                     )
@@ -211,7 +211,7 @@ class WizardStep5Time extends ConsumerWidget {
                                     if (selectedTime != null) {
                                       final newHoursStr = selectedTime.hour.toString().padLeft(2, '0');
                                       final newMinutesStr = selectedTime.minute.toString().padLeft(2, '0');
-                                      final newTimeStr = "$newHoursStr:$newMinutesStr";
+                                      final newTimeStr = '$newHoursStr:$newMinutesStr';
 
                                       final updatedTimes = List<String>.from(state.customTimes);
                                       updatedTimes[idx] = newTimeStr;
@@ -229,7 +229,7 @@ class WizardStep5Time extends ConsumerWidget {
                                     alignment: Alignment.center,
                                     child: Text(
                                       timeVal,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.text,
@@ -251,9 +251,9 @@ class WizardStep5Time extends ConsumerWidget {
                                       width: 45,
                                       height: 55,
                                       decoration: BoxDecoration(
-                                        color: AppColors.missed.withOpacity(0.12),
+                                        color: AppColors.missed.withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: AppColors.missed.withOpacity(0.4), width: 1.5),
+                                        border: Border.all(color: AppColors.missed.withValues(alpha: 0.4), width: 1.5),
                                       ),
                                       alignment: Alignment.center,
                                       child: Icon(
@@ -301,7 +301,7 @@ class WizardStep5Time extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          icon: const Icon(Icons.add, size: 18, color: AppColors.primary),
+                          icon: Icon(Icons.add, size: 18, color: AppColors.primary),
                           label: const Text(
                             'Adicionar outro horário',
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
@@ -349,7 +349,7 @@ class WizardStep5Time extends ConsumerWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.12),
+                    color: AppColors.primary.withValues(alpha: 0.12),
                     blurRadius: 6,
                     spreadRadius: 1,
                   )
@@ -365,7 +365,7 @@ class WizardStep5Time extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     p['title']!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,
                       color: AppColors.text,
@@ -377,7 +377,7 @@ class WizardStep5Time extends ConsumerWidget {
                   const SizedBox(height: 2),
                   Text(
                     "Cerca de ${p['time']}",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 9.5,
                       color: AppColors.textMuted,
                     ),
@@ -396,7 +396,7 @@ class WizardStep5Time extends ConsumerWidget {
                       children: [
                         Text(
                           p['title']!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13.5,
                             fontWeight: FontWeight.bold,
                             color: AppColors.text,
@@ -407,7 +407,7 @@ class WizardStep5Time extends ConsumerWidget {
                         const SizedBox(height: 2),
                         Text(
                           "Cerca de ${p['time']}",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             color: AppColors.textMuted,
                           ),

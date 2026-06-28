@@ -10,7 +10,7 @@ class MdnsDiscovery {
     try {
       await client.start();
     } catch (e) {
-      debugPrint("Error starting mDNS client: $e");
+      debugPrint('Error starting mDNS client: $e');
       return null;
     }
 
@@ -38,19 +38,17 @@ class MdnsDiscovery {
             final ipQuery = ResourceRecordQuery.addressIPv4(srv.target);
             await for (final ip in client.lookup<IPAddressResourceRecord>(ipQuery)) {
               deviceIp = ip.address.address;
-              if (deviceIp != null) {
-                if (!completer.isCompleted) {
-                  client.stop();
-                  completer.complete('http://$deviceIp');
-                }
-                break;
+              if (!completer.isCompleted) {
+                client.stop();
+                completer.complete('http://$deviceIp');
               }
+              break;
             }
           }
         }
       }
     } catch (e) {
-      debugPrint("Error during mDNS lookup: $e");
+      debugPrint('Error during mDNS lookup: $e');
     } finally {
       if (!completer.isCompleted) {
         client.stop();

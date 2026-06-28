@@ -73,7 +73,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // 1. Título
-          const Text(
+          Text(
             'Qual a quantidade que você toma por vez?',
             style: TextStyle(
               fontSize: 20,
@@ -88,8 +88,8 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
           LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth;
-              int crossAxisCount = width >= 700 ? 4 : 2;
-              double childAspectRatio = width >= 700 ? 1.25 : 1.15;
+              final int crossAxisCount = width >= 700 ? 4 : 2;
+              final double childAspectRatio = width >= 700 ? 1.25 : 1.15;
 
               final modes = [
                 {'id': 'fixed', 'icon': '🎯', 'title': 'Quantidade Fixa', 'sub': 'Sempre a mesma quantidade'},
@@ -128,7 +128,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.12),
+                                  color: AppColors.primary.withValues(alpha: 0.12),
                                   blurRadius: 6,
                                   spreadRadius: 1,
                                 )
@@ -142,7 +142,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                           const SizedBox(height: 6),
                           Text(
                             m['title']!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
                               color: AppColors.text,
@@ -154,7 +154,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                             padding: const EdgeInsets.symmetric(horizontal: 4.0),
                             child: Text(
                               m['sub']!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 9.5,
                                 color: AppColors.textMuted,
                               ),
@@ -199,7 +199,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Escolha a quantidade de cada tomada:',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
             textAlign: TextAlign.center,
@@ -245,7 +245,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Defina a dose para cada dia:',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
           ),
@@ -269,7 +269,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                     children: [
                       Text(
                         days[i],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: AppColors.text,
@@ -300,7 +300,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                       const SizedBox(height: 6),
                       Text(
                         '$typeLabel(s)',
-                        style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                        style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -332,7 +332,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Qual aparelho de teste você vai usar?',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
           ),
@@ -413,24 +413,24 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                     onChanged: (val) {
                       notifier.updateState((s) => s.copyWith(dynamicParamSelected: val));
                     },
-                    style: const TextStyle(color: AppColors.text, fontSize: 13),
+                    style: TextStyle(color: AppColors.text, fontSize: 13),
                     decoration: InputDecoration(
                       hintText: 'Outro...',
-                      hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                      hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 13),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 10),
                       filled: true,
                       fillColor: AppColors.surface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                        borderSide: BorderSide(color: AppColors.border, width: 1.5),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                        borderSide: BorderSide(color: AppColors.border, width: 1.5),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                        borderSide: BorderSide(color: AppColors.primary, width: 1.5),
                       ),
                     ),
                   ),
@@ -440,7 +440,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
           ),
 
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Defina a regra da dose:',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
           ),
@@ -478,8 +478,8 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                         step: 10,
                         minWidth: 40,
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 2.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2.0),
                         child: Text(
                           'por',
                           style: TextStyle(
@@ -535,7 +535,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             'Se estiver',
                             style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                           ),
@@ -565,14 +565,14 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                             ],
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          Text(
                             'do que',
                             style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                           ),
                           const SizedBox(height: 6),
                           limitWidget,
                           const SizedBox(height: 10),
-                          const Text(
+                          Text(
                             'Tomar',
                             style: TextStyle(
                               fontSize: 12,
@@ -605,7 +605,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                           const SizedBox(height: 4),
                           Text(
                             '$typeLabel(s)',
-                            style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                            style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                           ),
                         ],
                       ),
@@ -619,7 +619,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                               newRules.removeAt(index);
                               notifier.updateState((s) => s.copyWith(dynamicRules: newRules));
                             },
-                            child: const Icon(
+                            child: Icon(
                               Icons.close,
                               size: 16,
                               color: AppColors.textMuted,
@@ -657,7 +657,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
               label: const Text('Adicionar Faixa de Dose', style: TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
+                side: BorderSide(color: AppColors.primary),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -670,6 +670,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
   // --- 4. SEÇÃO DO MODO DESMAME (TAPERING) ---
   Widget _buildTaperSection(WizardState state, WizardNotifier notifier) {
     final stages = state.taperStages;
+    if (stages.isEmpty) return const SizedBox.shrink();
     final isComp = state.type == 'comprimido';
     final typeLabel = state.type.isNotEmpty ? state.type : 'dose';
 
@@ -684,7 +685,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Etapas de dose do desmame:',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
           ),
@@ -730,7 +731,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             'Tomar',
                             style: TextStyle(
                               fontSize: 12,
@@ -763,10 +764,10 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                           const SizedBox(height: 4),
                           Text(
                             '$typeLabel(s)',
-                            style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                            style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
+                          Text(
                             'Por',
                             style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                           ),
@@ -783,7 +784,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                             step: 1.0,
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'dia(s)',
                             style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                           ),
@@ -799,7 +800,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                               newStages.removeAt(index);
                               notifier.updateState((s) => s.copyWith(taperStages: newStages));
                             },
-                            child: const Icon(
+                            child: Icon(
                               Icons.close,
                               size: 16,
                               color: AppColors.textMuted,
@@ -826,7 +827,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
               label: const Text('Adicionar Nova Dose', style: TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
+                side: BorderSide(color: AppColors.primary),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -841,7 +842,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                 },
                 activeColor: AppColors.primary,
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Repetir esse ciclo de doses infinitamente?',
                   style: TextStyle(color: AppColors.text, fontSize: 13, fontWeight: FontWeight.w600),
@@ -880,7 +881,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
               border: Border.all(color: AppColors.primary, width: 2),
             ),
             alignment: Alignment.center,
-            child: const Text(
+            child: Text(
               '-',
               style: TextStyle(
                 color: AppColors.primary,
@@ -896,7 +897,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
           alignment: Alignment.center,
           child: Text(
             displayVal,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.text,
               fontSize: 38,
               fontWeight: FontWeight.w800,
@@ -917,7 +918,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
               border: Border.all(color: AppColors.primary, width: 2),
             ),
             alignment: Alignment.center,
-            child: const Text(
+            child: Text(
               '+',
               style: TextStyle(
                 color: AppColors.primary,
@@ -957,7 +958,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
               border: Border.all(color: AppColors.primary, width: 1.5),
             ),
             alignment: Alignment.center,
-            child: const Text(
+            child: Text(
               '-',
               style: TextStyle(
                 color: AppColors.primary,
@@ -973,7 +974,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
           alignment: Alignment.center,
           child: Text(
             displayVal,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.text,
               fontSize: 15,
               fontWeight: FontWeight.bold,
@@ -994,7 +995,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
               border: Border.all(color: AppColors.primary, width: 1.5),
             ),
             alignment: Alignment.center,
-            child: const Text(
+            child: Text(
               '+',
               style: TextStyle(
                 color: AppColors.primary,
@@ -1017,7 +1018,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
     final borderSide = hasHalf
         ? BorderSide(color: AppColors.primary, width: mini ? 1.2 : 2.0)
         : BorderSide(
-            color: AppColors.primary.withOpacity(0.4),
+            color: AppColors.primary.withValues(alpha: 0.4),
             width: mini ? 1.0 : 1.5,
           );
 

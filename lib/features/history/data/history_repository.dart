@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:drift/drift.dart';
 import '../../../core/database/database.dart';
@@ -14,6 +13,17 @@ class HistoryRepository {
   // Watch all history events sorted by timestamp (newest first)
   Stream<List<HistoryEvent>> watchAllHistoryEvents() {
     return (_db.select(_db.historyEvents)
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.timestamp, mode: OrderingMode.desc)
+          ]))
+        .watch();
+  }
+
+  // Watch only alarm events since a specific timestamp (e.g. 35 days ago to cover heatmap padding)
+  Stream<List<HistoryEvent>> watchAlarmHistoryEventsSince(int startTimestamp) {
+    return (_db.select(_db.historyEvents)
+          ..where((t) => t.type.equals('alarm'))
+          ..where((t) => t.timestamp.isBiggerOrEqualValue(startTimestamp))
           ..orderBy([
             (t) => OrderingTerm(expression: t.timestamp, mode: OrderingMode.desc)
           ]))
