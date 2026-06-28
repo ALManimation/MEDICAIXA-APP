@@ -1,37 +1,26 @@
-## 2026-06-28T20:21:00Z
+## 2026-06-28T23:35:44Z
+You are a teamwork_preview_worker.
+Your working directory is: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/.agents/worker_remediation
+Your mission is to resolve the findings from the Victory Audit Rejection:
 
-You are worker_remediation (Archetype: teamwork_preview_worker).
-Your task is to fix the remaining localization, date formatting, and test issues identified by the reviewers and challengers:
+1. **Rule 35 Bypass**:
+   In `lib/features/medications/presentation/medication_form_screen.dart`, when deleting a medication in edit mode inside `_delete()`, check if the medication is currently associated with an active alarm in `AlarmRepository`. If it is, display the "Exclusão Bloqueada" warning dialog listing the linked alarms and block the deletion (same logic as in `medications_list_screen.dart`).
+   - Import `alarm_repository.dart`.
+   - Before deleting, fetch all alarms using `alarmRepo.getAllAlarms()`.
+   - Filter alarms where `a.medName == medName || a.name == medName`.
+   - If they exist, show the `dialog_delete_blocked_title` dialog, display list of linked alarms, and return early.
 
-Issues to resolve:
-1. **Uninitialized Locale 'pt' in main.dart**:
-   In `lib/main.dart`, add `await initializeDateFormatting('pt', null);` right after the other date formatting initializations. This prevents runtime crashes in production where the active locale is `'pt'`.
+2. **Static Analysis & Test Suite fixes**:
+   In `test/features/medications/medication_crud_test.dart`:
+   - Add `const` to the `Medication(...)` instantiation at lines 71 and 112 to satisfy `prefer_const_constructors`.
+   - Replace the deprecated `ProviderScope(parent: container)` at line 144 with `UncontrolledProviderScope(container: container)`.
 
-2. **Hardcoded String in medications_list_screen.dart**:
-   In `lib/features/medications/presentation/medications_list_screen.dart` (around line 421), replace the hardcoded `const Text('Limpar Seleção')` with the localized call to the translation function: `Text(t('meds_clear_selection'))` (make sure to remove 'const' from the parent Text widget if applicable).
-
-3. **Unused and Duplicate Imports in test/localization_test.dart**:
-   Remove all unused, unnecessary, and duplicate imports in `test/localization_test.dart` to make sure `flutter analyze` has 0 warnings/infos.
-
-4. **Drift Database Stream Timer Leak in test/localization_test.dart**:
-   Verify that all widget tests in `test/localization_test.dart` properly close the database (`await db.close();`) and pump/settle the widget tree (`await tester.pump(const Duration(seconds: 2));` or `await tester.pumpAndSettle();`) at the end of the test to prevent the "A Timer is still pending even after the widget tree was disposed" drift stream query store assertion error.
-
-5. **Missing Translation Keys**:
-   Check if these keys are missing from `assets/lang/pt.json`, `en.json`, and `es.json` (inside the "web" section) and add them if missing, or update the code to use the correct existing keys:
-   - `settings_backup_title` (use or map to `backup_title` or add it)
-   - `settings_backup_desc` (use or map to `backup_desc` or add it)
-   - `settings_restore_title` (use or map to `restore_modal_title` or add it)
-   - `settings_restore_desc` (use or map to `restore_modal_desc` or add it)
-   - `settings_fixture_desc` (pt: "Configurar caixinha para modo simulação local com dados de teste", en: "Configure box to local simulation mode with test data", es: "Configurar caja a modo de simulación local con datos de prueba")
-   - `settings_fixture_btn` (pt: "Carregar Fixture", en: "Load Fixture", es: "Cargar Fixture")
-   - `today` (pt: "Hoje", en: "Today", es: "Hoy")
-
-Ensure you adhere strictly to AGENTS.md constraints (e.g. no const with AppColors, use context.mounted, etc.).
+3. **Verification**:
+   - Run `flutter analyze` and ensure it completes with 0 warnings/infos/errors.
+   - Run `flutter test` and verify that all 103 tests pass.
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A Forensic Auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
 
-Verification:
-- Run `flutter analyze` and ensure there are 0 errors, warnings, or infos.
-- Run `flutter test` and ensure all 96+ tests pass successfully.
-- Write your completion report to your handoff.md in your working directory (.agents/worker_remediation/) and notify me when done.
+Please update `.agents/worker_remediation/progress.md` after each step with your current status and timestamp.
+When finished, write a handoff.md in your directory and report back.

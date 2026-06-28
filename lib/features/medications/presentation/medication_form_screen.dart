@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/localization/app_localizations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/database/database.dart';
+import '../../alarms/data/alarm_repository.dart';
 import '../data/medication_repository.dart';
 
 class MedicationFormScreen extends ConsumerStatefulWidget {
@@ -87,29 +88,60 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
   }
 
   void _delete() async {
+    final editMed = widget.editMedication;
+    if (editMed == null) return;
+
+    final medName = editMed.name;
+    final alarmRepo = ref.read(alarmRepositoryProvider);
+    final allAlarms = await alarmRepo.getAllAlarms();
+
+    final linkedAlarms = allAlarms.where((a) => a.medName == medName || a.name == medName).toList();
+    final buildContext = context;
+
+    if (!buildContext.mounted) return;
+
+    if (linkedAlarms.isNotEmpty) {
+      final inUseText = '• $medName (${linkedAlarms.length} alarme${linkedAlarms.length > 1 ? 's' : ''})';
+      showDialog(
+        context: buildContext,
+        builder: (dialogCtx) => AlertDialog(
+          title: Text(t('dialog_delete_blocked_title')),
+          content: Text(
+            t('dialog_delete_blocked_desc', [inUseText])
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: Text(t('ok_btn'), style: TextStyle(color: AppColors.primary)),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: buildContext,
+      builder: (dialogCtx) => AlertDialog(
         title: Text(t('med_delete_btn')),
         content: Text(t('dialog_delete_med_desc')),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
             child: Text(t('cancel_btn').toUpperCase(), style: TextStyle(color: AppColors.textMuted)),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
             child: Text(t('btn_delete_caps'), style: TextStyle(color: AppColors.missed)),
           ),
         ],
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && buildContext.mounted) {
       final repo = ref.read(medicationRepositoryProvider);
-      final buildContext = context;
       try {
-        await repo.deleteMedication(widget.editMedication!.name);
+        await repo.deleteMedication(editMed.name);
         if (buildContext.mounted) {
           ScaffoldMessenger.of(buildContext).showSnackBar(
             SnackBar(

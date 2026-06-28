@@ -44,3 +44,47 @@ Integrity mode: development
 - [ ] A barra inferior e os cards de alerta reagem dinamicamente a mudanças de tema em tempo real.
 - [ ] `flutter analyze` compila com 0 issues.
 - [ ] A suíte de testes de widget e integração passa com sucesso.
+
+## Follow-up — 2026-06-28T20:22:07-03:00
+
+<USER_REQUEST>
+Execução de testes funcionais, exploratórios e de interface no aplicativo Flutter MediCaixa para identificar inconsistências e bugs nas operações de CRUD de medicamentos, alarmes e lembretes, utilizando um simulador de iPhone 14 Pro Max.
+
+Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app
+Integrity mode: development
+
+## Requirements
+
+### R1. Execução no Simulador iOS e Inspeção Semântica/Visual
+- Inicializar o simulador de iPhone 14 Pro Max (UUID `FAEFDC66-A2BD-4EE1-ADB5-9880A84CE09D`) e iniciar o app nele (`flutter run -d FAEFDC66-A2BD-4EE1-ADB5-9880A84CE09D`).
+- Analisar a consistência visual da interface do usuário (UI) usando logs de console, erros de renderização (como overflows), contraste e conformidade com as regras de cores dinâmicas (sem usar cores hardcoded como branco/preto absoluto em textos/ícones).
+- Verificar a conformidade do app com as regras especificadas no [AGENTS.md](file:///Users/almanimation/Downloads/Caixa%20Remedios/medicaixa_app/.agents/AGENTS.md) (como a estrutura de 4 abas, lógica do motor de alarmes, etc.).
+
+### R2. Testes Exploratórios de Lógica e CRUD
+- Testar a criação, edição e exclusão de:
+  - **Medicamentos**: inclusive tentar excluir medicamentos em uso para validar se o bloqueio de exclusão funciona conforme especificado na Regra 35.
+  - **Alarmes**: criar horários comuns, customizados e com frequências complexas (dias alternados, PRN, etc.) e verificar o salvamento no banco local (Drift/SQLite).
+  - **Lembretes**: criar, validar a exibição ou ocultação quando vazios no Dashboard (Regra 33).
+- Identificar e documentar quaisquer falhas de lógica, crashes, erros de concorrência ou loops do motor de alarmes.
+
+### R3. Criação de Testes de Integração (Opcional/Adicional)
+- Escrever testes de integração permanentes na pasta `integration_test/` ou testes de widget na pasta `test/` cobrindo pelo menos um fluxo de CRUD de alarmes ou medicamentos para garantir que regressões não ocorram.
+
+## Verification & Deliverables
+
+O agente deve produzir um relatório detalhado em markdown contendo:
+1. **Erros e Bugs Identificados**: Lista estruturada de bugs contendo gravidade, comportamento observado, comportamento esperado (referenciando as regras do `AGENTS.md`) e como reproduzir.
+2. **Resultados dos Testes de Integração**: Sucesso ou falha dos testes criados.
+3. **Recomendações de Correção**: Sugestões diretas de mudanças no código para sanar cada problema encontrado.
+
+## Acceptance Criteria
+
+### Teste de UI e Usabilidade
+- [ ] O simulador iOS foi iniciado com sucesso e o app executou nele.
+- [ ] Foram verificados os layouts nas 4 abas principais do app buscando overflows e problemas de contraste/cores.
+- [ ] Foi gerado um relatório de bugs encontrados estruturado.
+
+### Testes de CRUD e Regras de Negócio
+- [ ] Foi testada a exclusão de um medicamento associado a um alarme ativo (deve falhar e exibir diálogo conforme Regra 35).
+- [ ] Foi criada uma rotina de teste de integração funcional executável ou suite de testes de widget para validar o fluxo principal de alarmes/medicamentos.
+</USER_REQUEST>

@@ -88,7 +88,7 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
     final List<String> inUseList = [];
 
     for (final medName in _selectedMeds) {
-      final linkedAlarms = allAlarms.where((a) => a.name == medName).toList();
+      final linkedAlarms = allAlarms.where((a) => a.medName == medName || a.name == medName).toList();
       if (linkedAlarms.isNotEmpty) {
         inUseList.add('• $medName (${linkedAlarms.length} alarme${linkedAlarms.length > 1 ? 's' : ''})');
       }
@@ -188,26 +188,30 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            t('nav_meds'),
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.text,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t('nav_meds'),
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.text,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            t('meds_subtitle'),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textMuted,
+                            const SizedBox(height: 4),
+                            Text(
+                              t('meds_subtitle'),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       if (allMeds.isNotEmpty)
                         TextButton(

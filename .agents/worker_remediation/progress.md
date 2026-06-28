@@ -1,13 +1,16 @@
-# Progress Tracker — worker_remediation
+# Progress - worker_remediation
 
-Last visited: 2026-06-28T20:21:15Z
+Last visited: 2026-06-28T20:38:00-03:00
 
-## Plan and Tasks
-- [x] Investigate issues and locate the target code
-- [x] Fix Issue 1: Uninitialized Locale 'pt' in `lib/main.dart`
-- [x] Fix Issue 2: Hardcoded String in `medications_list_screen.dart`
-- [x] Fix Issue 3 & 4: Unused/duplicate imports & Drift database stream timer leak in `test/localization_test.dart`
-- [x] Fix Issue 5: Missing translation keys in JSON files
-- [x] Run `flutter analyze` to ensure 0 issues
-- [x] Run `flutter test` to ensure all tests pass
-- [x] Generate final `handoff.md` and notify parent
+## Done
+- Initialized ORIGINAL_REQUEST.md, BRIEFING.md, and loaded skills.
+- Implemented Rule 35 Deletion Prevention in `lib/features/medications/presentation/medication_form_screen.dart` by importing `alarm_repository.dart` and checking for linked alarms before deleting.
+- Fixed static analysis and test suite issues in `test/features/medications/medication_crud_test.dart` by adding `const` to Medication instantiations and replacing deprecated `ProviderScope(parent: container)` with `UncontrolledProviderScope(container: container)`.
+- Verified code with static analysis (`flutter analyze` has 0 issues).
+- Verified tests (`flutter test` passes 104/104 tests successfully, including the new widget test verifying deletion block on the medication form screen).
+
+## In Progress
+- Completed all work. Preparing the handoff report.
+
+## To Do
+- Write handoff.md and notify parent.
