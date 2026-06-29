@@ -441,14 +441,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                         // Voice Assistant ExpansionTile
                         _buildVoiceAssistantTile(settings),
-                        const SizedBox(height: 12),
-
-                        // Device Maintenance ExpansionTile
-                        _buildMaintenanceTile(settings),
                       ],
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+
+                // Device Maintenance ExpansionTile
+                _buildMaintenanceTile(settings),
 
                 const SizedBox(height: 32),
 
@@ -1669,12 +1669,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   payload['wifi'] == true ||
                                   payload['settings'] == true ||
                                   payload['xiaozhi'] == true;
+              final isWifiOrFactory = payload['factory'] == true || payload['wifi'] == true;
+
               if (needsReboot && buildContext.mounted) {
                 _showRebootOverlay('${t('settings_reset_success_toast')}\n${t('reset_modal_warning_reboot')}', 8);
-              } else if (buildContext.mounted) {
-                ScaffoldMessenger.of(buildContext).showSnackBar(
-                  SnackBar(content: Text(t('settings_reset_success_toast')), backgroundColor: AppColors.success),
-                );
+                if (isWifiOrFactory) {
+                  await Future.delayed(const Duration(seconds: 8));
+                  if (buildContext.mounted) {
+                    Navigator.of(buildContext).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const PairingScreen()),
+                    );
+                  }
+                }
+              } else {
+                if (buildContext.mounted) {
+                  ScaffoldMessenger.of(buildContext).showSnackBar(
+                    SnackBar(content: Text(t('settings_reset_success_toast')), backgroundColor: AppColors.success),
+                  );
+                }
+                if (isWifiOrFactory && buildContext.mounted) {
+                  Navigator.of(buildContext).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const PairingScreen()),
+                  );
+                }
               }
             }
           },
@@ -1688,6 +1705,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
           onTap: () async {
             final buildContext = context;
+            final connState = ref.read(pairingNotifierProvider);
+            if (connState.status != ConnectionStatus.connected) {
+              ScaffoldMessenger.of(buildContext).showSnackBar(
+                SnackBar(
+                  content: Text(t('settings_device_offline_reboot_error')),
+                  backgroundColor: AppColors.missed,
+                ),
+              );
+              return;
+            }
             final confirm = await showDialog<bool>(
               context: buildContext,
               builder: (dialogCtx) => AlertDialog(

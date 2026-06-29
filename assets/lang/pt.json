@@ -886,6 +886,7 @@
     "settings_reboot_device_title": "Reiniciar Caixinha",
     "settings_reboot_device_desc": "Executa uma reinicialização física da MediCaixa",
     "settings_reboot_device_confirm": "Deseja realmente reiniciar a caixinha MediCaixa?",
+    "settings_device_offline_reboot_error": "Dispositivo offline. Não é possível reiniciar a caixinha.",
     "btn_reboot": "Reiniciar",
     "reminder_manage_title": "Gerenciar Lembrete",
     "btn_mark_done": "Marcar como Feito",

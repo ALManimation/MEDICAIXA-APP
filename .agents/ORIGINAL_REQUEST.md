@@ -430,3 +430,59 @@ O agente deve produzir um relatório detalhado em markdown contendo:
 </USER_REQUEST>
 
 
+## 2026-06-29T11:48:24Z
+
+<USER_REQUEST>
+Implementar a funcionalidade de backup, restauração de dados e reset de configurações no MediCaixa App. As operações devem funcionar em modo Standalone (offline-first, atuando no banco SQLite local) e em modo Conectado (sincronizando os dados correspondentes com o dispositivo físico via REST API do ESP32).
+
+Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app
+Integrity mode: development
+
+## Requirements
+
+### R1. Exportação de Backup (Download)
+- Se conectado ao dispositivo físico, o app deve baixar o arquivo de backup diretamente do endpoint HTTP `/backup` do ESP32.
+- Se offline (modo Standalone), o app deve gerar dinamicamente o JSON de backup contendo as tabelas locais do SQLite (`meds`, `alarms`, `reminders`, `history` e `settings`), formatado no mesmo layout de chaves e campos que a caixinha utiliza (com campos em `snake_case` e a chave `backup_date`).
+- O backup final deve ser disponibilizado ao usuário para download local (usando `file_picker` de gravação no macOS/Desktop ou a folha de compartilhamento nativa `share_plus` no mobile).
+
+### R2. Importação e Restauração de Backup (Restore)
+- O usuário deve poder selecionar um arquivo `.json` de backup localmente usando a folha do sistema (via `file_picker`).
+- O app deve ler o JSON e apresentar um diálogo de seleção contendo as categorias disponíveis no arquivo (`meds`, `alarms`, `reminders`, `history`, `settings` etc.), seguindo a interface do C++.
+- Ao confirmar, o app deve limpar as tabelas correspondentes selecionadas na base de dados SQLite local e inserir os registros restaurados a partir do JSON de backup (convertendo os campos em `snake_case` para os modelos Drift).
+- Se estiver no modo Conectado, o app deve transmitir o payload parcial do backup para o endpoint HTTP POST `/restore` do ESP32 para garantir o sincronismo físico.
+
+### R3. Redefinição de Dados (Reset)
+- Implementar um diálogo de confirmação que permita ao usuário selecionar quais categorias deseja redefinir individualmente (alarmes, lembretes, medicamentos, histórico de doses, configurações do app) ou realizar uma redefinição total de fábrica (`factory`), espelhando a lógica de caixas de seleção da Web UI do C++.
+- Limpar localmente no banco de dados Drift SQLite do app os dados das tabelas selecionadas.
+- Se estiver no modo Conectado, o app deve propagar a limpeza enviando a requisição HTTP POST ao endpoint `/reset` do ESP32 com o payload correspondente.
+- Em redefinições que apagam as configurações Wi-Fi ou executam reset de fábrica (`factory`), o app deve desconectar o pareamento ativo e redirecionar o usuário ao fluxo standalone de inicialização.
+
+## Verification & Deliverables
+
+### D1. Código Fonte
+- Atualizar a tela settings_screen.dart e o repositório settings_repository.dart com as lógicas locais de backup, restauração e redefinição de dados SQLite.
+- Garantir o correto tratamento de erros em caso de JSONs malformados ou falhas de comunicação REST com o ESP32.
+
+### D2. Testes de Integração e Robustez
+- Escrever testes automatizados em settings_robustness_test.dart cobrindo os fluxos de:
+  - Exportação de backup local (modo Standalone) e validação da estrutura JSON gerada.
+  - Importação e restauração parcial de backup na base SQLite local, checando se as tabelas locais mudaram.
+  - Reset parcial de dados do banco de dados (ex: apagar apenas histórico) em modo Standalone e Conectado.
+
+## Acceptance Criteria
+
+### Backup & Restore
+- [ ] O backup gerado no modo Standalone exporta com sucesso um arquivo JSON contendo as chaves `meds`, `alarms`, `reminders`, `history` e `settings` alinhadas ao banco SQLite local.
+- [ ] Restaurar um backup atualiza corretamente as tabelas correspondentes no SQLite local.
+- [ ] Se conectado, a restauração também faz o HTTP POST `/restore` com o payload correto para o ESP32.
+
+### Reset de Dados
+- [ ] O diálogo de redefinição permite selecionar partições individuais e aplica os resets locais no banco SQLite do app.
+- [ ] Se conectado, o app dispara o POST `/reset` com o respectivo payload para o ESP32 e desconecta do dispositivo se as credenciais Wi-Fi ou partições de pareamento forem apagadas.
+
+### Qualidade e Estabilidade
+- [ ] Todos os testes unitários e de integração novos e existentes passam com sucesso (`flutter test`).
+- [ ] A análise estática não retorna erros ou warnings (`flutter analyze`).
+</USER_REQUEST>
+
+

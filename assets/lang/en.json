@@ -886,6 +886,7 @@
     "settings_reboot_device_title": "Reboot Box",
     "settings_reboot_device_desc": "Performs a physical restart of the MediCaixa",
     "settings_reboot_device_confirm": "Do you really want to reboot the MediCaixa box?",
+    "settings_device_offline_reboot_error": "Device offline. Cannot reboot the box.",
     "btn_reboot": "Reboot",
     "reminder_manage_title": "Manage Reminder",
     "btn_mark_done": "Mark as Done",
