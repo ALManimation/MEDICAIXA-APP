@@ -395,6 +395,10 @@ class DashboardScreen extends ConsumerWidget {
       return false;
     }
 
+    if (alarm.snoozeMin > 0) {
+      return true; // Adiado está pendente de tomada e mantém a seção expandida
+    }
+
     if (isToday) {
       final alarmTime = DateTime(now.year, now.month, now.day, alarm.hour, alarm.minute);
       if (now.isAfter(alarmTime)) {
@@ -594,8 +598,9 @@ class DashboardScreen extends ConsumerWidget {
           AnimatedSize(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
             child: isCollapsed
-                ? const SizedBox.shrink()
+                ? const SizedBox(width: double.infinity, height: 0)
                 : Builder(
                     builder: (context) {
                       final isWide = MediaQuery.of(context).size.width >= 800;
