@@ -485,4 +485,52 @@ Integrity mode: development
 - [ ] A análise estática não retorna erros ou warnings (`flutter analyze`).
 </USER_REQUEST>
 
+## 2026-06-29T13:40:59Z
+
+<USER_REQUEST>
+Refinar o layout e a usabilidade do MediCaixa App para melhorar a estética em telas largas (Desktop/macOS) e simplificar a tela inicial (Dashboard).
+
+Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app
+Integrity mode: development
+
+## Requirements
+
+### R1. Remoção das Setas da Calendar Strip
+- No widget [calendar_strip_widget.dart](file:///Users/almanimation/Downloads/Caixa%20Remedios/medicaixa_app/lib/features/dashboard/presentation/widgets/calendar_strip_widget.dart), remover as sobreposições de setas laterais (os elementos `Positioned` que exibem os ícones `chevron_left` e `chevron_right`).
+- Retornar o `ListView.builder` de forma limpa na árvore de visualização (mantendo o comportamento de arrastar para rolar nativo).
+
+### R2. Remoção do Card "Ritmo Semanal" no Dashboard
+- Na tela [dashboard_screen.dart](file:///Users/almanimation/Downloads/Caixa%20Remedios/medicaixa_app/lib/features/dashboard/presentation/dashboard_screen.dart), remover por completo o widget `WeeklyRhythmWidget` da aba Início e as chamadas de banco/histórico associadas a ele.
+- O espaço horizontal liberado no Desktop deve ser ocupado inteiramente pelas seções de alarmes e lembretes.
+
+### R3. Grid Responsivo de Alarmes e Lembretes (Dashboard)
+- Na aba início [dashboard_screen.dart](file:///Users/almanimation/Downloads/Caixa%20Remedios/medicaixa_app/lib/features/dashboard/presentation/dashboard_screen.dart), quando o aplicativo rodar em telas largas (largura da tela >= 800px):
+  - Distribuir os cards de alarmes (`AlarmCardWidget`) e lembretes (`ReminderCardWidget`) de cada período ativo em um grid responsivo de múltiplas colunas (utilizando `GridView.builder` com `SliverGridDelegateWithMaxCrossAxisExtent` com largura máxima de ~400px por card e `mainAxisExtent` confortável para evitar cortes de texto).
+  - Em telas mobile (largura < 800px), manter o layout original em lista de coluna vertical simples.
+
+### R4. Grid Responsivo de Medicamentos (Remédios)
+- Na tela de listagem [medications_list_screen.dart](file:///Users/almanimation/Downloads/Caixa%20Remedios/medicaixa_app/lib/features/medications/presentation/medications_list_screen.dart), quando a largura da tela for >= 800px, renderizar a listagem de medicamentos cadastrados em grid de múltiplas colunas (usando `GridView.builder` com `maxCrossAxisExtent: 400` e `mainAxisExtent` adequado).
+- Em telas mobile, manter o empilhamento vertical clássico de `ListView.separated`.
+
+## Verification & Deliverables
+
+### D1. Código Fonte
+- Modificar os arquivos de UI do Dashboard, Calendar Strip e Medicamentos.
+- Executar análises e builds locais para certificar de que não há nenhum overflow no layout responsivo ou quebra de componentes.
+
+### D2. Suíte de Testes
+- Rodar a suíte inteira de testes do Flutter para validar que nenhuma navegação de UI ou fluxo foi prejudicado com a remoção dos componentes.
+
+## Acceptance Criteria
+
+### Calendar Strip & Ritmo Semanal
+- [ ] As setas `chevron_left` e `chevron_right` não são mais exibidas no topo do calendário.
+- [ ] O card "Ritmo Semanal" e seu widget correspondente foram totalmente removidos do Dashboard.
+
+### Grid Responsivo (Desktop vs. Mobile)
+- [ ] Em resoluções Desktop (>= 800px), os cards de alarmes, lembretes e medicamentos aparecem distribuídos horizontalmente lado a lado em colunas fluidas (máximo de 400px de largura por card).
+- [ ] Em resoluções Mobile (< 800px), os cartões continuam alinhados verticalmente ocupando toda a largura útil da coluna.
+- [ ] Não ocorrem overflows de renderização (RenderFlex) ou erros visuais ao redimensionar a janela do aplicativo.
+</USER_REQUEST>
+
 

@@ -11,16 +11,15 @@ import '../../alarms/presentation/snooze_modal.dart';
 import '../../alarms/data/alarm_model.dart';
 import '../../alarms/data/alarm_repository.dart';
 import '../../reminders/data/reminder_repository.dart';
+import '../../reminders/data/reminder_model.dart';
 import 'dashboard_notifier.dart';
 import '../../reminders/presentation/reminder_form_screen.dart';
 import 'package:medicaixa_app/features/reminders/presentation/widgets/reminder_action_modal.dart';
 import 'package:intl/intl.dart';
-import '../../history/data/history_repository.dart';
 import '../../history/presentation/history_screen.dart';
 import 'widgets/alarm_card_widget.dart';
 import 'widgets/health_banner_widget.dart';
 import 'widgets/reminder_card_widget.dart';
-import 'widgets/weekly_rhythm_widget.dart';
 import 'widgets/calendar_strip_widget.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/localization/app_localizations.dart';
@@ -58,7 +57,6 @@ class DashboardScreen extends ConsumerWidget {
     final connState = ref.watch(pairingNotifierProvider);
     final db = ref.watch(databaseProvider);
     final settingsStream = db.select(db.settings).watchSingleOrNull();
-    final isDesktop = MediaQuery.of(context).size.width >= 800;
 
     return StreamBuilder<Setting?>(
       stream: settingsStream,
@@ -266,46 +264,13 @@ class DashboardScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isDesktop)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Left: alarms
-                        Expanded(
-                          flex: 2,
-                          child: _buildAlarmsBody(
-                            context, ref, state,
-                            morningAlarms, afternoonAlarms, nightAlarms, prnAlarms,
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        // Right: weekly rhythm sidebar
-                        Expanded(
-                          flex: 1,
-                          child: StreamBuilder<List<HistoryEvent>>(
-                            stream: ref.watch(historyRepositoryProvider).watchAllHistoryEvents(),
-                            builder: (context, snapshot) {
-                              final events = snapshot.data ?? [];
-                              return WeeklyRhythmWidget(
-                                weekStats: _buildWeekStatsFromHistory(events, locale),
-                                adherencePercent: _calcAdherencePercentFromHistory(events),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildAlarmsBody(
-                      context, ref, state,
-                      morningAlarms, afternoonAlarms, nightAlarms, prnAlarms,
-                    ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildAlarmsBody(
+                    context, ref, state,
+                    morningAlarms, afternoonAlarms, nightAlarms, prnAlarms,
                   ),
+                ),
               ],
             ),
           ),
@@ -631,41 +596,64 @@ class DashboardScreen extends ConsumerWidget {
             curve: Curves.easeInOut,
             child: isCollapsed
                 ? const SizedBox.shrink()
-                : Column(
-                    children: [
-                      ...alarms.map((alarm) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: AlarmCardWidget(
-                            alarm: alarm,
-                            onMarkTaken: alarm.isGhost
-                                ? () {}
-                                : () async {
-                                    if (alarm.isPrn == true) {
-                                      await _handleTakePrn(context, ref, alarm);
-                                    } else {
-                                      await ref.read(alarmRepositoryProvider).markTaken(alarm.id);
-                                    }
-                                    ref.read(dashboardNotifierProvider.notifier).refresh();
-                                  },
-                            onMarkSkipped: alarm.isGhost
-                                ? () {}
-                                : () async {
-                                    await ref.read(alarmRepositoryProvider).markSkipped(alarm.id);
-                                    ref.read(dashboardNotifierProvider.notifier).refresh();
-                                  },
-                            onToggleEnabled: alarm.isGhost
-                                ? (_) {}
-                                : (val) async {
-                                    await ref.read(alarmRepositoryProvider).toggleAlarm(alarm.id, val);
-                                    ref.read(dashboardNotifierProvider.notifier).refresh();
-                                  },
-                            onTap: (alarm.isPrn == true || alarm.isGhost == true) ? null : () => _openSnoozeModal(context, ref, alarm),
-                          ),
+                : Builder(
+                    builder: (context) {
+                      final isWide = MediaQuery.of(context).size.width >= 800;
+
+                      Widget buildCard(AlarmModel alarm) {
+                        return AlarmCardWidget(
+                          alarm: alarm,
+                          onMarkTaken: alarm.isGhost
+                              ? () {}
+                              : () async {
+                                  if (alarm.isPrn == true) {
+                                    await _handleTakePrn(context, ref, alarm);
+                                  } else {
+                                    await ref.read(alarmRepositoryProvider).markTaken(alarm.id);
+                                  }
+                                  ref.read(dashboardNotifierProvider.notifier).refresh();
+                                },
+                          onMarkSkipped: alarm.isGhost
+                              ? () {}
+                              : () async {
+                                  await ref.read(alarmRepositoryProvider).markSkipped(alarm.id);
+                                  ref.read(dashboardNotifierProvider.notifier).refresh();
+                                },
+                          onToggleEnabled: alarm.isGhost
+                              ? (_) {}
+                              : (val) async {
+                                  await ref.read(alarmRepositoryProvider).toggleAlarm(alarm.id, val);
+                                  ref.read(dashboardNotifierProvider.notifier).refresh();
+                                },
+                          onTap: (alarm.isPrn == true || alarm.isGhost == true) ? null : () => _openSnoozeModal(context, ref, alarm),
                         );
-                      }),
-                      const SizedBox(height: 12),
-                    ],
+                      }
+
+                      if (isWide) {
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 400,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            mainAxisExtent: 140,
+                          ),
+                          itemCount: alarms.length,
+                          itemBuilder: (context, idx) => buildCard(alarms[idx]),
+                        );
+                      } else {
+                        return Column(
+                          children: [
+                            ...alarms.map((alarm) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: buildCard(alarm),
+                            )),
+                            const SizedBox(height: 12),
+                          ],
+                        );
+                      }
+                    },
                   ),
           ),
         ],
@@ -713,24 +701,52 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 10),
-        ...state.reminders.map(
-            (reminder) => ReminderCardWidget(
-              reminder: reminder,
-              selectedDate: state.selectedDate,
-              onComplete: () async {
-                await repo.completeReminder(reminder.id);
-                ref.read(dashboardNotifierProvider.notifier).refresh();
-              },
-              onTap: () {
-                ReminderActionModal.show(
-                  context,
-                  reminder: reminder,
-                  repository: repo,
-                  onRefresh: () => ref.read(dashboardNotifierProvider.notifier).refresh(),
-                );
-              },
-            ),
-          ),
+        Builder(
+          builder: (context) {
+            final isWide = MediaQuery.of(context).size.width >= 800;
+
+            Widget buildReminderCard(ReminderModel reminder) {
+              return ReminderCardWidget(
+                reminder: reminder,
+                selectedDate: state.selectedDate,
+                onComplete: () async {
+                  await repo.completeReminder(reminder.id);
+                  ref.read(dashboardNotifierProvider.notifier).refresh();
+                },
+                onTap: () {
+                  ReminderActionModal.show(
+                    context,
+                    reminder: reminder,
+                    repository: repo,
+                    onRefresh: () => ref.read(dashboardNotifierProvider.notifier).refresh(),
+                  );
+                },
+              );
+            }
+
+            if (isWide) {
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 400,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  mainAxisExtent: 100,
+                ),
+                itemCount: state.reminders.length,
+                itemBuilder: (context, idx) => buildReminderCard(state.reminders[idx]),
+              );
+            } else {
+              return Column(
+                children: state.reminders.map((reminder) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: buildReminderCard(reminder),
+                )).toList(),
+              );
+            }
+          },
+        ),
         const SizedBox(height: 16),
       ],
     );
@@ -846,53 +862,4 @@ class DashboardScreen extends ConsumerWidget {
     }
   }
 
-  List<DayStat> _buildWeekStatsFromHistory(List<HistoryEvent> events, String locale) {
-    final now = currentDateOverride();
-    final stats = <DayStat>[];
-
-    // Map events by date (YYYY-MM-DD)
-    final eventsByDate = <String, List<HistoryEvent>>{};
-    for (final e in events) {
-      final dt = DateTime.fromMillisecondsSinceEpoch(e.timestamp);
-      final dateStr = DateFormat('yyyy-MM-dd').format(dt);
-      eventsByDate.putIfAbsent(dateStr, () => []).add(e);
-    }
-
-    for (int i = 6; i >= 0; i--) {
-      final date = now.subtract(Duration(days: i));
-      final dateStr = DateFormat('yyyy-MM-dd').format(date);
-      final dayEvents = eventsByDate[dateStr] ?? [];
-
-      final taken = dayEvents.where((e) => e.status == 'TOMADO' || e.status == 'CONCLUIDO').length;
-      final missed = dayEvents.where((e) => e.status == 'PERDIDO').length;
-      final expected = taken + missed;
-
-      // Get first letter of localized day name
-      final dayName = DateFormat('E', locale).format(date);
-      final dayLabel = dayName.isNotEmpty ? dayName[0].toUpperCase() : '';
-
-      stats.add(DayStat(
-        dayLabel: dayLabel,
-        taken: taken,
-        expected: expected,
-      ));
-    }
-    return stats;
-  }
-
-  int _calcAdherencePercentFromHistory(List<HistoryEvent> events) {
-    final now = currentDateOverride();
-    final sevenDaysAgo = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 7));
-    final weekEvents = events.where((e) {
-      final dt = DateTime.fromMillisecondsSinceEpoch(e.timestamp);
-      return dt.isAfter(sevenDaysAgo);
-    }).toList();
-
-    final taken = weekEvents.where((e) => e.status == 'TOMADO' || e.status == 'CONCLUIDO').length;
-    final missed = weekEvents.where((e) => e.status == 'PERDIDO').length;
-    final total = taken + missed;
-    
-    if (total == 0) return 100;
-    return ((taken / total) * 100).round();
-  }
 }

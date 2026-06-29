@@ -350,171 +350,121 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
       children: [
         SizedBox(
           height: 64, // Reduced from 80 since labels are aside, not stacked
-          child: Stack(
-            children: [
-              ListView.builder(
-                controller: _scrollController,
-                scrollDirection: Axis.horizontal,
-                itemCount: _items.length,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemBuilder: (context, index) {
-                  final item = _items[index];
-                  
-                  if (item is SparseMarkerItem) {
-                    return Container(
-                      width: _sparseItemWidth,
-                      alignment: Alignment.center,
-                      child: Text('···', style: TextStyle(color: AppColors.textMuted, fontSize: 16)),
-                    );
-                  }
-                  
-                  if (item is MonthLabelItem) {
-                    return Container(
-                      width: _labelItemWidth,
-                      alignment: Alignment.center,
-                      child: Text(
-                        item.label,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    );
-                  }
-                  
-                  if (item is YearLabelItem) {
-                    return Container(
-                      width: _labelItemWidth,
-                      alignment: Alignment.center,
-                      child: Text(
-                        item.label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    );
-                  }
-                  
-                  if (item is DateItem) {
-                    return GestureDetector(
-                      onTap: () {
-                        ref.read(dashboardNotifierProvider.notifier).selectDate(item.date);
-                        _scrollToIndex(index);
-                      },
-                      child: Container(
-                        width: 50,
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        padding: const EdgeInsets.only(top: 8, bottom: 6),
-                        decoration: BoxDecoration(
-                          color: item.isSelected 
-                            ? AppColors.primary 
-                            : (item.isToday ? Colors.transparent : Colors.transparent),
-                          borderRadius: BorderRadius.circular(12),
-                          border: item.isToday && !item.isSelected 
-                            ? Border.all(color: AppColors.primary, width: 2) 
-                            : null,
-                          boxShadow: item.isSelected 
-                            ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 2))]
-                            : null,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              DateFormat('E', locale).format(item.date).toUpperCase().replaceAll('.', ''),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: item.isSelected 
-                                  ? Colors.white 
-                                  : (item.isToday ? AppColors.primary : AppColors.textMuted),
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${item.date.day}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: item.isToday ? FontWeight.w700 : FontWeight.w600,
-                                color: item.isSelected 
-                                  ? Colors.white 
-                                  : (item.isToday ? AppColors.primary : AppColors.text),
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            // Dots
-                            SizedBox(
-                              height: 5,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (item.hasRecurring) _buildDot(const Color(0xFF22C55E), item.isSelected),
-                                  if (item.hasDated) _buildDot(const Color(0xFF3B82F6), item.isSelected),
-                                  if (item.hasReminder) _buildDot(const Color(0xFFEF4444), item.isSelected),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
-
-              // Left arrow hint
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                child: IgnorePointer(
-                  child: Container(
-                    width: 32,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.background,
-                          AppColors.background.withValues(alpha: 0),
-                        ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
+          child: ListView.builder(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            itemCount: _items.length,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            itemBuilder: (context, index) {
+              final item = _items[index];
+              
+              if (item is SparseMarkerItem) {
+                return Container(
+                  width: _sparseItemWidth,
+                  alignment: Alignment.center,
+                  child: Text('···', style: TextStyle(color: AppColors.textMuted, fontSize: 16)),
+                );
+              }
+              
+              if (item is MonthLabelItem) {
+                return Container(
+                  width: _labelItemWidth,
+                  alignment: Alignment.center,
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                      letterSpacing: 0.5,
                     ),
-                    child: Icon(Icons.chevron_left, color: AppColors.textMuted, size: 20),
                   ),
-                ),
-              ),
-
-              // Right arrow hint
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                child: IgnorePointer(
-                  child: Container(
-                    width: 32,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.background.withValues(alpha: 0),
-                          AppColors.background,
-                        ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
+                );
+              }
+              
+              if (item is YearLabelItem) {
+                return Container(
+                  width: _labelItemWidth,
+                  alignment: Alignment.center,
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textMuted,
                     ),
-                    child: Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
                   ),
-                ),
-              ),
-            ],
+                );
+              }
+              
+              if (item is DateItem) {
+                return GestureDetector(
+                  onTap: () {
+                    ref.read(dashboardNotifierProvider.notifier).selectDate(item.date);
+                    _scrollToIndex(index);
+                  },
+                  child: Container(
+                    width: 50,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    padding: const EdgeInsets.only(top: 8, bottom: 6),
+                    decoration: BoxDecoration(
+                      color: item.isSelected 
+                        ? AppColors.primary 
+                        : (item.isToday ? Colors.transparent : Colors.transparent),
+                      borderRadius: BorderRadius.circular(12),
+                      border: item.isToday && !item.isSelected 
+                        ? Border.all(color: AppColors.primary, width: 2) 
+                        : null,
+                      boxShadow: item.isSelected 
+                        ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.35), blurRadius: 8, offset: const Offset(0, 2))]
+                        : null,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          DateFormat('E', locale).format(item.date).toUpperCase().replaceAll('.', ''),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: item.isSelected 
+                              ? Colors.white 
+                              : (item.isToday ? AppColors.primary : AppColors.textMuted),
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${item.date.day}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: item.isToday ? FontWeight.w700 : FontWeight.w600,
+                            color: item.isSelected 
+                              ? Colors.white 
+                              : (item.isToday ? AppColors.primary : AppColors.text),
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        // Dots
+                        SizedBox(
+                          height: 5,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (item.hasRecurring) _buildDot(const Color(0xFF22C55E), item.isSelected),
+                              if (item.hasDated) _buildDot(const Color(0xFF3B82F6), item.isSelected),
+                              if (item.hasReminder) _buildDot(const Color(0xFFEF4444), item.isSelected),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
         ),
         

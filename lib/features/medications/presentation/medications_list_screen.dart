@@ -295,105 +295,128 @@ class _MedicationsListScreenState extends ConsumerState<MedicationsListScreen> {
                                 ],
                               ),
                             )
-                          : ListView.separated(
-                              padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
-                              itemCount: filteredList.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 16),
-                              itemBuilder: (context, index) {
-                                final med = filteredList[index];
-                                final color = AppColors.getAlarmColor(med.color);
-                                final typeLabel = _formatType(med.type);
-                                final isSelected = _selectedMeds.contains(med.name);
+                          : Builder(
+                              builder: (context) {
+                                final isWide = MediaQuery.of(context).size.width >= 800;
 
-                                return GestureDetector(
-                                  onTap: () {
-                                    if (_isSelectionMode) {
-                                      _toggleSelection(med.name);
-                                    } else {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => MedicationFormScreen(editMedication: med),
+                                Widget buildItem(BuildContext context, int index) {
+                                  final med = filteredList[index];
+                                  final color = AppColors.getAlarmColor(med.color);
+                                  final typeLabel = _formatType(med.type);
+                                  final isSelected = _selectedMeds.contains(med.name);
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (_isSelectionMode) {
+                                        _toggleSelection(med.name);
+                                      } else {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) => MedicationFormScreen(editMedication: med),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? color.withValues(alpha: 0.08)
+                                            : AppColors.surface,
+                                        borderRadius: BorderRadius.circular(30),
+                                        border: Border.all(
+                                          color: color,
+                                          width: 2.5,
                                         ),
-                                      );
-                                    }
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? color.withValues(alpha: 0.08)
-                                          : AppColors.surface,
-                                      borderRadius: BorderRadius.circular(30),
-                                      border: Border.all(
-                                        color: color,
-                                        width: 2.5,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                                      child: Row(
+                                        children: [
+                                          if (_isSelectionMode) ...[
+                                            Icon(
+                                              isSelected
+                                                  ? Icons.check_circle_rounded
+                                                  : Icons.radio_button_unchecked_rounded,
+                                              color: color,
+                                              size: 24,
+                                            ),
+                                            const SizedBox(width: 16),
+                                          ],
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                                  textBaseline: TextBaseline.alphabetic,
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        med.name,
+                                                        style: TextStyle(
+                                                          color: AppColors.text,
+                                                          fontSize: 16,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                    if (med.dosage != null && med.dosage!.isNotEmpty) ...[
+                                                      const SizedBox(width: 8),
+                                                      Text(
+                                                        med.dosage!,
+                                                        style: TextStyle(
+                                                          color: AppColors.textMuted,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  typeLabel,
+                                                  style: TextStyle(
+                                                    color: AppColors.textMuted,
+                                                    fontSize: 12.5,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (!_isSelectionMode && med.pendingSync)
+                                            Icon(
+                                              Icons.cloud_upload_rounded,
+                                              color: AppColors.pending,
+                                              size: 20,
+                                            ),
+                                        ],
                                       ),
                                     ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                                    child: Row(
-                                      children: [
-                                        if (_isSelectionMode) ...[
-                                          Icon(
-                                            isSelected
-                                                ? Icons.check_circle_rounded
-                                                : Icons.radio_button_unchecked_rounded,
-                                            color: color,
-                                            size: 24,
-                                          ),
-                                          const SizedBox(width: 16),
-                                        ],
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                                textBaseline: TextBaseline.alphabetic,
-                                                children: [
-                                                  Flexible(
-                                                    child: Text(
-                                                      med.name,
-                                                      style: TextStyle(
-                                                        color: AppColors.text,
-                                                        fontSize: 16,
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                  if (med.dosage != null && med.dosage!.isNotEmpty) ...[
-                                                    const SizedBox(width: 8),
-                                                    Text(
-                                                      med.dosage!,
-                                                      style: TextStyle(
-                                                        color: AppColors.textMuted,
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                typeLabel,
-                                                style: TextStyle(
-                                                  color: AppColors.textMuted,
-                                                  fontSize: 12.5,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        if (!_isSelectionMode && med.pendingSync)
-                                          Icon(
-                                            Icons.cloud_upload_rounded,
-                                            color: AppColors.pending,
-                                            size: 20,
-                                          ),
-                                      ],
+                                  );
+                                }
+
+                                if (isWide) {
+                                  return GridView.builder(
+                                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
+                                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                      maxCrossAxisExtent: 400,
+                                      crossAxisSpacing: 16,
+                                      mainAxisSpacing: 16,
+                                      mainAxisExtent: 90,
                                     ),
-                                  ),
-                                );
+                                    itemCount: filteredList.length,
+                                    itemBuilder: buildItem,
+                                  );
+                                } else {
+                                  return ListView.separated(
+                                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 100),
+                                    itemCount: filteredList.length,
+                                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                                    itemBuilder: buildItem,
+                                  );
+                                }
                               },
                             ),
                 ),

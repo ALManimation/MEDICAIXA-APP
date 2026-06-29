@@ -1,28 +1,31 @@
-# BRIEFING — 2026-06-29T08:48:24-03:00
+# BRIEFING — 2026-06-29T10:53:00-03:00
 
 ## Mission
-Implementar a funcionalidade de backup, restauração de dados e reset de configurações no MediCaixa App, operando em modo Standalone (offline-first) e Conectado (sincronizado com ESP32 via REST API).
+Refinar o layout e a usabilidade do MediCaixa App para melhorar a estética em telas largas (Desktop/macOS) e simplificar a tela inicial (Dashboard).
 
 ## 🔒 My Identity
 - Archetype: sentinel
 - Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/.agents/
-- Orchestrator: 87efc6fd-3b3a-46e9-aa66-d0927134558c
-- Victory Auditor: 91703b4f-ff47-47b9-b77c-bc79e3109d27
+- Orchestrator: 00167e46-fd46-42e1-a3fd-0b235ec53da9
+- Victory Auditor: 11ca6ea8-b904-41f3-a1b5-79f73ef81821
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
 - Victory Audit is MANDATORY before reporting completion
+- Rule 21: Never use sed/awk/regex in Dart files.
 - Rule 22: DO NOT use const with AppColors.
 - Rule 32: Use context.mounted in async callbacks.
+- Rule 38: ensureInitialized within runApp callback.
+- Rule 59: Drift NativeDatabase synchronous connection on iOS/macOS.
 
 ## User Context
-- **Last user request**: Implementação de backup (exportação), restauração (importação) e reset de dados (modo Standalone e Conectado).
+- **Last user request**: Refinar o layout e usabilidade no Desktop (setas da calendar strip, semanal, grids responsivos).
 - **Pending clarifications**: none
 - **Delivered results**:
-  - Exportação de Backup local e remota (através do ESP32 `/backup` ou gerado sob demanda do banco SQLite local em Standalone).
-  - Importação e Restauração de dados selecionados com diálogo interativo de categorias (completamente sincronizado com o SQLite local e com o hardware do ESP32 `/restore`).
-  - Redefinição (Reset) parcial ou de fábrica de dados (com caixa de seleção, confirmação de segurança via palavra "APAGAR", propagação remota e despareamento de segurança).
-  - Conjunto de testes de robustez cobrindo todos os fluxos de backup, restauração e reset em `test/features/settings/settings_robustness_test.dart`.
+  - Remoção de setas na Calendar Strip (chevron_left/right).
+  - Remoção do card "Ritmo Semanal" e integrações do Dashboard.
+  - Layout Grid responsivo de alarmes e lembretes no Dashboard (>= 800px).
+  - Layout Grid responsivo na lista de Medicamentos (>= 800px).
 
 ## Project Status
 - **Phase**: complete
@@ -34,8 +37,6 @@ Implementar a funcionalidade de backup, restauração de dados e reset de config
 
 ## Artifact Index
 - ORIGINAL_REQUEST.md — Verbatim user request.
-- .agents/orchestrator_backup/progress.md — Orchestrator's progress tracker.
-- .agents/orchestrator_backup/handoff.md — Orchestrator's handoff report.
-- .agents/victory_auditor_backup/audit_report.md — Victory Auditor's verification report.
-- test/features/settings/settings_robustness_test.dart — Automated robustness tests.
-
+- .agents/BRIEFING.md — Sentinel persistent memory.
+- .agents/orchestrator_layout/progress.md — Orchestrator's progress.
+- .agents/victory_auditor_layout/handoff.md — Victory Auditor's report.
