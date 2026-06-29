@@ -113,7 +113,7 @@ void main() {
       // Day -6 (6 Days Ago): Taken
       // Day -7 (7 Days Ago): Taken
       
-      final tToday = todayMidnight.millisecondsSinceEpoch + 8 * 3600 * 1000;
+      final tToday = todayMidnight.millisecondsSinceEpoch + 60 * 1000; // Today 00:01
       final t2DaysAgo = todayMidnight.subtract(const Duration(days: 2)).millisecondsSinceEpoch + 8 * 3600 * 1000;
       final t3DaysAgo = todayMidnight.subtract(const Duration(days: 3)).millisecondsSinceEpoch + 8 * 3600 * 1000;
       final t4DaysAgo = todayMidnight.subtract(const Duration(days: 4)).millisecondsSinceEpoch + 8 * 3600 * 1000;

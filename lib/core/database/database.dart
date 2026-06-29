@@ -185,11 +185,13 @@ class AppDatabase extends _$AppDatabase {
         },
       );
 }
-
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(p.join(dbFolder.path, 'medicaixa.sqlite'));
+    if (Platform.isIOS || Platform.isMacOS) {
+      return NativeDatabase(file);
+    }
     return NativeDatabase.createInBackground(file);
   });
 }

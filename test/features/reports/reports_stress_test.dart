@@ -54,7 +54,7 @@ void main() {
     test('1. 0% Adherence - All events missed or skipped without taken ones', () async {
       final now = DateTime.now();
       final todayMidnight = DateTime(now.year, now.month, now.day);
-      final tToday = todayMidnight.millisecondsSinceEpoch + 12 * 3600 * 1000;
+      final tToday = todayMidnight.millisecondsSinceEpoch + 60 * 1000; // Today 00:01
 
       // Insert medication
       await db.into(db.medications).insert(const Medication(
@@ -106,7 +106,7 @@ void main() {
 
       final statuses = ['TOMADO', 'TOMADO FORA HORA', 'TOMADO PRN', 'CONCLUIDO'];
       for (int i = 0; i < statuses.length; i++) {
-        final timestamp = todayMidnight.subtract(Duration(days: i)).millisecondsSinceEpoch + 12 * 3600 * 1000;
+        final timestamp = todayMidnight.subtract(Duration(days: i)).millisecondsSinceEpoch + 60 * 1000;
         await db.into(db.historyEvents).insert(HistoryEvent(
           id: i + 1,
           medName: 'Med100',
@@ -157,7 +157,7 @@ void main() {
         dosage: null,       // Optional field null
         alarmId: null,      // Optional field null
         reminderId: null,   // Optional field null
-        timestamp: todayMidnight.millisecondsSinceEpoch + 10 * 3600 * 1000,
+        timestamp: todayMidnight.millisecondsSinceEpoch + 60 * 1000,
         status: 'TOMADO',
         type: 'alarm',
         pendingSync: false,

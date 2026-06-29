@@ -44,7 +44,7 @@ void main() {
     final todayMidnight = DateTime(now.year, now.month, now.day);
 
     // Let's create timestamps for the last few days
-    final tToday = todayMidnight.millisecondsSinceEpoch + 10 * 3600 * 1000; // Today 10:00
+    final tToday = todayMidnight.millisecondsSinceEpoch + 60 * 1000; // Today 00:01
     final tYesterday = todayMidnight.subtract(const Duration(days: 1)).millisecondsSinceEpoch + 14 * 3600 * 1000; // Yesterday 14:00
     final t2DaysAgo_1 = todayMidnight.subtract(const Duration(days: 2)).millisecondsSinceEpoch + 8 * 3600 * 1000; // 2 Days Ago 08:00
     final t2DaysAgo_2 = todayMidnight.subtract(const Duration(days: 2)).millisecondsSinceEpoch + 20 * 3600 * 1000; // 2 Days Ago 20:00
@@ -217,7 +217,7 @@ void main() {
 
     final now = DateTime.now();
     final todayMidnight = DateTime(now.year, now.month, now.day);
-    final tToday = todayMidnight.millisecondsSinceEpoch + 10 * 3600 * 1000;
+    final tToday = todayMidnight.millisecondsSinceEpoch + 60 * 1000; // Today 00:01
 
     // Insert history events:
     // Paracetamol: 1 taken, 0 missed
