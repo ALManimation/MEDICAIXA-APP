@@ -1,8 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:drift/drift.dart';
 import 'wizard_state.dart';
 import '../../data/alarm_model.dart';
 import '../../data/alarm_repository.dart';
-
+import '../../../../core/database/database.dart';
+import '../../../medications/data/medication_repository.dart';
 part 'wizard_notifier.g.dart';
 
 @riverpod
@@ -288,6 +290,33 @@ class WizardNotifier extends _$WizardNotifier {
   Future<void> saveAlarm() async {
     final repo = ref.read(alarmRepositoryProvider);
     final isPrn = state.useMode == 'prn';
+
+    final medRepo = ref.read(medicationRepositoryProvider);
+    final savedMed = await medRepo.getMedicationByName(state.name);
+    if (savedMed != null) {
+      await medRepo.updateMedication(
+        savedMed.name,
+        savedMed.copyWith(
+          color: state.color,
+          lastModified: Value(DateTime.now().millisecondsSinceEpoch),
+        ),
+      );
+    } else {
+      await medRepo.createMedication(
+        Medication(
+          name: state.name,
+          color: state.color,
+          type: state.type,
+          dosage: state.dosage,
+          pendingSync: true,
+        ),
+      );
+    }
+
+    final resolvedMed = await medRepo.getMedicationByName(state.name);
+    if (resolvedMed != null) {
+      state = state.copyWith(color: resolvedMed.color);
+    }
 
     if (state.editingAlarmId != null) {
       // In edit mode, we update the single alarm, keeping its ID

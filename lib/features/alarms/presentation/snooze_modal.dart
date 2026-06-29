@@ -49,6 +49,7 @@ class SnoozeModal extends StatefulWidget {
   }) {
     return showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -119,10 +120,17 @@ class _SnoozeModalState extends State<SnoozeModal> {
     final alarmColor = AppColors.getAlarmColor(widget.alarm.color);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      padding: EdgeInsets.fromLTRB(
+        24,
+        16,
+        24,
+        MediaQuery.of(context).viewInsets.bottom + 32,
+      ),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
           // Drag handle
           Container(
             width: 40,
@@ -492,6 +500,8 @@ class _SnoozeModalState extends State<SnoozeModal> {
             ],
           ),
         ],
+      ),
+      ),
       ),
     );
   }

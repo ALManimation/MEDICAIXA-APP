@@ -170,14 +170,30 @@ class AlarmRepository {
   }
 
   Stream<List<AlarmModel>> watchAllAlarms() {
-    return _db.select(_db.alarms).watch().map((list) {
-      return list.map((driftAlarm) => _toModel(driftAlarm)).toList();
+    final query = _db.select(_db.alarms).join([
+      leftOuterJoin(_db.medications, _db.medications.name.equalsExp(_db.alarms.medName)),
+    ]);
+    return query.watch().map((rows) {
+      return rows.map((row) {
+        final driftAlarm = row.readTable(_db.alarms);
+        final medication = row.readTableOrNull(_db.medications);
+        final resolvedColor = medication != null ? medication.color : driftAlarm.color;
+        return _toModel(driftAlarm).copyWith(color: resolvedColor);
+      }).toList();
     });
   }
 
   Future<List<AlarmModel>> getAllAlarms() async {
-    final list = await _db.select(_db.alarms).get();
-    return list.map((driftAlarm) => _toModel(driftAlarm)).toList();
+    final query = _db.select(_db.alarms).join([
+      leftOuterJoin(_db.medications, _db.medications.name.equalsExp(_db.alarms.medName)),
+    ]);
+    final rows = await query.get();
+    return rows.map((row) {
+      final driftAlarm = row.readTable(_db.alarms);
+      final medication = row.readTableOrNull(_db.medications);
+      final resolvedColor = medication != null ? medication.color : driftAlarm.color;
+      return _toModel(driftAlarm).copyWith(color: resolvedColor);
+    }).toList();
   }
 
   Future<int> _generateLocalId() async {
@@ -746,6 +762,7 @@ class AlarmRepository {
 
     final alarm = _toModel(alarmList.first);
     final updated = alarm.copyWith(
+      status: 'SNOOZED',
       snoozeMin: minutes,
       lastModified: DateTime.now().millisecondsSinceEpoch,
       pendingSync: !_isConnected(),

@@ -67,16 +67,16 @@ class _WizardStepMedicationState extends ConsumerState<WizardStepMedication> {
     });
   }
 
-  void _selectMedication(String name, String type, String dosage, String? category, String? instruction) {
+  void _selectMedication(String name, String type, String dosage, String? category, String? instruction) async {
     final notifier = ref.read(alarmWizardNotifierProvider.notifier);
-    notifier.updateMedication(
-      name,
-      type,
-      dosage,
-      _getColorForCategory(category),
-      instruction,
-    );
-    widget.onNext();
+    final medRepo = ref.read(medicationRepositoryProvider);
+    final savedMed = await medRepo.getMedicationByName(name);
+    final color = savedMed?.color ?? _getColorForCategory(category);
+    
+    notifier.updateMedication(name, type, dosage, color, instruction);
+    if (context.mounted) {
+      widget.onNext();
+    }
   }
 
   String _getColorForCategory(String? category) {

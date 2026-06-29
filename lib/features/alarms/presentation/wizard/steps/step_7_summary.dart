@@ -14,8 +14,21 @@ class WizardStep7Summary extends ConsumerWidget {
     final strengthText = dosage.isNotEmpty ? ' $dosage' : '';
     
     final colorMap = {
-      'blue': 'Azul', 'green': 'Verde', 'red': 'Vermelho', 'yellow': 'Amarelo',
-      'purple': 'Roxo', 'orange': 'Laranja', 'pink': 'Rosa', 'teal': 'Teal/Ciano', 'white': 'Cinza/Branco'
+      'white': 'Branco',
+      'red': 'Vermelho',
+      'green': 'Verde',
+      'blue': 'Azul',
+      'yellow': 'Amarelo',
+      'magenta': 'Magenta',
+      'cyan': 'Ciano',
+      'orange': 'Laranja',
+      'purple': 'Roxo',
+      'pink': 'Rosa',
+      'brown': 'Marrom',
+      'chartreuse': 'Chartreuse',
+      'teal': 'Teal/Verde-azulado',
+      'coral': 'Coral',
+      'gold': 'Ouro/Dourado',
     };
     final colorText = colorMap[state.color] ?? state.color;
     

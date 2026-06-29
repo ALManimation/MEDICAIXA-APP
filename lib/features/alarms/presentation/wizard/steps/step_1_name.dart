@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../medications/data/medication_repository.dart';
 import '../../../data/medication_search_service.dart';
 import '../wizard_notifier.dart';
 
@@ -143,24 +144,34 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
               return results;
             },
             displayStringForOption: (MedicationAnvisa option) => option.name,
-            onSelected: (MedicationAnvisa selection) {
+            onSelected: (MedicationAnvisa selection) async {
               _selectedFromDropdown = true;
               setState(() {
                 _showManualDosageInput = false;
               });
+              final medRepo = ref.read(medicationRepositoryProvider);
+              final savedMed = await medRepo.getMedicationByName(selection.name);
+              final resolvedColor = savedMed?.color ?? ref.read(wizardNotifierProvider).color;
               notifier.updateState((s) => s.copyWith(
                 name: selection.name,
                 type: selection.type,
                 dosage: selection.dosage,
+                color: resolvedColor,
               ));
             },
             fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
               return TextField(
                 controller: controller,
                 focusNode: focusNode,
-                onChanged: (val) {
+                onChanged: (val) async {
                   _selectedFromDropdown = false;
-                  notifier.updateState((s) => s.copyWith(name: val));
+                  final medRepo = ref.read(medicationRepositoryProvider);
+                  final savedMed = await medRepo.getMedicationByName(val);
+                  final resolvedColor = savedMed?.color ?? ref.read(wizardNotifierProvider).color;
+                  notifier.updateState((s) => s.copyWith(
+                    name: val,
+                    color: resolvedColor,
+                  ));
                 },
                 onEditingComplete: onEditingComplete,
                 style: TextStyle(color: AppColors.text, fontSize: 18),

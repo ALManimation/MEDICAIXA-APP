@@ -138,6 +138,10 @@ class MedicationRepository {
         .get();
   }
 
+  Future<Medication?> getMedicationByName(String name) async {
+    return await (_db.select(_db.medications)..where((t) => t.name.equals(name))).getSingleOrNull();
+  }
+
   Future<void> createMedication(Medication med) async {
     bool isPending = false;
 

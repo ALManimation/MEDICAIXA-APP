@@ -1,7 +1,7 @@
-# BRIEFING — 2026-06-28T23:37:55Z
+# BRIEFING — 2026-06-28T21:36:42-03:00
 
 ## Mission
-Resolve findings from the Victory Audit Rejection: fix Rule 35 Bypass in medication_form_screen.dart, fix static analysis and test suite issues in medication_crud_test.dart, and verify using flutter analyze and flutter test.
+Implement bug fixes and C++ alignment requirements (R1 to R5) in MediCaixa Flutter app based on findings from Explorer 1, 2, and 3.
 
 ## 🔒 My Identity
 - Archetype: worker
@@ -20,26 +20,36 @@ Resolve findings from the Victory Audit Rejection: fix Rule 35 Bypass in medicat
 - Updated: yes (completed task)
 
 ## Task Summary
-- **What to build**: Add Rule 35 check to `medication_form_screen.dart` and fix deprecation/lint issues in `medication_crud_test.dart`.
-- **Success criteria**: Zero flutter analyze issues, 104/104 tests pass.
-- **Interface contracts**: lib/features/medications/presentation/medication_form_screen.dart, test/features/medications/medication_crud_test.dart
+- **What to build**: DB changes (left outer join query, getMedicationByName, snoozeAlarm status), UI & Layout changes (Snooze bottom sheet, dashboard progress indicator / animated opacity, FAB shape), expand color pickers to 15 colors, propagate colors in wizard step medications, name typing autocomplete, and wizard notifier (create/update Medication in DB during alarm save).
+- **Success criteria**: Zero flutter analyze issues, 100% tests passing, C++ alignment verified.
+- **Interface contracts**: lib/features/medications/data/medication_repository.dart, lib/features/alarms/data/alarm_repository.dart, etc.
 - **Code layout**: Standard Flutter app structure.
 
 ## Key Decisions Made
-- Added a `mounted` check before utilizing BuildContext across an async gap in `medication_form_screen.dart` to adhere to static analysis checks.
-- Added a test case in `medication_crud_test.dart` specifically verifying that the deletion prevention is enforced on the `MedicationFormScreen` edit/deletion flow.
+- Chose to wrap the `scrollableBody` in `AnimatedOpacity` inside the body Column instead of double-wrapping in `Expanded` to prevent layout exception issues.
+- Updated `onSelected` and `onChanged` in `step_1_name.dart` to look up matching colors asynchronously using `getMedicationByName` and fallback to existing state color cleanly.
 
 ## Change Tracker
 - **Files modified**:
-  - `lib/features/medications/presentation/medication_form_screen.dart` — Implement Rule 35 deletion block check & dialog.
-  - `test/features/medications/medication_crud_test.dart` — Fix lints (const & UncontrolledProviderScope) and add a test case.
+  - `lib/features/medications/data/medication_repository.dart` — Added `getMedicationByName` method.
+  - `lib/features/alarms/data/alarm_repository.dart` — Left outer join on watchAllAlarms/getAllAlarms and copy 'SNOOZED' status in snoozeAlarm.
+  - `lib/features/alarms/presentation/snooze_modal.dart` — Layout scrolling wrapper and bottom padding dynamic offset.
+  - `lib/features/dashboard/presentation/dashboard_screen.dart` — LinearProgressIndicator and AnimatedOpacity for loading states.
+  - `lib/features/medications/presentation/medication_form_screen.dart` — Expanded color picker to 15 colors with contrast icon check.
+  - `lib/features/reminders/presentation/reminder_form_screen.dart` — Expanded color picker to 15 colors.
+  - `lib/features/alarms/presentation/wizard/steps/wizard_step_options.dart` — Expanded static colors list to 15 colors.
+  - `lib/features/alarms/presentation/wizard/steps/step_1_name.dart` — Expanded color picker mapping and database lookup on select/change.
+  - `lib/features/alarms/presentation/wizard/steps/step_7_summary.dart` — Expanded color translation map.
+  - `lib/features/alarms/presentation/wizard/steps/wizard_step_medication.dart` — Asynchronous medication search with color pre-selection.
+  - `lib/features/alarms/presentation/wizard/wizard_notifier.dart` — Create or update medications on alarm save, propagate resolved colors.
+  - `lib/features/alarms/presentation/wizard/alarm_wizard_notifier.dart` — Create or update medications on alarm save.
 - **Build status**: PASS
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: PASS (104 tests passed)
+- **Build/test result**: PASS (104/104 tests passed)
 - **Lint status**: PASS (0 issues found by flutter analyze)
-- **Tests added/modified**: `Verify Rule 35 in MedicationFormScreen: Blocking medication deletion if linked to an active alarm`
+- **Tests added/modified**: Checked coverage for C++ alignment requirements.
 
 ## Loaded Skills
 - **Source**: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/.agents/skills/flutter-import-verification/SKILL.md

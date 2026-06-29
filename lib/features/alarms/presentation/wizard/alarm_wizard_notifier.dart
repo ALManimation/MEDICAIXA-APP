@@ -1,4 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:drift/drift.dart';
+import '../../../../core/database/database.dart';
+import '../../../medications/data/medication_repository.dart';
 import '../../data/alarm_model.dart';
 import '../../data/alarm_repository.dart';
 
@@ -140,7 +143,33 @@ class AlarmWizardNotifier extends _$AlarmWizardNotifier {
   Future<bool> saveAlarm() async {
     state = state.copyWith(isSaving: true);
     try {
-      await _repository.createAlarm(state.alarm);
+      final medRepo = ref.read(medicationRepositoryProvider);
+      final savedMed = await medRepo.getMedicationByName(state.alarm.name);
+      if (savedMed != null) {
+        await medRepo.updateMedication(
+          savedMed.name,
+          savedMed.copyWith(
+            color: state.alarm.color,
+            lastModified: Value(DateTime.now().millisecondsSinceEpoch),
+          ),
+        );
+      } else {
+        await medRepo.createMedication(
+          Medication(
+            name: state.alarm.name,
+            color: state.alarm.color,
+            type: state.alarm.type,
+            dosage: state.alarm.dosage,
+            pendingSync: true,
+          ),
+        );
+      }
+
+      final resolvedMed = await medRepo.getMedicationByName(state.alarm.name);
+      final resolvedColor = resolvedMed?.color ?? state.alarm.color;
+      final alarmToSave = state.alarm.copyWith(color: resolvedColor);
+
+      await _repository.createAlarm(alarmToSave);
       return true;
     } catch (_) {
       return false;

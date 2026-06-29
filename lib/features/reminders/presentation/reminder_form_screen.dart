@@ -482,28 +482,23 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
   }
 
   Widget _buildColorPicker() {
-    final colors = [
-      {'id': 'blue', 'color': const Color(0xFF3B82F6)},
-      {'id': 'green', 'color': const Color(0xFF10B981)},
-      {'id': 'red', 'color': const Color(0xFFEF4444)},
-      {'id': 'yellow', 'color': const Color(0xFFFBBF24)},
-      {'id': 'purple', 'color': const Color(0xFF8B5CF6)},
-      {'id': 'orange', 'color': const Color(0xFFF97316)},
-      {'id': 'pink', 'color': const Color(0xFFEC4899)},
-      {'id': 'teal', 'color': const Color(0xFF14B8A6)},
-      {'id': 'white', 'color': const Color(0xFFF3F4F6)},
-    ];
+    final colors = AppColors.alarmColors.entries.toList();
 
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children: colors.map((c) {
-        final isSelected = _selectedColor == c['id'];
-        final colorVal = c['color'] as Color;
+      children: colors.map((entry) {
+        final colorId = entry.key;
+        final colorVal = entry.value;
+        final isSelected = _selectedColor == colorId;
+        final useBlackIcon = colorId == 'white' ||
+            colorId == 'yellow' ||
+            colorId == 'gold' ||
+            colorId == 'chartreuse';
         return GestureDetector(
           onTap: () {
             setState(() {
-              _selectedColor = c['id'] as String;
+              _selectedColor = colorId;
             });
           },
           child: Container(
@@ -527,7 +522,7 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
             child: isSelected
                 ? Icon(
                     Icons.check_rounded,
-                    color: c['id'] == 'white' ? Colors.black : Colors.white,
+                    color: useBlackIcon ? Colors.black : Colors.white,
                     size: 20,
                   )
                 : null,

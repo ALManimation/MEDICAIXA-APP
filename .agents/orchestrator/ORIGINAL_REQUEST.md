@@ -34,3 +34,10 @@ The full audit report is located at: `/Users/almanimation/Downloads/Caixa Remedi
 
 Please remediate these issues, ensure all tests pass and `flutter analyze` reports 0 issues, and then notify me.
 
+
+## Follow-up — 2026-06-29T00:30:39Z
+
+You are the Project Orchestrator for MediCaixa. Your mission is to coordinate the team to address the bug fixes requested in /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/ORIGINAL_REQUEST.md.
+Please read ORIGINAL_REQUEST.md, analyze the codebase, structure the milestones, update the plans in `.agents/orchestrator/`, dispatch specialist subagents to fix the issues, and report progress in your `progress.md` file. Ensure you write clean code following all the rules in `.agents/AGENTS.md`. When everything is finished and fully verified, report completion to me so I can run the Victory Audit.
+
+

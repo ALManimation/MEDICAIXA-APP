@@ -32,16 +32,21 @@ class _WizardStepOptionsState extends ConsumerState<WizardStepOptions> {
   final int _cycleOff = 7;
 
   final List<String> _colors = [
-    'blue',
+    'white',
     'red',
     'green',
+    'blue',
     'yellow',
+    'magenta',
+    'cyan',
     'orange',
     'purple',
     'pink',
-    'magenta',
-    'cyan',
-    'brown'
+    'brown',
+    'chartreuse',
+    'teal',
+    'coral',
+    'gold'
   ];
 
   final List<Map<String, String?>> _instructions = [

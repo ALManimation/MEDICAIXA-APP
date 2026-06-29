@@ -256,75 +256,84 @@ class DashboardScreen extends ConsumerWidget {
           ],
         );
 
-        // Build scrollable body wrapped in Expanded and RefreshIndicator
-        final scrollableBody = Expanded(
-          child: RefreshIndicator(
-            onRefresh: () => notifier.sync(),
-            color: AppColors.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (isDesktop)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Left: alarms
-                          Expanded(
-                            flex: 2,
-                            child: _buildAlarmsBody(
-                              context, ref, state,
-                              morningAlarms, afternoonAlarms, nightAlarms, prnAlarms,
-                            ),
+        // Build scrollable body wrapped in RefreshIndicator
+        final scrollableBody = RefreshIndicator(
+          onRefresh: () => notifier.sync(),
+          color: AppColors.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (isDesktop)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left: alarms
+                        Expanded(
+                          flex: 2,
+                          child: _buildAlarmsBody(
+                            context, ref, state,
+                            morningAlarms, afternoonAlarms, nightAlarms, prnAlarms,
                           ),
-                          const SizedBox(width: 24),
-                          // Right: weekly rhythm sidebar
-                          Expanded(
-                            flex: 1,
-                            child: StreamBuilder<List<HistoryEvent>>(
-                              stream: ref.watch(historyRepositoryProvider).watchAllHistoryEvents(),
-                              builder: (context, snapshot) {
-                                final events = snapshot.data ?? [];
-                                return WeeklyRhythmWidget(
-                                  weekStats: _buildWeekStatsFromHistory(events, locale),
-                                  adherencePercent: _calcAdherencePercentFromHistory(events),
-                                );
-                              },
-                            ),
+                        ),
+                        const SizedBox(width: 24),
+                        // Right: weekly rhythm sidebar
+                        Expanded(
+                          flex: 1,
+                          child: StreamBuilder<List<HistoryEvent>>(
+                            stream: ref.watch(historyRepositoryProvider).watchAllHistoryEvents(),
+                            builder: (context, snapshot) {
+                              final events = snapshot.data ?? [];
+                              return WeeklyRhythmWidget(
+                                weekStats: _buildWeekStatsFromHistory(events, locale),
+                                adherencePercent: _calcAdherencePercentFromHistory(events),
+                              );
+                            },
                           ),
-                        ],
-                      ),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _buildAlarmsBody(
-                        context, ref, state,
-                        morningAlarms, afternoonAlarms, nightAlarms, prnAlarms,
-                      ),
+                        ),
+                      ],
                     ),
-                ],
-              ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildAlarmsBody(
+                      context, ref, state,
+                      morningAlarms, afternoonAlarms, nightAlarms, prnAlarms,
+                    ),
+                  ),
+              ],
             ),
           ),
         );
 
         return Scaffold(
           backgroundColor: AppColors.background,
-          body: state.isLoading
-              ? Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                )
-              : Column(
-                  children: [
-                    fixedHeader,
-                    scrollableBody,
-                  ],
+          body: Column(
+            children: [
+              fixedHeader,
+              SizedBox(
+                height: 4,
+                child: state.isLoading
+                    ? LinearProgressIndicator(
+                        color: AppColors.primary,
+                        backgroundColor: Colors.transparent,
+                      )
+                    : null,
+              ),
+              Expanded(
+                child: AnimatedOpacity(
+                  opacity: state.isLoading ? 0.65 : 1.0,
+                  duration: const Duration(milliseconds: 150),
+                  child: scrollableBody,
                 ),
+              ),
+            ],
+          ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               Navigator.of(context).push(
@@ -333,6 +342,7 @@ class DashboardScreen extends ConsumerWidget {
             },
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
+            shape: const CircleBorder(),
             tooltip: t('new_alarm_title'),
             child: const Icon(Icons.add_rounded),
           ),

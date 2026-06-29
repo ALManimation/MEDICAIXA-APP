@@ -1,46 +1,29 @@
-# Project: MediCaixa App Settings Reorganization and Integration
+# Project: MediCaixa App Bug Fixes and Hardware Alignment
 
 ## Architecture
-- **Features**: Settings feature is located at `lib/features/settings/`.
+- **Features**: Alarms (`lib/features/alarms/`), Medications (`lib/features/medications/`), Reminders (`lib/features/reminders/`), and Dashboard (`lib/features/dashboard/`).
 - **Data Flow**:
-  - Presentation (`settings_screen.dart`) interacts with `SettingsRepository` and new API clients to fetch network, voice status, and maintenance features from ESP32.
-  - All communication is routed through `DioClient` with serialized request queueing to prevent crashing the ESP32 (DRAM limits).
-  - SQLite (Drift) is used offline-first for settings persistence.
+  - Offline-first: Presentation reads from Drift SQLite.
+  - Alarms and Medications are synced with the ESP32 hardware using `DioClient` with serialized request queueing.
+  - AppShell exposes Início, Remédios, Relatórios, and Ajustes.
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|---|---|---|---|
-| 1 | Exploration & Planning | Analyze requirements & codebase | None | DONE |
-| 2 | Settings & C++ Box Integrations | Reorganize UI, Wi-Fi, Sound, RTC, Voice, Maintenance APIs | None | DONE |
-| 3 | E2E Verification & Audit | Test compilation, functional verification & integrity audit | M2 | DONE |
-| 4 | ReportsScreen & Adherence Analytics | Implement CustomPainter charts, ReportsScreen layout, Drift queries, and unit tests | M3 | DONE |
-| 5 | Complete Multilingual Translation | Map hardcoded strings, dynamic date/calendar locale, Drift SQLite settings persistence & tests | M4 | DONE |
-
-## Interface Contracts
-### Wi-Fi API Client
-- `Future<List<WifiNetwork>> scanWifi()` -> `GET /wifi_scan`
-- `Future<List<String>> getSavedWifi()` -> `GET /wifi_list`
-- `Future<void> addWifi(String ssid, String password)` -> `POST /wifi_add`
-- `Future<void> removeWifi(String ssid)` -> `POST /wifi_remove`
-
-### Clock API Client
-- `Future<DateTime> getServerTime()` -> `GET /server_time`
-- `Future<void> setDateTime(DateTime dateTime)` -> `POST /set_datetime`
-
-### Voice Status Client
-- `Future<VoiceStatus>` -> `GET /voice_status`
-
-### Maintenance API Client
-- `Future<void> testSound(int index)` -> `POST /test_sound`
-- `Future<Map<String, dynamic>> downloadBackup()` -> `GET /backup`
-- `Future<void> restoreBackup(Map<String, dynamic> data)` -> `POST /restore`
-- `Future<void> resetDevice(Map<String, bool> partitions)` -> `POST /reset`
-- `Future<void> restartDevice()` -> `POST /restart`
+| 1 | Exploration & Design | Analyze requirements, identify file paths, and plan overrides | None | DONE |
+| 2 | UI & Interaction Fixes | Implement snooze screen close, modal RenderFlex fix, and round FAB | M1 | DONE |
+| 3 | Flicker Prevention | Replace full-screen loading spinner in Dashboard Calendar with LinearProgressIndicator | M2 | DONE |
+| 4 | Color Sync & Palettes | Implement 15 official hardware colors in picker options, pre-select wizard colors, propagate color on save, and join queries for central color inheritance | M3 | DONE |
+| 5 | Verification & Audit | Verify build, run test suite, and execute Forensic Audit | M4 | DONE |
 
 ## Code Layout
-- `lib/features/settings/data/settings_repository.dart`
-- `lib/features/settings/presentation/settings_screen.dart`
-- `lib/features/reports/presentation/reports_screen.dart`
-- `lib/features/reports/presentation/reports_notifier.dart`
-- `lib/features/reports/presentation/widgets/`
-
+- `lib/core/constants/app_colors.dart`
+- `lib/features/alarms/data/alarm_repository.dart`
+- `lib/features/alarms/presentation/alarm_active_screen.dart`
+- `lib/features/alarms/presentation/snooze_modal.dart`
+- `lib/features/alarms/presentation/wizard/wizard_notifier.dart`
+- `lib/features/alarms/presentation/wizard/steps/wizard_step_options.dart`
+- `lib/features/alarms/presentation/wizard/steps/wizard_step_medication.dart`
+- `lib/features/medications/presentation/medication_form_screen.dart`
+- `lib/features/reminders/presentation/reminder_form_screen.dart`
+- `lib/features/dashboard/presentation/dashboard_screen.dart`

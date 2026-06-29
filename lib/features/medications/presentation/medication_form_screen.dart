@@ -320,30 +320,23 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
   }
 
   Widget _buildColorPicker() {
-    final colors = [
-      {'id': 'white', 'color': const Color(0xFFFFFFFF)},
-      {'id': 'red', 'color': const Color(0xFFFF0000)},
-      {'id': 'green', 'color': const Color(0xFF00FF00)},
-      {'id': 'blue', 'color': const Color(0xFF0000FF)},
-      {'id': 'yellow', 'color': const Color(0xFFFFFF00)},
-      {'id': 'magenta', 'color': const Color(0xFFFF00FF)},
-      {'id': 'cyan', 'color': const Color(0xFF00FFFF)},
-      {'id': 'orange', 'color': const Color(0xFFFFA500)},
-      {'id': 'purple', 'color': const Color(0xFF800080)},
-      {'id': 'pink', 'color': const Color(0xFFFFC0CB)},
-      {'id': 'teal', 'color': const Color(0xFF008080)},
-    ];
+    final colors = AppColors.alarmColors.entries.toList();
 
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children: colors.map((c) {
-        final isSelected = _selectedColor == c['id'];
-        final colorVal = c['color'] as Color;
+      children: colors.map((entry) {
+        final colorId = entry.key;
+        final colorVal = entry.value;
+        final isSelected = _selectedColor == colorId;
+        final useBlackIcon = colorId == 'white' ||
+            colorId == 'yellow' ||
+            colorId == 'gold' ||
+            colorId == 'chartreuse';
         return GestureDetector(
           onTap: () {
             setState(() {
-              _selectedColor = c['id'] as String;
+              _selectedColor = colorId;
             });
           },
           child: Container(
@@ -367,7 +360,7 @@ class _MedicationFormScreenState extends ConsumerState<MedicationFormScreen> {
             child: isSelected
                 ? Icon(
                     Icons.check_rounded,
-                    color: c['id'] == 'white' || c['id'] == 'yellow' ? Colors.black : Colors.white,
+                    color: useBlackIcon ? Colors.black : Colors.white,
                     size: 20,
                   )
                 : null,
