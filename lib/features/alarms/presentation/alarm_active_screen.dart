@@ -115,6 +115,16 @@ class _AlarmActiveScreenState extends ConsumerState<AlarmActiveScreen>
     _nextOrDismiss();
   }
 
+  @override
+  void didUpdateWidget(covariant AlarmActiveScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_currentAlarmIndex >= widget.activeAlarms.length) {
+      setState(() {
+        _currentAlarmIndex = widget.activeAlarms.isEmpty ? 0 : widget.activeAlarms.length - 1;
+      });
+    }
+  }
+
   void _nextOrDismiss() {
     if (_currentAlarmIndex < widget.activeAlarms.length - 1) {
       setState(() {
@@ -130,7 +140,9 @@ class _AlarmActiveScreenState extends ConsumerState<AlarmActiveScreen>
   Widget build(BuildContext context) {
     if (widget.activeAlarms.isEmpty) return const SizedBox.shrink();
 
-    final alarm = widget.activeAlarms[_currentAlarmIndex];
+    // Clamp the index with safety to prevent RangeErrors during reactive rebuilds
+    final safeIndex = _currentAlarmIndex.clamp(0, widget.activeAlarms.length - 1);
+    final alarm = widget.activeAlarms[safeIndex];
     final alarmColor = AppColors.getAlarmColor(alarm.color);
 
     // Calculate current dose quantity based on weekday
