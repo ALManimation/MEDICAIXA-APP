@@ -273,15 +273,41 @@ class SettingsRepository {
           'last_completed_date': r.lastCompletedDate,
           'color': r.color,
         }).toList(),
-        'history': historyList.map((h) => {
-          'id': h.id,
-          'alarm_id': h.alarmId,
-          'reminder_id': h.reminderId,
-          'med_name': h.medName,
-          'dosage': h.dosage,
-          'timestamp': h.timestamp,
-          'status': h.status,
-          'type': h.type,
+        'history': historyList.map((h) {
+          final dt = DateTime.fromMillisecondsSinceEpoch(h.timestamp);
+          final dateStr = '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+          final timeStr = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}';
+          
+          String eventStr = 'Tomado';
+          if (h.status == 'PERDIDO') {
+            eventStr = 'Não Tomado';
+          } else if (h.status == 'CANCELADO') {
+            eventStr = 'Cancelado';
+          } else if (h.status == 'TOMADO FORA HORA') {
+            eventStr = 'Tomado fora hora';
+          } else if (h.status == 'TOMADO PRN') {
+            eventStr = 'Tomado PRN';
+          }
+
+          return {
+            'date': dateStr,
+            'time': timeStr,
+            'event': eventStr,
+            'details': h.medName ?? '',
+            'id': h.alarmId ?? h.id,
+            'h': dt.hour,
+            'm': dt.minute,
+            'color': 'blue',
+            'dosage': h.dosage ?? '',
+            'type': h.type,
+            'qty': 1.0,
+            // Chaves locais para retrocompatibilidade
+            'alarm_id': h.alarmId,
+            'reminder_id': h.reminderId,
+            'med_name': h.medName,
+            'timestamp': h.timestamp,
+            'status': h.status,
+          };
         }).toList(),
         'settings': {
           'device_ip': settings.deviceIp,
@@ -429,15 +455,42 @@ class SettingsRepository {
         final list = partialBackup['history'] as List;
         for (final rawItem in list) {
           final item = rawItem as Map<String, dynamic>;
+          
+          int finalTimestamp;
+          String? finalMedName;
+          String? finalStatus;
+          String? finalType;
+          int? finalAlarmId;
+          String? finalDosage;
+
+          if (item.containsKey('date') && item.containsKey('time')) {
+            final dateStr = item['date'] as String?;
+            final timeStr = item['time'] as String?;
+            finalTimestamp = _parseDateTimeStrings(dateStr, timeStr) ?? DateTime.now().millisecondsSinceEpoch;
+            finalMedName = item['details'] as String?;
+            finalAlarmId = item['id'] as int?;
+            finalDosage = item['dosage'] as String?;
+            finalType = 'alarm';
+            final rawEvent = item['event'] as String? ?? 'Tomado';
+            finalStatus = _mapEventToStatus(rawEvent);
+          } else {
+            finalTimestamp = item['timestamp'] as int? ?? DateTime.now().millisecondsSinceEpoch;
+            finalMedName = item['med_name'] as String? ?? item['details'] as String?;
+            finalAlarmId = item['alarm_id'] as int? ?? item['id'] as int?;
+            finalDosage = item['dosage'] as String?;
+            finalStatus = item['status'] as String? ?? 'TOMADO';
+            finalType = item['type'] as String? ?? 'alarm';
+          }
+
           final historyEvent = HistoryEventsCompanion(
-            id: item['id'] != null ? Value(item['id'] as int) : const Value.absent(),
-            alarmId: Value(item['alarm_id'] as int?),
+            id: item['id'] != null && !item.containsKey('date') ? Value(item['id'] as int) : const Value.absent(),
+            alarmId: Value(finalAlarmId),
             reminderId: Value(item['reminder_id'] as int?),
-            medName: Value(item['med_name'] as String?),
-            dosage: Value(item['dosage'] as String?),
-            timestamp: Value(item['timestamp'] as int? ?? DateTime.now().millisecondsSinceEpoch),
-            status: Value(item['status'] as String? ?? 'TOMADO'),
-            type: Value(item['type'] as String? ?? 'alarm'),
+            medName: Value(finalMedName),
+            dosage: Value(finalDosage),
+            timestamp: Value(finalTimestamp),
+            status: Value(finalStatus),
+            type: Value(finalType),
             pendingSync: const Value(false),
           );
           await _db.into(_db.historyEvents).insert(historyEvent, mode: InsertMode.insertOrReplace);
@@ -556,6 +609,49 @@ class SettingsRepository {
     } catch (e) {
       debugPrint('Error syncing settings: $e');
     }
+  }
+
+  int? _parseDateTimeStrings(String? dateStr, String? timeStr) {
+    if (dateStr == null || timeStr == null) return null;
+    try {
+      final dateParts = dateStr.split('/');
+      if (dateParts.length != 3) return null;
+      final timeParts = timeStr.split(':');
+      if (timeParts.length != 3) return null;
+
+      final day = int.tryParse(dateParts[0]) ?? 1;
+      final month = int.tryParse(dateParts[1]) ?? 1;
+      final year = int.tryParse(dateParts[2]) ?? 1970;
+
+      final hour = int.tryParse(timeParts[0]) ?? 0;
+      final minute = int.tryParse(timeParts[1]) ?? 0;
+      final second = int.tryParse(timeParts[2]) ?? 0;
+
+      final dt = DateTime(year, month, day, hour, minute, second);
+      return dt.millisecondsSinceEpoch;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _mapEventToStatus(String event) {
+    final lower = event.toLowerCase();
+    if (lower.contains('não tomado') || lower.contains('perdido')) {
+      return 'PERDIDO';
+    }
+    if (lower.contains('cancelado') || lower.contains('pulado')) {
+      return 'CANCELADO';
+    }
+    if (lower.contains('fora hora') || lower.contains('fora da hora')) {
+      return 'TOMADO FORA HORA';
+    }
+    if (lower.contains('prn')) {
+      return 'TOMADO PRN';
+    }
+    if (lower.contains('tomado')) {
+      return 'TOMADO';
+    }
+    return event.toUpperCase();
   }
 }
 

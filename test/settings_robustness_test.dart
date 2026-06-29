@@ -531,6 +531,59 @@ void main() {
           completes,
         );
       });
+
+      test('executeBackupRestore parses and restores history in both C++ (date/time) and Flutter formats', () async {
+        dioClient.postHandlers['/restore'] = (payload) {
+          return {'restored_files': 2};
+        };
+
+        final testBackup = {
+          'history': [
+            {
+              'date': '29/06/2026',
+              'time': '08:05:40',
+              'event': 'Tomado',
+              'details': 'Prednisona',
+              'id': 42,
+              'h': 8,
+              'm': 0,
+              'color': 'yellow',
+              'dosage': '5mg',
+              'type': 'comprimido',
+              'qty': 3
+            },
+            {
+              'timestamp': 1782729938000,
+              'med_name': 'Dipirona',
+              'id': 26,
+              'dosage': '10mL',
+              'status': 'PERDIDO',
+              'type': 'alarm'
+            }
+          ]
+        };
+
+        final count = await settingsRepo.executeBackupRestore(testBackup);
+        expect(count, 2);
+
+        final events = await db.select(db.historyEvents).get();
+        expect(events.length, 2);
+
+        final event1 = events.firstWhere((e) => e.medName == 'Prednisona');
+        expect(event1.alarmId, 42);
+        expect(event1.dosage, '5mg');
+        expect(event1.status, 'TOMADO');
+        expect(event1.type, 'alarm');
+        final expectedTs = DateTime(2026, 6, 29, 8, 5, 40).millisecondsSinceEpoch;
+        expect(event1.timestamp, expectedTs);
+
+        final event2 = events.firstWhere((e) => e.medName == 'Dipirona');
+        expect(event2.alarmId, 26);
+        expect(event2.dosage, '10mL');
+        expect(event2.status, 'PERDIDO');
+        expect(event2.type, 'alarm');
+        expect(event2.timestamp, 1782729938000);
+      });
     });
   });
 }
