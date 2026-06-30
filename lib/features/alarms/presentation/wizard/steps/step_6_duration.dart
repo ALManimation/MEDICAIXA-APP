@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/presentation/widgets/standard_stepper.dart';
 import '../wizard_notifier.dart';
 
 class WizardStep6Duration extends ConsumerStatefulWidget {
@@ -215,57 +216,14 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Decrement Button
-              IconButton(
-                onPressed: currentDays > 1
-                    ? () {
-                        notifier.updateState((s) => s.copyWith(durationDays: currentDays - 1));
-                      }
-                    : null,
-                icon: const Icon(Icons.remove, size: 24),
-                style: IconButton.styleFrom(
-                  side: BorderSide(
-                    color: currentDays > 1 ? AppColors.primary : AppColors.border,
-                    width: 1.5,
-                  ),
-                  padding: const EdgeInsets.all(12),
-                ),
-              ),
-              const SizedBox(width: 24),
-              // Value display
-              SizedBox(
-                width: 80,
-                child: Text(
-                  '$currentDays',
-                  style: TextStyle(
-                    fontSize: 38,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.text,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(width: 24),
-              // Increment Button
-              IconButton(
-                onPressed: currentDays < 365
-                    ? () {
-                        notifier.updateState((s) => s.copyWith(durationDays: currentDays + 1));
-                      }
-                    : null,
-                icon: const Icon(Icons.add, size: 24),
-                style: IconButton.styleFrom(
-                  side: BorderSide(
-                    color: currentDays < 365 ? AppColors.primary : AppColors.border,
-                    width: 1.5,
-                  ),
-                  padding: const EdgeInsets.all(12),
-                ),
-              ),
-            ],
+          StandardStepper(
+            value: currentDays.toDouble(),
+            onChanged: (v) {
+              notifier.updateState((s) => s.copyWith(durationDays: v.toInt()));
+            },
+            min: 1,
+            max: 365,
+            step: 1,
           ),
           const SizedBox(height: 12),
           Text(
@@ -397,54 +355,16 @@ class _WizardStep6DurationState extends ConsumerState<WizardStep6Duration> {
             Row(
               children: [
                 // Mini stepper for delay value
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border, width: 1.5),
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: delayVal > 1
-                            ? () {
-                                final newVal = delayVal - 1;
-                                notifier.updateState((s) => s.copyWith(
-                                      removalDelayMins: _composeDelay(newVal, delayUnit),
-                                    ));
-                              }
-                            : null,
-                        icon: const Icon(Icons.remove, size: 16),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        constraints: const BoxConstraints(),
-                      ),
-                      SizedBox(
-                        width: 40,
-                        child: Text(
-                          '$delayVal',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.text,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: delayVal < 168
-                            ? () {
-                                final newVal = delayVal + 1;
-                                notifier.updateState((s) => s.copyWith(
-                                      removalDelayMins: _composeDelay(newVal, delayUnit),
-                                    ));
-                              }
-                            : null,
-                        icon: const Icon(Icons.add, size: 16),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
+                StandardStepper(
+                  value: delayVal.toDouble(),
+                  onChanged: (v) {
+                    notifier.updateState((s) => s.copyWith(
+                          removalDelayMins: _composeDelay(v.toInt(), delayUnit),
+                        ));
+                  },
+                  min: 1,
+                  max: 168,
+                  step: 1,
                 ),
                 const SizedBox(width: 12),
                 // Dropdown for unit selection

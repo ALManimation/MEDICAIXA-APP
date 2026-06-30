@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/presentation/widgets/vertical_datetime_selector.dart';
 import '../wizard_notifier.dart';
 import '../wizard_state.dart';
 
@@ -254,11 +255,9 @@ class WizardStep7Summary extends ConsumerWidget {
                       isSelected: state.startDateMode == 'custom',
                       onTap: () async {
                         notifier.updateState((s) => s.copyWith(startDateMode: 'custom'));
-                        final selected = await showDatePicker(
-                          context: context,
+                        final selected = await showVerticalDatePicker(
+                          context,
                           initialDate: state.customStartDate ?? DateTime.now().add(const Duration(days: 1)),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 365)),
                         );
                         if (selected != null) {
                           notifier.updateState((s) => s.copyWith(customStartDate: selected));

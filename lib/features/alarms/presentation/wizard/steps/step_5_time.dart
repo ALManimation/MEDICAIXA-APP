@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/presentation/widgets/vertical_datetime_selector.dart';
 import '../../../../../core/database/database.dart';
 import '../../../../../core/providers/core_providers.dart';
 import '../wizard_notifier.dart';
@@ -203,8 +204,8 @@ class WizardStep5Time extends ConsumerWidget {
                                       initialMinute = int.tryParse(parts[1]) ?? 0;
                                     }
 
-                                    final selectedTime = await showTimePicker(
-                                      context: context,
+                                    final selectedTime = await showVerticalTimePicker(
+                                      context,
                                       initialTime: TimeOfDay(hour: initialHour, minute: initialMinute),
                                     );
 

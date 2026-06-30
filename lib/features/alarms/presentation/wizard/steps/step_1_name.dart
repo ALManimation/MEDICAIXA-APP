@@ -504,24 +504,14 @@ class _WizardStep1NameState extends ConsumerState<WizardStep1Name> {
   }
 
   Widget _buildColorPicker(String selectedColor, Function(String) onSelect) {
-    final colors = {
-      'blue': const Color(0xFF3B82F6),
-      'green': const Color(0xFF10B981),
-      'red': const Color(0xFFEF4444),
-      'yellow': const Color(0xFFFBBF24),
-      'purple': const Color(0xFF8B5CF6),
-      'orange': const Color(0xFFF97316),
-      'pink': const Color(0xFFEC4899),
-      'teal': const Color(0xFF14B8A6),
-      'white': const Color(0xFF9CA3AF), // gray circle from C++ UI
-    };
+    const colors = AppColors.alarmColors;
 
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       alignment: WrapAlignment.center,
       children: colors.entries.map((e) {
-        final isSelected = selectedColor == e.key;
+        final isSelected = selectedColor.toLowerCase() == e.key.toLowerCase();
         return GestureDetector(
           onTap: () => onSelect(e.key),
           child: Container(

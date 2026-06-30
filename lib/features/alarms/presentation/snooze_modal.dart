@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/localization/app_localizations.dart';
+import '../../../core/presentation/widgets/standard_stepper.dart';
 import '../data/alarm_model.dart';
 import 'widgets/dynamic_dose_dialog.dart';
 
@@ -73,7 +74,7 @@ class SnoozeModal extends StatefulWidget {
 
 class _SnoozeModalState extends State<SnoozeModal> {
   int _snoozeMinutes = 10;
-  late final TextEditingController _qtyController;
+  late double _qty;
 
   @override
   void initState() {
@@ -81,19 +82,9 @@ class _SnoozeModalState extends State<SnoozeModal> {
     final now = DateTime.now();
     final wday = now.weekday % 7;
     final hasAsymmetric = widget.alarm.daysQuantity.any((q) => q > 0);
-    final double qty = (hasAsymmetric && wday < widget.alarm.daysQuantity.length && widget.alarm.daysQuantity[wday] > 0)
+    _qty = (hasAsymmetric && wday < widget.alarm.daysQuantity.length && widget.alarm.daysQuantity[wday] > 0)
         ? widget.alarm.daysQuantity[wday]
         : widget.alarm.quantity;
-    
-    _qtyController = TextEditingController(
-      text: qty == qty.toInt() ? qty.toInt().toString() : qty.toStringAsFixed(1),
-    );
-  }
-
-  @override
-  void dispose() {
-    _qtyController.dispose();
-    super.dispose();
   }
 
   String _formatType(String type) {
@@ -120,11 +111,11 @@ class _SnoozeModalState extends State<SnoozeModal> {
     final alarmColor = AppColors.getAlarmColor(widget.alarm.color);
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
+      padding: const EdgeInsets.fromLTRB(
         24,
         16,
         24,
-        MediaQuery.of(context).viewInsets.bottom + 32,
+        32,
       ),
       child: SafeArea(
         child: SingleChildScrollView(
@@ -226,7 +217,7 @@ class _SnoozeModalState extends State<SnoozeModal> {
                         qty = await DynamicDoseDialog.show(context, widget.alarm);
                         if (qty == null) return; // User cancelled
                       } else {
-                        qty = double.tryParse(_qtyController.text.replaceAll(',', '.'));
+                        qty = _qty;
                       }
                       await widget.onMarkTaken(qty);
                       if (context.mounted) Navigator.pop(context);
@@ -290,39 +281,35 @@ class _SnoozeModalState extends State<SnoozeModal> {
                 ),
               ),
             ] else ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    t('snooze_qty_to_take'),
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.text),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 70,
-                    height: 36,
-                    child: TextField(
-                      controller: _qtyController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(vertical: 6),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: AppColors.border),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(color: AppColors.primary),
-                        ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        t('snooze_qty_to_take'),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.text),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatType(widget.alarm.type),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _formatType(widget.alarm.type),
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textMuted),
+                  const SizedBox(height: 12),
+                  StandardStepper(
+                    value: _qty,
+                    onChanged: (v) {
+                      setState(() {
+                        _qty = v;
+                      });
+                    },
+                    min: 0.5,
+                    max: 50.0,
+                    step: 0.5,
+                    hasFractionButton: widget.alarm.type == 'comprimido',
                   ),
                 ],
               ),
@@ -345,34 +332,16 @@ class _SnoozeModalState extends State<SnoozeModal> {
           const SizedBox(height: 8),
 
           // Stepper: - [value] +
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _StepperButton(
-                icon: Icons.remove,
-                onPressed: _snoozeMinutes > 10
-                    ? () => setState(() => _snoozeMinutes -= 10)
-                    : null,
-              ),
-              Container(
-                width: 60,
-                alignment: Alignment.center,
-                child: Text(
-                  '$_snoozeMinutes',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.text,
-                  ),
-                ),
-              ),
-              _StepperButton(
-                icon: Icons.add,
-                onPressed: _snoozeMinutes < 60
-                    ? () => setState(() => _snoozeMinutes += 10)
-                    : null,
-              ),
-            ],
+          StandardStepper(
+            value: _snoozeMinutes.toDouble(),
+            onChanged: (v) {
+              setState(() {
+                _snoozeMinutes = v.toInt();
+              });
+            },
+            min: 10,
+            max: 60,
+            step: 10,
           ),
           Text(
             t('snooze_minutes_label'),
@@ -499,6 +468,7 @@ class _SnoozeModalState extends State<SnoozeModal> {
               ),
             ],
           ),
+          SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
         ],
       ),
       ),
@@ -507,31 +477,4 @@ class _SnoozeModalState extends State<SnoozeModal> {
   }
 }
 
-class _StepperButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
 
-  const _StepperButton({required this.icon, this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surfaceVariant,
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: Container(
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          child: Icon(
-            icon,
-            color: onPressed != null ? AppColors.text : AppColors.border,
-            size: 22,
-          ),
-        ),
-      ),
-    );
-  }
-}

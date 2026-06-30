@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -8,8 +9,10 @@ import 'package:drift/drift.dart' show Value;
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'package:medicaixa_app/core/constants/app_colors.dart';
+import '../../../core/presentation/widgets/vertical_datetime_selector.dart';
 import 'package:medicaixa_app/core/database/database.dart';
 import 'package:medicaixa_app/core/providers/locale_provider.dart';
 import 'package:medicaixa_app/core/providers/theme_provider.dart';
@@ -50,12 +53,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _showGeminiKey = false;
   bool _isLoading = false;
 
+  AudioPlayer? _testAudioPlayer;
+  StreamSubscription<void>? _testAudioSubscription;
+  bool _isTestingSound = false;
+
   @override
   void dispose() {
     _nameController.dispose();
     _geminiKeyController.dispose();
     _wifiSsidController.dispose();
     _wifiPasswordController.dispose();
+    _testAudioSubscription?.cancel();
+    _testAudioPlayer?.stop();
+    _testAudioPlayer?.dispose();
     super.dispose();
   }
 
@@ -77,22 +87,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _selectTime(BuildContext context, Setting currentSettings, String fieldName, String? currentValue) async {
     final initialTime = _parseTimeOfDay(currentValue) ?? const TimeOfDay(hour: 8, minute: 0);
-    final picked = await showTimePicker(
-      context: context,
+    final picked = await showVerticalTimePicker(
+      context,
       initialTime: initialTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: AppColors.surface,
-              onSurface: AppColors.text,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) {
       final formatted = _formatTimeOfDay(picked);
@@ -406,6 +403,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 // Idioma do App
                 _buildAppConfigCard(currentLocale, settings),
+                const SizedBox(height: 12),
+
+                // Notificações e Sons do App
+                _buildAppNotificationsCard(settings),
                 const SizedBox(height: 24),
 
                 // ================= AJUSTES DA CAIXINHA =================
@@ -715,6 +716,213 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _toggleSoundTest(int soundIndex, int volume) async {
+    final buildContext = context;
+    if (_isTestingSound) {
+      _testAudioSubscription?.cancel();
+      if (_testAudioPlayer != null) {
+        await _testAudioPlayer!.stop();
+      }
+      setState(() {
+        _isTestingSound = false;
+      });
+    } else {
+      setState(() {
+        _isTestingSound = true;
+      });
+      _testAudioPlayer ??= AudioPlayer();
+      try {
+        await _testAudioPlayer!.setReleaseMode(ReleaseMode.release);
+        await _testAudioPlayer!.setVolume(volume / 100.0);
+        
+        String soundPath = 'sounds/alarm_alerta.wav';
+        switch (soundIndex) {
+          case 0: soundPath = 'sounds/alarm_gentile.wav'; break;
+          case 1: soundPath = 'sounds/alarm_alerta.wav'; break;
+          case 2: soundPath = 'sounds/alarm_melodia.wav'; break;
+          case 3: soundPath = 'sounds/alarm_urgente.wav'; break;
+          case 4: soundPath = 'sounds/alarm_musical.wav'; break;
+        }
+        
+        _testAudioSubscription?.cancel();
+        _testAudioSubscription = _testAudioPlayer!.onPlayerComplete.listen((_) {
+          if (buildContext.mounted) {
+            setState(() {
+              _isTestingSound = false;
+            });
+          }
+        });
+
+        await _testAudioPlayer!.play(AssetSource(soundPath));
+      } catch (e) {
+        debugPrint('Error playing sound test: $e');
+        if (buildContext.mounted) {
+          setState(() {
+            _isTestingSound = false;
+          });
+        }
+      }
+    }
+  }
+
+  Widget _buildAppNotificationsCard(Setting settings) {
+    final repo = ref.read(settingsRepositoryProvider);
+
+    final soundDropdown = DropdownButtonFormField<int>(
+      initialValue: settings.localAlarmSound,
+      dropdownColor: AppColors.surface,
+      style: TextStyle(color: AppColors.text, fontSize: 16),
+      decoration: const InputDecoration(
+        labelText: 'Som do Alarme',
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      items: [
+        DropdownMenuItem(value: 0, child: Text('Beep', style: TextStyle(color: AppColors.text))),
+        DropdownMenuItem(value: 1, child: Text('Alerta', style: TextStyle(color: AppColors.text))),
+        DropdownMenuItem(value: 2, child: Text('Melodia', style: TextStyle(color: AppColors.text))),
+        DropdownMenuItem(value: 3, child: Text('Urgente', style: TextStyle(color: AppColors.text))),
+        DropdownMenuItem(value: 4, child: Text('Musical', style: TextStyle(color: AppColors.text))),
+      ],
+      onChanged: (val) async {
+        if (val != null) {
+          final updated = settings.copyWith(localAlarmSound: val);
+          await repo.updateSettings(updated);
+        }
+      },
+    );
+
+    final durationDropdown = DropdownButtonFormField<int>(
+      initialValue: settings.localAlarmDurationMins,
+      dropdownColor: AppColors.surface,
+      style: TextStyle(color: AppColors.text, fontSize: 16),
+      decoration: const InputDecoration(
+        labelText: 'Duração Limite',
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      items: [
+        DropdownMenuItem(value: 1, child: Text('1 Minuto', style: TextStyle(color: AppColors.text))),
+        DropdownMenuItem(value: 2, child: Text('2 Minutos', style: TextStyle(color: AppColors.text))),
+        DropdownMenuItem(value: 5, child: Text('5 Minutos', style: TextStyle(color: AppColors.text))),
+      ],
+      onChanged: (val) async {
+        if (val != null) {
+          final updated = settings.copyWith(localAlarmDurationMins: val);
+          await repo.updateSettings(updated);
+        }
+      },
+    );
+
+    final volumeSlider = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Volume do Alarme: ${settings.localAlarmVolume}%',
+          style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w500),
+        ),
+        Slider(
+          value: settings.localAlarmVolume.toDouble(),
+          min: 0,
+          max: 100,
+          divisions: 100,
+          activeColor: AppColors.primary,
+          onChanged: (val) {
+            repo.updateSettings(settings.copyWith(localAlarmVolume: val.toInt()));
+          },
+        ),
+      ],
+    );
+
+    final vibrationSwitch = SwitchListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text('Vibrar ao tocar', style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w500)),
+      value: settings.localVibrationEnabled,
+      activeThumbColor: AppColors.primary,
+      onChanged: (val) async {
+        final updated = settings.copyWith(localVibrationEnabled: val);
+        await repo.updateSettings(updated);
+      },
+    );
+
+    final testButton = ElevatedButton.icon(
+      onPressed: () => _toggleSoundTest(settings.localAlarmSound, settings.localAlarmVolume),
+      icon: Icon(
+        _isTestingSound ? Icons.stop_rounded : Icons.play_arrow_rounded,
+        color: Colors.white,
+      ),
+      label: Text(_isTestingSound ? 'Parar Teste' : 'Testar Alarme'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _isTestingSound ? AppColors.missed : AppColors.primary,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+
+    final width = MediaQuery.of(context).size.width;
+    final isWide = width >= 800;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Notificações e Sons do App',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.text,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (isWide) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        soundDropdown,
+                        const SizedBox(height: 16),
+                        durationDropdown,
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        volumeSlider,
+                        const SizedBox(height: 8),
+                        vibrationSwitch,
+                        const SizedBox(height: 16),
+                        SizedBox(width: double.infinity, child: testButton),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              soundDropdown,
+              const SizedBox(height: 16),
+              durationDropdown,
+              const SizedBox(height: 16),
+              volumeSlider,
+              const SizedBox(height: 8),
+              vibrationSwitch,
+              const SizedBox(height: 16),
+              SizedBox(width: double.infinity, child: testButton),
+            ],
           ],
         ),
       ),
@@ -1269,42 +1477,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     onPressed: () async {
                       final buildContext = context;
                       final now = DateTime.now();
-                      final date = await showDatePicker(
-                        context: buildContext,
+                      final date = await showVerticalDatePicker(
+                        buildContext,
                         initialDate: now,
-                        firstDate: DateTime(2025),
-                        lastDate: DateTime(2035),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: ColorScheme.dark(
-                                primary: AppColors.primary,
-                                onPrimary: Colors.white,
-                                surface: AppColors.surface,
-                                onSurface: AppColors.text,
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
                       );
                       if (date != null && buildContext.mounted) {
-                        final time = await showTimePicker(
-                          context: buildContext,
+                        final time = await showVerticalTimePicker(
+                          buildContext,
                           initialTime: TimeOfDay.now(),
-                          builder: (context, child) {
-                            return Theme(
-                              data: Theme.of(context).copyWith(
-                                colorScheme: ColorScheme.dark(
-                                  primary: AppColors.primary,
-                                  onPrimary: Colors.white,
-                                  surface: AppColors.surface,
-                                  onSurface: AppColors.text,
-                                ),
-                              ),
-                              child: child!,
-                            );
-                          },
                         );
                         if (time != null && buildContext.mounted) {
                           final combined = DateTime(date.year, date.month, date.day, time.hour, time.minute);

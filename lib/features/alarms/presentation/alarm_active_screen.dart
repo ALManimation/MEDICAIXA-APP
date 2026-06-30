@@ -1,11 +1,15 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../dashboard/presentation/dashboard_notifier.dart';
 import '../data/alarm_model.dart';
 import '../data/alarm_repository.dart';
+import '../../settings/data/settings_repository.dart';
 import 'widgets/dynamic_dose_dialog.dart';
 
 class AlarmActiveScreen extends ConsumerStatefulWidget {
@@ -25,47 +29,198 @@ class _AlarmActiveScreenState extends ConsumerState<AlarmActiveScreen>
   late AudioPlayer _audioPlayer;
   late AnimationController _pulsingController;
   int _currentAlarmIndex = 0;
+  static const _appNapChannel = MethodChannel('com.medicaixa.app/app_nap');
+
+  Timer? _timeoutTimer;
+  Timer? _vibrationTimer;
+  Timer? _fallbackVibrationTimer;
+  int _localAlarmSound = 0;
+  int _localAlarmVolume = 70;
+  bool _localVibrationEnabled = true;
+  int _localAlarmDurationMins = 2;
+  bool _soundPlayingSucceeded = false;
+  bool _vibrationLoopStarted = false;
 
   @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
-    _playAlarmSound();
-
     _pulsingController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
     )..repeat(reverse: true);
+
+    _initAlarmState();
+    _startAppNapPrevention();
+  }
+
+  void _maybeStartVibrationLoop() {
+    if (!mounted) return;
+    if (!_localVibrationEnabled) return;
+    if (_vibrationLoopStarted) return;
+    _vibrationLoopStarted = true;
+    _startVibrationLoop();
+  }
+
+  Future<void> _initAlarmState() async {
+    try {
+      final repo = ref.read(settingsRepositoryProvider);
+      final settings = await repo.getSettings();
+      _localAlarmSound = settings.localAlarmSound;
+      _localAlarmVolume = settings.localAlarmVolume;
+      _localVibrationEnabled = settings.localVibrationEnabled;
+      _localAlarmDurationMins = settings.localAlarmDurationMins;
+
+      await _audioPlayer.setVolume(_localAlarmVolume / 100.0);
+    } catch (e) {
+      debugPrint('Error loading settings in AlarmActiveScreen: $e');
+    }
+
+    _maybeStartVibrationLoop();
+
+    await _playAlarmSound();
+
+    if (mounted) {
+      _startTimeoutTimer();
+      _maybeStartVibrationLoop();
+    }
+  }
+
+  void _startTimeoutTimer() {
+    _timeoutTimer?.cancel();
+    _timeoutTimer = Timer(Duration(minutes: _localAlarmDurationMins), () async {
+      if (!mounted) return;
+      
+      final repo = ref.read(alarmRepositoryProvider);
+      for (int i = _currentAlarmIndex; i < widget.activeAlarms.length; i++) {
+        final alarm = widget.activeAlarms[i];
+        final minutes = alarm.snoozeMin > 0 ? alarm.snoozeMin : 10;
+        await repo.snoozeAlarm(alarm.id, minutes);
+      }
+      
+      if (!mounted) return;
+      ref.invalidate(dashboardNotifierProvider);
+      
+      _audioPlayer.stop();
+      _stopAppNapPrevention();
+    });
+  }
+
+  void _startVibrationLoop() {
+    if (!_localVibrationEnabled) return;
+    _vibrateAndSchedule();
+  }
+
+  void _vibrateAndSchedule() {
+    if (!mounted || !_localVibrationEnabled) return;
+    try {
+      HapticFeedback.vibrate();
+    } catch (e) {
+      debugPrint('HapticFeedback.vibrate failed: $e');
+    }
+    _vibrationTimer?.cancel();
+    _vibrationTimer = Timer(const Duration(seconds: 2), _vibrateAndSchedule);
+  }
+
+  Future<void> _startAppNapPrevention() async {
+    if (Platform.isMacOS) {
+      try {
+        await _appNapChannel.invokeMethod('start');
+        debugPrint('App Nap prevention started.');
+      } catch (e) {
+        debugPrint('Failed to start App Nap prevention: $e');
+      }
+    }
+  }
+
+  Future<void> _stopAppNapPrevention() async {
+    if (Platform.isMacOS) {
+      try {
+        await _appNapChannel.invokeMethod('stop');
+        debugPrint('App Nap prevention stopped.');
+      } catch (e) {
+        debugPrint('Failed to stop App Nap prevention: $e');
+      }
+    }
   }
 
   @override
   void dispose() {
+    _timeoutTimer?.cancel();
+    _vibrationTimer?.cancel();
+    _fallbackVibrationTimer?.cancel();
     _audioPlayer.dispose();
     _pulsingController.dispose();
+    _stopAppNapPrevention();
     super.dispose();
   }
 
   Future<void> _playAlarmSound() async {
     try {
-      // Use a premium alarm sound URL with fallback
+      await NotificationService.instance.configureAudioSessionForPlayback();
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.play(UrlSource(
-        'https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg',
-      ));
+      await _audioPlayer.setVolume(_localAlarmVolume / 100.0);
     } catch (e) {
-      debugPrint('Could not play alarm sound: $e. Using system vibration.');
-      // Fallback: trigger haptic feedback periodically
+      debugPrint('Error configuring audio session/release mode/volume: $e');
+    }
+
+    _soundPlayingSucceeded = false;
+
+    // Use sound choices corresponding to generated buzzer melody files
+    String soundPath = 'sounds/alarm_alerta.wav';
+    switch (_localAlarmSound) {
+      case 0: soundPath = 'sounds/alarm_gentile.wav'; break;
+      case 1: soundPath = 'sounds/alarm_alerta.wav'; break;
+      case 2: soundPath = 'sounds/alarm_melodia.wav'; break;
+      case 3: soundPath = 'sounds/alarm_urgente.wav'; break;
+      case 4: soundPath = 'sounds/alarm_musical.wav'; break;
+    }
+
+    try {
+      await _audioPlayer.play(AssetSource(soundPath));
+      debugPrint('Playing local asset sound: $soundPath');
+      _soundPlayingSucceeded = true;
+      _maybeStartVibrationLoop();
+    } catch (assetError) {
+      debugPrint('Could not play local asset: $assetError. Trying remote URL fallback.');
+      try {
+        await _audioPlayer.play(UrlSource(
+          'https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg',
+        ));
+        _soundPlayingSucceeded = true;
+        _maybeStartVibrationLoop();
+      } catch (remoteError) {
+        debugPrint('Could not play remote URL fallback sound: $remoteError');
+      }
+    }
+
+    if (!_soundPlayingSucceeded) {
+      debugPrint('All audio players failed. Falling back to system vibration and system sound.');
       _triggerPeriodicVibration();
     }
   }
 
   void _triggerPeriodicVibration() {
-    Future.doWhile(() async {
-      if (!context.mounted) return false;
-      HapticFeedback.vibrate();
-      await Future.delayed(const Duration(seconds: 2));
-      return context.mounted;
-    });
+    _vibrateFallbackAndSchedule();
+  }
+
+  void _vibrateFallbackAndSchedule() async {
+    if (!mounted) return;
+    if (_localVibrationEnabled) {
+      try {
+        await HapticFeedback.vibrate();
+      } catch (e) {
+        debugPrint('HapticFeedback.vibrate failed: $e');
+      }
+    }
+    try {
+      await SystemSound.play(SystemSoundType.alert);
+    } catch (e) {
+      debugPrint('SystemSound.play failed: $e');
+    }
+    if (!mounted) return;
+    _fallbackVibrationTimer?.cancel();
+    _fallbackVibrationTimer = Timer(const Duration(seconds: 2), _vibrateFallbackAndSchedule);
   }
 
   IconData _getMedicationIcon(String type) {
@@ -94,45 +249,37 @@ class _AlarmActiveScreenState extends ConsumerState<AlarmActiveScreen>
     double? customQty;
     if (alarm.isDynamic == true) {
       customQty = await DynamicDoseDialog.show(context, alarm);
+      if (!context.mounted) return;
       if (customQty == null) return; // User cancelled
     }
     await repo.markTaken(alarm.id, customQty: customQty);
+    if (!context.mounted) return;
     ref.invalidate(dashboardNotifierProvider);
-    _nextOrDismiss();
   }
 
   Future<void> _markSkipped(AlarmModel alarm) async {
     final repo = ref.read(alarmRepositoryProvider);
     await repo.markSkipped(alarm.id);
+    if (!context.mounted) return;
     ref.invalidate(dashboardNotifierProvider);
-    _nextOrDismiss();
   }
 
   Future<void> _snooze(AlarmModel alarm, int minutes) async {
     final repo = ref.read(alarmRepositoryProvider);
     await repo.snoozeAlarm(alarm.id, minutes);
+    if (!context.mounted) return;
     ref.invalidate(dashboardNotifierProvider);
-    _nextOrDismiss();
   }
 
   @override
   void didUpdateWidget(covariant AlarmActiveScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_currentAlarmIndex >= widget.activeAlarms.length) {
+    if (widget.activeAlarms.length != oldWidget.activeAlarms.length) {
       setState(() {
-        _currentAlarmIndex = widget.activeAlarms.isEmpty ? 0 : widget.activeAlarms.length - 1;
+        _currentAlarmIndex = 0;
       });
-    }
-  }
-
-  void _nextOrDismiss() {
-    if (_currentAlarmIndex < widget.activeAlarms.length - 1) {
-      setState(() {
-        _currentAlarmIndex++;
-      });
-    } else {
-      // All alarms processed, screen will be dismissed automatically by the activeAlarms stream provider
-      _audioPlayer.stop();
+      _startTimeoutTimer();
+      _playAlarmSound();
     }
   }
 

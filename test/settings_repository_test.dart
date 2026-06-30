@@ -139,6 +139,28 @@ void main() {
       expect(retrieved.themeMode, 'light');
     });
 
+    test('Local app alarm settings update correctly', () async {
+      final initial = await settingsRepo.getSettings();
+      expect(initial.localAlarmSound, 0);
+      expect(initial.localAlarmVolume, 70);
+      expect(initial.localVibrationEnabled, true);
+      expect(initial.localAlarmDurationMins, 2);
+
+      final updated = initial.copyWith(
+        localAlarmSound: 2,
+        localAlarmVolume: 90,
+        localVibrationEnabled: false,
+        localAlarmDurationMins: 5,
+      );
+      await settingsRepo.updateSettings(updated);
+
+      final retrieved = await settingsRepo.getSettings();
+      expect(retrieved.localAlarmSound, 2);
+      expect(retrieved.localAlarmVolume, 90);
+      expect(retrieved.localVibrationEnabled, false);
+      expect(retrieved.localAlarmDurationMins, 5);
+    });
+
     group('RingtoneType & AlarmSpacingInterval mappings', () {
       test('RingtoneType fromIndex', () {
         expect(RingtoneType.fromIndex(0), RingtoneType.gentile);

@@ -1,0 +1,16 @@
+# Reviewer Context
+- Target: Reviewing native alarm, sound, and notification integration.
+- Files to check:
+  - docs/integration_plan.md
+  - android/app/src/main/AndroidManifest.xml
+  - android/app/src/main/kotlin/com/medicaixa/medicaixa_app/MainActivity.kt
+  - ios/Runner/Info.plist
+  - ios/Runner/Runner.entitlements
+  - ios/Runner/AppDelegate.swift
+  - macos/Runner/Info.plist
+  - macos/Runner/DebugProfile.entitlements
+  - macos/Runner/Release.entitlements
+  - macos/Runner/AppDelegate.swift
+  - lib/core/services/notification_service.dart
+  - lib/features/alarms/presentation/alarm_active_screen.dart
+  - pubspec.yaml

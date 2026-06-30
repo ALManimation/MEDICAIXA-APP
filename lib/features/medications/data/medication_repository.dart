@@ -162,6 +162,16 @@ class MedicationRepository {
     );
 
     await _db.into(_db.medications).insert(newMed, mode: InsertMode.insertOrReplace);
+
+    // Bidirectional color sync
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    await (_db.update(_db.alarms)..where((t) => t.medName.equals(med.name))).write(
+      AlarmsCompanion(
+        color: Value(med.color),
+        pendingSync: const Value(true),
+        lastModified: Value(nowMs),
+      ),
+    );
   }
 
   Future<void> updateMedication(String oldName, Medication med) async {
@@ -188,6 +198,16 @@ class MedicationRepository {
     );
 
     await _db.into(_db.medications).insert(updatedMed, mode: InsertMode.insertOrReplace);
+
+    // Bidirectional color sync
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    await (_db.update(_db.alarms)..where((t) => t.medName.equals(med.name))).write(
+      AlarmsCompanion(
+        color: Value(med.color),
+        pendingSync: const Value(true),
+        lastModified: Value(nowMs),
+      ),
+    );
   }
 
   Future<void> deleteMedication(String name) async {

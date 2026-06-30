@@ -1,3 +1,5 @@
+import '../../../core/constants/app_colors.dart';
+
 class ReminderModel {
   final int id;
   final String title;
@@ -36,6 +38,8 @@ class ReminderModel {
   });
 
   factory ReminderModel.fromJson(Map<String, dynamic> json) {
+    final rawColor = (json['color'] as String? ?? 'blue').toLowerCase();
+    final validatedColor = AppColors.alarmColors.containsKey(rawColor) ? rawColor : 'blue';
     return ReminderModel(
       id: json['id'] as int,
       title: json['title'] as String? ?? '',
@@ -49,7 +53,7 @@ class ReminderModel {
       startDate: json['start_date'] as String? ?? '',
       notifyDaysBefore: json['notify_days_before'] as int? ?? 0,
       lastCompletedDate: json['last_completed_date'] as String?,
-      color: json['color'] as String? ?? 'blue',
+      color: validatedColor,
       lastModified: json['last_modified'] as int?,
       pendingSync: json['pending_sync'] == true,
     );

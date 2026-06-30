@@ -39,6 +39,10 @@ class SettingsRepository {
         alarmSpacingMs: Value(10000),
         alarmWizardEnabled: Value(true),
         themeMode: Value('dark'),
+        localAlarmSound: Value(0),
+        localAlarmVolume: Value(70),
+        localVibrationEnabled: Value(true),
+        localAlarmDurationMins: Value(2),
       );
       await _db.into(_db.settings).insert(defaultSettings);
       final newList = await _db.select(_db.settings).get();
@@ -328,6 +332,10 @@ class SettingsRepository {
           'gemini_api_key': settings.geminiApiKey,
           'prohibited_ranges': settings.prohibitedRanges != null ? json.decode(settings.prohibitedRanges!) : null,
           'theme_mode': settings.themeMode,
+          'local_alarm_sound': settings.localAlarmSound,
+          'local_alarm_volume': settings.localAlarmVolume,
+          'local_vibration_enabled': settings.localVibrationEnabled,
+          'local_alarm_duration_mins': settings.localAlarmDurationMins,
         }
       };
       return jsonEncode(backupData);
@@ -540,6 +548,10 @@ class SettingsRepository {
           geminiApiKey: Value(item['gemini_api_key'] as String?),
           prohibitedRanges: Value(item['prohibited_ranges'] != null ? json.encode(item['prohibited_ranges']) : null),
           themeMode: Value(item['theme_mode'] as String? ?? 'dark'),
+          localAlarmSound: Value((item['local_alarm_sound'] as num?)?.toInt() ?? 0),
+          localAlarmVolume: Value((item['local_alarm_volume'] as num?)?.toInt() ?? 70),
+          localVibrationEnabled: Value((item['local_vibration_enabled'] as bool?) ?? true),
+          localAlarmDurationMins: Value((item['local_alarm_duration_mins'] as num?)?.toInt() ?? 2),
         );
         await _db.into(_db.settings).insert(setting, mode: InsertMode.insertOrReplace);
         totalRestored += 1;
@@ -780,6 +792,10 @@ class DeviceResetNotifier extends _$DeviceResetNotifier {
           geminiApiKey: const Value(null),
           prohibitedRanges: const Value(null),
           themeMode: 'dark',
+          localAlarmSound: 0,
+          localAlarmVolume: 70,
+          localVibrationEnabled: true,
+          localAlarmDurationMins: 2,
         );
         await repo.updateSettings(defaults);
       }

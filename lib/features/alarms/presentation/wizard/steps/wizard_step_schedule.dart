@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/presentation/widgets/vertical_datetime_selector.dart';
 import '../../../../../core/database/database.dart';
 import '../../../../../core/providers/core_providers.dart';
 import '../alarm_wizard_notifier.dart';
@@ -32,20 +33,9 @@ class _WizardStepScheduleState extends ConsumerState<WizardStepSchedule> {
   }
 
   void _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
+    final TimeOfDay? picked = await showVerticalTimePicker(
+      context,
       initialTime: _selectedTime,
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.dark().copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
-              surface: AppColors.surface,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null && picked != _selectedTime) {
       setState(() {

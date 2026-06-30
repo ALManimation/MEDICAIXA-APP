@@ -533,4 +533,86 @@ Integrity mode: development
 - [ ] Não ocorrem overflows de renderização (RenderFlex) ou erros visuais ao redimensionar a janela do aplicativo.
 </USER_REQUEST>
 
+## 2026-06-29T14:35:36Z
 
+O MediCaixa-App necessita de um sistema integrado de gerenciamento de sons e notificações de alarmes para Android, iOS e macOS, funcionando de forma 100% autônoma e tirando proveito dos recursos nativos mais avançados de cada plataforma em 2026.
+
+Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app
+Integrity mode: development
+
+## Requirements
+
+### R1. Plano de Integração de Alarme Nativo Avançado
+Gerar um documento de design/plano de engenharia detalhado contendo a arquitetura de integração de alarmes com o sistema operacional para cada uma das plataformas (Android, iOS e macOS). O plano deve descrever como o aplicativo lidará com a execução em segundo plano, contorno de modos silenciosos e DND, e exibição de interfaces sobre a tela de bloqueio.
+
+### R2. Configurações de Permissões e Manifestos Nativos
+Atualizar os manifestos e arquivos de configuração nativos do projeto Flutter para habilitar as permissões e recursos de segundo plano necessários em cada sistema operacional:
+- **Android**: `AndroidManifest.xml` configurado com `USE_FULL_SCREEN_INTENT`, `SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`, `WAKE_LOCK`, e `RECEIVE_BOOT_COMPLETED`.
+- **iOS**: `Info.plist` e Entitlements configurados para solicitar Critical Alerts (Alertas Críticos) e Background Modes (Audio playback e Background fetch).
+- **macOS**: Arquivos `.entitlements` e configurações de notificações correspondentes.
+
+### R3. Atualização e Extensão do NotificationService
+Expandir o `NotificationService` no Flutter para:
+- Inicializar canais de notificação no Android com alta prioridade, importância máxima e suporte a `fullScreenIntent` (carregando a `AlarmActiveScreen`).
+- Configurar o iOS para Alertas Críticos (`UNNotificationSound.criticalSoundNamed`) e inicializar adequadamente a `AVAudioSession` no modo de reprodução de áudio (`.playback`) quando um som tocar.
+- Adicionar documentação e suporte no Flutter para configurar e disparar notificações Time-Sensitive no macOS.
+
+## Acceptance Criteria
+
+### Plano e Arquitetura
+- [ ] O plano de engenharia deve estar documentado em `docs/integration_plan.md` e conter seções específicas para Android, iOS e macOS detalhando as APIs nativas usadas.
+- [ ] O plano deve detalhar o processo de solicitação e tratamento do *Critical Alerts Entitlement* para iOS e o fallback usando `AVAudioSession` com áudio em background.
+
+### Configurações de Plataforma
+- [ ] O arquivo `android/app/src/main/AndroidManifest.xml` deve incluir as permissões declaradas para alarmes exatos e exibição em tela de bloqueio.
+- [ ] O arquivo `ios/Runner/Info.plist` e os arquivos de entitlements (`ios/Runner/Runner.entitlements`, etc.) devem conter as chaves de `UIBackgroundModes` (com `audio` e `fetch`) e a declaração de Critical Alerts se aplicável.
+- [ ] O arquivo `macos/Runner/DebugProfile.entitlements` e `Release.entitlements` devem conter as permissões de rede e notificações necessárias.
+
+### Implementação Dart e Compilação
+- [ ] O código Dart do `NotificationService` modificado deve compilar com sucesso e passar na análise estática (`flutter analyze`).
+- [ ] A inicialização do canal de notificação com Alertas Críticos e suporte a `fullScreenIntent` deve ser implementada de forma condicional por plataforma, evitando falhas de compilação ou execução em plataformas sem suporte.
+
+## 2026-06-29T17:10:00Z
+
+O MediCaixa-App necessita de novos controles locais na aba de Ajustes (SettingsScreen) para gerenciar as notificações e sons de alarmes do próprio aplicativo de forma independente do estado de conexão da caixinha (modo autônomo), persistindo as escolhas no Drift Database local e integrando com o motor de alarmes.
+
+Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app
+Integrity mode: development
+
+## Requirements
+
+### R1. Atualização do Esquema do Banco de Dados (Drift)
+Adicionar na tabela `Settings` do Drift as novas colunas necessárias para persistência offline-first das configurações locais:
+- `localAlarmSound` (IntColumn, índice do som padrão do app, default 0).
+- `localAlarmVolume` (IntColumn, volume do alarme de 0 a 100, default 70).
+- `localVibrationEnabled` (BoolColumn, se a vibração hática está ativa, default true).
+- `localAlarmDurationMins` (IntColumn, limite de tempo do alarme tocando antes de adiar/cancelar automaticamente: 1, 2 ou 5 minutos, default 2).
+Executar o gerador de código `build_runner` para regenerar os arquivos de banco de dados (`database.g.dart`).
+
+### R2. Interface Gráfica de Ajustes Locais
+Estender a interface da tela `SettingsScreen` para incluir uma nova seção visível chamada "Notificações e Sons do App" (sob os Ajustes Locais). Esta seção deve conter:
+- Dropdown para escolha do som local do app (Beep, Alerta, Melodia, Musical, Urgente).
+- Slider para controle de volume do alarme local (0 a 100).
+- Switch para ligar/desligar a vibração hática do alarme local.
+- Dropdown para a duração limite do alarme (1 minuto, 2 minutos, 5 minutos).
+- Botão "Testar Alarme" que reproduz localmente o som e volume selecionados (mudando para "Parar Teste" enquanto estiver tocando) para feedback imediato do usuário.
+
+### R3. Integração com NotificationService e AlarmActiveScreen
+- Adaptar o `NotificationService` para agendar as notificações locais usando o som selecionado em `localAlarmSound` (mapeado para os arquivos nativos `.wav` já existentes no Android, iOS e macOS).
+- Adaptar a tela `AlarmActiveScreen` para ler as novas preferências locais de volume, vibração e duração limite, aplicando-as à `AVAudioSession`, ao loop de reprodução hática e ao timer de fechamento automático por inatividade do alarme.
+
+## Acceptance Criteria
+
+### Banco de Dados
+- [ ] A tabela `Settings` em `lib/core/database/database.dart` deve incluir as quatro novas colunas (`localAlarmSound`, `localAlarmVolume`, `localVibrationEnabled`, `localAlarmDurationMins`) com os respectivos defaults de inicialização.
+- [ ] O arquivo `database.g.dart` deve ser regenerado com sucesso sem erros de build.
+
+### Interface Visual (Ajustes)
+- [ ] A tela de Ajustes deve renderizar a nova seção e persistir as alterações imediatamente no banco de dados local ao alterar os valores (reatividade e persistência offline).
+- [ ] O botão de teste de áudio na tela de Ajustes deve tocar o som selecionado com o volume correto (e parar adequadamente ao ser clicado de novo).
+
+### Motor de Alarmes
+- [ ] A tela ativa do alarme (`AlarmActiveScreen`) deve ler a configuração local de som e volume do banco e usá-los na inicialização do player.
+- [ ] Se o alarme não for atendido pelo usuário dentro da duração limite selecionada (ex: 1, 2 ou 5 minutos), ele deve entrar em Soneca/Perdido e fechar a tela automaticamente.
+- [ ] A vibração na tela de alarme ativo deve respeitar a chave de ativação configurada.
+- [ ] O projeto modificado deve compilar com sucesso e passar na análise estática (`flutter analyze` e `flutter test`).

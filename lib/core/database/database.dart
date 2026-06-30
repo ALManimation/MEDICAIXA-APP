@@ -118,6 +118,10 @@ class Settings extends Table {
   TextColumn get geminiApiKey => text().nullable()();
   TextColumn get prohibitedRanges => text().nullable()(); // JSON serialized List<TimeRange>
   TextColumn get themeMode => text().withDefault(const Constant('dark'))();
+  IntColumn get localAlarmSound => integer().withDefault(const Constant(0))();
+  IntColumn get localAlarmVolume => integer().withDefault(const Constant(70))();
+  BoolColumn get localVibrationEnabled => boolean().withDefault(const Constant(true))();
+  IntColumn get localAlarmDurationMins => integer().withDefault(const Constant(2))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -163,7 +167,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.connect(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -181,6 +185,12 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 5) {
             await migrator.addColumn(settings, settings.themeMode);
+          }
+          if (from < 6) {
+            await migrator.addColumn(settings, settings.localAlarmSound);
+            await migrator.addColumn(settings, settings.localAlarmVolume);
+            await migrator.addColumn(settings, settings.localVibrationEnabled);
+            await migrator.addColumn(settings, settings.localAlarmDurationMins);
           }
         },
       );

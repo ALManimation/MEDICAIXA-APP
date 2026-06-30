@@ -96,3 +96,110 @@ Integrity mode: development
 - [ ] Em resoluções Desktop (>= 800px), os cards de alarmes, lembretes e medicamentos aparecem distribuídos horizontalmente lado a lado em colunas fluidas (máximo de 400px de largura por card).
 - [ ] Em resoluções Mobile (< 800px), os cartões continuam alinhados verticalmente ocupando toda a largura útil da coluna.
 - [ ] Não ocorrem overflows de renderização (RenderFlex) ou erros visuais ao redimensionar a janela do aplicativo.
+ 
++## 2026-06-29T14:35:36Z
++
++O MediCaixa-App necessita de um sistema integrado de gerenciamento de sons e notificações de alarmes para Android, iOS e macOS, funcionando de forma 100% autônoma e tirando proveito dos recursos nativos mais avançados de cada plataforma em 2026.
++
++Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app
++Integrity mode: development
++
++## Requirements
++
++### R1. Plano de Integração de Alarme Nativo Avançado
++Gerar um documento de design/plano de engenharia detalhado contendo a arquitetura de integração de alarmes com o sistema operacional para cada uma das plataformas (Android, iOS e macOS). O plano deve descrever como o aplicativo lidará com a execução em segundo plano, contorno de modos silenciosos e DND, e exibição de interfaces sobre a tela de bloqueio.
++
++### R2. Configurações de Permissões e Manifestos Nativos
++Atualizar os manifestos e arquivos de configuração nativos do projeto Flutter para habilitar as permissões e recursos de segundo plano necessários em cada sistema operacional:
++- **Android**: `AndroidManifest.xml` configurado com `USE_FULL_SCREEN_INTENT`, `SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`, `WAKE_LOCK`, e `RECEIVE_BOOT_COMPLETED`.
++- **iOS**: `Info.plist` e Entitlements configurados para solicitar Critical Alerts (Alertas Críticos) e Background Modes (Audio playback e Background fetch).
++- **macOS**: Arquivos `.entitlements` e configurações de notificações correspondentes.
++
++### R3. Atualização e Extensão do NotificationService
++Expandir o `NotificationService` no Flutter para:
++- Inicializar canais de notificação no Android com alta prioridade, importância máxima e suporte a `fullScreenIntent` (carregando a `AlarmActiveScreen`).
++- Configurar o iOS para Alertas Críticos (`UNNotificationSound.criticalSoundNamed`) e inicializar adequadamente a `AVAudioSession` no modo de reprodução de áudio (`.playback`) quando um som tocar.
++- Adicionar documentação e suporte no Flutter para configurar e disparar notificações Time-Sensitive no macOS.
++
++## Acceptance Criteria
++
++### Plano e Arquitetura
++- [ ] O plano de engenharia deve estar documentado em `docs/integration_plan.md` e conter seções específicas para Android, iOS e macOS detalhando as APIs nativas usadas.
++- [ ] O plano deve detalhar o processo de solicitação e tratamento do *Critical Alerts Entitlement* para iOS e o fallback usando `AVAudioSession` com áudio em background.
++
++### Configurações de Plataforma
+## 2026-06-29T14:35:36Z
+
+O MediCaixa-App necessita de um sistema integrado de gerenciamento de sons e notificações de alarmes para Android, iOS e macOS, funcionando de forma 100% autônoma e tirando proveito dos recursos nativos mais avançados de cada plataforma em 2026.
+
+Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app
+Integrity mode: development
+
+## Requirements
+
+### R1. Plano de Integração de Alarme Nativo Avançado
+Gerar um documento de design/plano de engenharia detalhado contendo a arquitetura de integração de alarmes com o sistema operacional para cada uma das plataformas (Android, iOS e macOS). O plano deve descrever como o aplicativo lidará com a execução em segundo plano, contorno de modos silenciosos e DND, e exibição de interfaces sobre a tela de bloqueio.
+
+### R2. Configurações de Permissões e Manifestos Nativos
+Atualizar os manifestos e arquivos de configuração nativos do projeto Flutter para habilitar as permissões e recursos de segundo plano necessários em cada sistema operacional:
+- **Android**: `AndroidManifest.xml` configurado com `USE_FULL_SCREEN_INTENT`, `SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`, `WAKE_LOCK`, e `RECEIVE_BOOT_COMPLETED`.
+- **iOS**: `Info.plist` e Entitlements configurados para solicitar Critical Alerts (Alertas Críticos) e Background Modes (Audio playback e Background fetch).
+- **macOS**: Arquivos `.entitlements` e configurações de notificações correspondentes.
+
+### R3. Atualização e Extensão do NotificationService
+Expandir o `NotificationService` no Flutter para:
+- Inicializar canais de notificação no Android com alta prioridade, importância máxima e suporte a `fullScreenIntent` (carregando a `AlarmActiveScreen`).
+- Configurar o iOS para Alertas Críticos (`UNNotificationSound.criticalSoundNamed`) e inicializar adequadamente a `AVAudioSession` no modo de reprodução de áudio (`.playback`) quando um som tocar.
+- Adicionar documentação e suporte no Flutter para configurar e disparar notificações Time-Sensitive no macOS.
+
+## Acceptance Criteria
+
+### Plano e Arquitetura
+- [ ] O plano de engenharia deve estar documentado em `docs/integration_plan.md` e conter seções específicas para Android, iOS e macOS detalhando as APIs nativas usadas.
+- [ ] O plano deve detalhar o processo de solicitação e tratamento do *Critical Alerts Entitlement* para iOS e o fallback usando `AVAudioSession` com áudio em background.
+
+### Configurações de Plataforma
+- [ ] O arquivo `android/app/src/main/AndroidManifest.xml` deve incluir as permissões declaradas para alarmes exatos e exibição em tela de bloqueio.
+- [ ] O arquivo `ios/Runner/Info.plist` e os arquivos de entitlements (`ios/Runner/Runner.entitlements`, etc.) devem conter as chaves de `UIBackgroundModes` (com `audio` e `fetch`) e a declaração de Critical Alerts se aplicável.
+- [ ] O arquivo `macos/Runner/DebugProfile.entitlements` e `Release.entitlements` devem conter as permissões de rede e notificações necessárias.
+
+### Implementação Dart e Compilação
+- [ ] O código Dart do `NotificationService` modificado deve compilar com sucesso e passar na análise estática (`flutter analyze`).
+- [ ] A inicialização do canal de notificação com Alertas Críticos e suporte a `fullScreenIntent` (carregando a `AlarmActiveScreen`) deve ser implementada de forma condicional por plataforma, evitando falhas de compilação ou execução em plataformas sem suporte.
+
+## Follow-up — 2026-06-29T21:16:29-03:00
+
+O projeto consiste em padronizar os inputs numéricos e seletores de data/hora do aplicativo Flutter com base no layout da imagem fornecida, garantindo um design de tamanho médio uniforme de 160px a 180px para os inputs numéricos e um formato vertical com botões (+) em cima e (-) embaixo para data e hora.
+
+Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app
+Integrity mode: development
+
+## Requirements
+
+### R1. Padronização de Inputs Numéricos
+- Criar ou refatorar o widget de input numérico para que seja uniforme em todo o app.
+- O design deve conter um botão circular de menos (-) à esquerda, o valor numérico centralizado, e um botão circular de mais (+) à direita.
+- Se o campo de texto/número aceitar frações (ex: meio comprimido), exibir opcionalmente o botão "+ ½ (Meio Comprimido)" logo abaixo, de acordo com o design fornecido.
+- Padronizar o tamanho físico dos inputs numéricos para uma largura média uniforme de 160px a 180px, reduzindo os maiores e aumentando os menores.
+
+### R2. Novo Input de Data e Hora Vertical e Reativo
+- Desenvolver um componente unificado para seleção de hora/minuto e data (dia/mês/ano) usando o padrão vertical.
+- No seletor de hora e minuto: colocar o (+) em cima da hora e (-) embaixo; para os minutos, fazer a mesma coisa (um (+) em cima e um (-) embaixo).
+- No seletor de data (dia, mês, ano): aplicar o mesmo padrão vertical, exibindo botões (+) em cima de cada campo (Dia, Mês, Ano) e (-) embaixo.
+- Lógica de toque e aceleração:
+  - Cada toque rápido altera exatamente uma unidade.
+  - Ao manter pressionado o botão (LongPress) por mais de 2 segundos, a velocidade de incremento/decremento deve ser acelerada.
+
+### R3. Integração nas Telas Existentes
+- Substituir todos os seletores de quantidade/inputs numéricos antigos (como `_buildLargeStepper`, `_buildMiniStepper`, `_buildStepper`, etc.) nas telas de cadastro de alarmes (`WizardStep3Qty`, `WizardStep4Days`, `WizardStep6Duration`, etc.) e na tela de soneca (`SnoozeModal`) pelo novo componente padrão.
+- Substituir todos os seletores de data e hora antigos (como `showTimePicker` e `showDatePicker`) nas telas do aplicativo (cadastro de alarmes, cadastro de lembretes, tela de ajustes, etc.) pelos novos componentes de data e hora verticais reativos.
+
+## Acceptance Criteria
+
+### Componentes de Input
+- [ ] O componente numérico padronizado com largura de 160px-180px é usado em todas as telas com inputs numéricos.
+- [ ] O seletor de data e hora vertical com botões (+/-) acima e abaixo de cada campo individual (Hora, Minuto, Dia, Mês, Ano) é usado no app nos locais apropriados.
+- [ ] O gesto de segurar por mais de 2 segundos nos botões (+/-) acelera a velocidade de incremento/decremento de forma contínua e suave.
+- [ ] O layout e dimensões dos inputs são consistentes (médio) em todas as telas (sem quebras de layout ou overflows).
+- [ ] O app compila e roda com sucesso (sem falhas de build de runner, drift ou flutter).
+- [ ] As lógicas de sincronização com o hardware (ESP32) e segurança de salvamento continuam intactas (ex: formato de data `lastStatusDate` em DD/MM/YYYY, etc.).

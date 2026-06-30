@@ -1,101 +1,68 @@
 # Handoff Report — Victory Audit
 
 ## 1. Observation
-
-- **O1 (Rule 35 Deletion Block in Medications List Screen)**:
-  File `lib/features/medications/presentation/medications_list_screen.dart` lines 79-99:
-  ```dart
-    Future<void> _deleteSelected() async {
-      if (_selectedMeds.isEmpty) return;
-
-      final alarmRepo = ref.read(alarmRepositoryProvider);
-      final medRepo = ref.read(medicationRepositoryProvider);
-      
-      // Obter todos os alarmes cadastrados
-      final allAlarms = await alarmRepo.getAllAlarms();
-
-      final List<String> inUseList = [];
-
-      for (final medName in _selectedMeds) {
-        final linkedAlarms = allAlarms.where((a) => a.medName == medName || a.name == medName).toList();
-        if (linkedAlarms.isNotEmpty) {
-          inUseList.add('• $medName (${linkedAlarms.length} alarme${linkedAlarms.length > 1 ? 's' : ''})');
-        }
-      }
-  ```
-  It successfully alerts and returns early if a medication is in use, blocking deletion.
-
-- **O2 (Rule 35 Bypass in Medication Form Screen)**:
-  File `lib/features/medications/presentation/medication_form_screen.dart` lines 89-133:
-  ```dart
-    void _delete() async {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(t('med_delete_btn')),
-          content: Text(t('dialog_delete_med_desc')),
-          ...
-      if (confirmed == true) {
-        final repo = ref.read(medicationRepositoryProvider);
-        final buildContext = context;
-        try {
-          await repo.deleteMedication(widget.editMedication!.name);
-  ```
-  This is called during medication edits, performing the deletion directly without querying the `AlarmRepository`.
-
-- **O3 (Static Analysis Failure)**:
-  `flutter analyze` command result:
-  ```
-  info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • test/features/medications/medication_crud_test.dart:71:19 • prefer_const_constructors
-  info • Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation • test/features/medications/medication_crud_test.dart:112:19 • prefer_const_constructors
-  info • 'parent' is deprecated and shouldn't be used. Will be removed in 3.0.0. See https://github.com/rrousselGit/riverpod/issues/3261#issuecomment-1973514033. Try replacing the use of the deprecated member with the replacement • test/features/medications/medication_crud_test.dart:144:11 • deprecated_member_use
-
-  3 issues found. (ran in 3.5s)
-  ```
-  This returns exit code 1.
-
-- **O4 (Simulator build and execution)**:
-  `flutter run -d FAEFDC66-A2BD-4EE1-ADB5-9880A84CE09D` completed successfully:
-  ```
-  A Dart VM Service on iPhone 14 Pro Max is available at: http://127.0.0.1:51933/3ycUObOpXWo=/
-  flutter: NotificationService initialized successfully.
-  ```
-
-- **O5 (Test Suite)**:
-  `flutter test` execution completed successfully:
-  ```
-  All tests passed!
-  ```
-
-- **O6 (Rule 22 and Rule 32 Compliance)**:
-  Checked all code files for `const` AppColors and async mounted validation. Found no violations.
+- **O1 (Dismissing Alarm on Snooze)**: In `lib/features/alarms/presentation/alarm_active_screen.dart`, the "ADIAR 10 MIN" button triggers `_snooze(alarm, 10)` which updates the status to `SNOOZED` in the database. This updates `activeAlarmsProvider` in `lib/core/services/alarm_engine.dart` causing the reactive `AlarmActiveScreen` wrapper overlay in `lib/app.dart` to unmount gracefully since `activeAlarms` is now empty.
+- **O2 (Snooze Modal RenderFlex Overflow)**: `lib/features/alarms/presentation/snooze_modal.dart` wraps the body layout in a `SingleChildScrollView` (line 121) and appends `MediaQuery.of(context).viewInsets.bottom` (line 471) to ensure fluid keyboard/bottom-sheet sizing without overflows.
+- **O3 (Dashboard Calendar & Flicker)**: `lib/features/dashboard/presentation/dashboard_screen.dart` uses `AnimatedOpacity` (line 287) to fade the body to 0.65 and displays a discrete `LinearProgressIndicator` (line 280) when `state.isLoading` is true, preventing widget subtree rebuilding and calendar flicker.
+- **O4 (FAB Shape)**: `lib/features/dashboard/presentation/dashboard_screen.dart` line 303 defines `shape: const CircleBorder()` on the `FloatingActionButton`.
+- **O5 (Color Synchronization & Inheritance)**:
+  - Color pickers in `lib/features/alarms/presentation/wizard/steps/wizard_step_options.dart` (lines 34-50) and `lib/features/medications/presentation/medication_form_screen.dart` (lines 322-371) allow selection of all 15 hardware-mapped colors in `AppColors.alarmColors`.
+  - Choosing a medication in the wizard pre-selects its color via `wizard_step_medication.dart` line 73.
+  - Saving an alarme creates/updates the medication color in the Drift db via `alarm_wizard_notifier.dart` lines 143-166.
+  - Alarms inherit their color from matching medications automatically in `lib/features/alarms/data/alarm_repository.dart` (lines 172-197) via LEFT OUTER JOIN query.
+  - Reminders choose and validate colors strictly against `AppColors.alarmColors` in `lib/features/reminders/data/reminder_model.dart` line 42 and `lib/features/reminders/presentation/reminder_form_screen.dart` lines 457-506.
+- **O6 (Platform Permissions & Sound Configurations)**:
+  - `android/app/src/main/AndroidManifest.xml` lists permissions for `USE_FULL_SCREEN_INTENT`, `SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`, and registers `ScheduledNotificationBootReceiver` (lines 5-12, 48-56).
+  - `ios/Runner/Runner.entitlements` contains critical alerts entitlement (lines 5-6).
+  - `macos/Runner/DebugProfile.entitlements` and `Release.entitlements` contain sandbox/network entitlements and read-write user-selected files entitlements (lines 5-15).
+  - `lib/core/services/notification_service.dart` schedules notifications with raw sounds, `fullScreenIntent` on Android, critical sound on iOS, and time-sensitive alerts on macOS (lines 157-219).
+- **O7 (Numeric and DateTime Steppers)**:
+  - `lib/core/presentation/widgets/standard_stepper.dart` implements a 170.0px wide custom stepper with +/- buttons, optional "+ ½" button, and acceleration for long presses > 2s (lines 46-69).
+  - `lib/core/presentation/widgets/vertical_datetime_selector.dart` implements vertical spinners for Date and Time with acceleration (lines 48-71) and dialog wrappers `showVerticalTimePicker` / `showVerticalDatePicker` (lines 389-498).
+- **O8 (Grid Layouts and Weekly Rhythm Removal)**:
+  - Arrows removed from `lib/features/dashboard/presentation/widgets/calendar_strip_widget.dart` (lines 351-360).
+  - Weekly Rhythm card widget removed and file deleted.
+  - Responsive grids with maximum cross-axis extent 400px are used when width >= 800px on Dashboard (`dashboard_screen.dart` lines 628-640, 723-735) and medications list (`medications_list_screen.dart` lines 400-412).
+- **O9 (Medication Deletion Guard)**:
+  - Both `medications_list_screen.dart` (lines 82-116) and `medication_form_screen.dart` (lines 90-121) verify with `AlarmRepository` before deleting a medication, displaying a warning dialog and blocking deletion if it is currently in use.
+- **O10 (Git log & Timeline)**: Checked `git log`. Timestamps are sequential and progress in a natural, chronological fashion.
+- **O11 (Static Analysis and Tests)**:
+  - `flutter analyze` completed with "No issues found!".
+  - `flutter test` completed with "All tests passed!" (150 tests passed).
 
 ## 2. Logic Chain
-
-1. **Rule 35 Verification**: Rule 35 states: "Antes de excluir qualquer medicamento da base de dados, consulte o `AlarmRepository`. Se o medicamento estiver em uso em algum alarme cadastrado, bloqueie a exclusão e alerte o usuário listando os alarmes impeditivos."
-2. **List Screen Verification**: Based on **O1**, the list screen correctly checks `allAlarms` and blocks deletion if a medication is in use.
-3. **Form Screen Verification**: Based on **O2**, when deleting a medication via the edit form screen (`medication_form_screen.dart`), the deletion executes directly via the repository without any active alarm check.
-4. **Conclusion on Rule 35**: Since deleting via the edit form screen bypasses the block check, Rule 35 is not fully implemented across the app interface, allowing invalid database deletions.
-5. **Static Analysis Verification**: The user acceptance criteria requires `flutter analyze` to pass with 0 issues. Based on **O3**, `flutter analyze` fails with exit code 1 and has 3 unresolved info warnings in test files.
-6. **Final Verdict**: Because Rule 35 is bypassed on the edit screen and `flutter analyze` has issues, the verdict must be `VICTORY REJECTED`.
+1. **R1-R3 Alarms & Layouts**: Active alarm closes via reactive stream unmounting. Bottom sheet overflows are resolved via SingleChildScrollView and viewInsets. Calendar flicker is prevented via opacity transitions instead of widget teardowns. Thus, all layout and alarm-active screen requirements are met.
+2. **Colors Sync & Inheritance**: Selecting existing meds populates color. Saving alarms updates or inserts medications with matching colors. Alarms perform Left Outer Joins on database watch queries to inherit medication colors. Reminders restrict selections to official 15 colors. This ensures complete color parity with C++ hardware.
+3. **Stepper Inputs & Datetime Picker**: StandardStepper matches 170.0px width, +/- controls, "+ ½" fraction button, and accelerates increments on long press. Vertical Date/Time spinner implements +/- above/below the value and also accelerates. Old pickers have been completely removed. This fully implements custom inputs.
+4. **Desktop Layouts**: Responsive grids are used on Dashboard and Medications screen when screen width >= 800px, distributing cards horizontally. Weekly Rhythm and calendar strip chevrons have been completely removed.
+5. **Perms & Native Config**: Android permissions, iOS entitlements (Critical Alerts), macOS sandbox/read-write entitlements, and native assets/sound resources match the advanced alarms integration plan.
+6. **Timeline & Forensic Checks**: Chronological commits show authentic developer progression. There are no pre-populated log files or facade bypasses.
+7. **Verdict**: All three phases of the victory audit (Timeline, Integrity/Cheating, and Test execution) succeeded. The verdict is `VICTORY CONFIRMED`.
 
 ## 3. Caveats
-
-No caveats. All areas were audited.
+- No physical ESP32 box connection could be verified since it requires LAN hardware access, but the Standalone connection state was fully simulated and tested.
 
 ## 4. Conclusion
 
-The claim of complete project implementation is rejected due to:
-1. Medication deletion block (Rule 35) being bypassed in `medication_form_screen.dart`.
-2. Static analysis (`flutter analyze`) failing due to three warnings in `test/features/medications/medication_crud_test.dart`.
+=== VICTORY AUDIT REPORT ===
 
-The team must remediate:
-- Implement `AlarmRepository` checks in `medication_form_screen.dart` before calling deletion, similar to the logic in `medications_list_screen.dart`.
-- Fix the analysis warnings in `medication_crud_test.dart` to clean up the `flutter analyze` command.
+VERDICT: VICTORY CONFIRMED
+
+PHASE A — TIMELINE:
+  Result: PASS
+  Anomalies: none
+
+PHASE B — INTEGRITY CHECK:
+  Result: PASS
+  Details: Inspected the code of standard_stepper, vertical_datetime_selector, medications_list_screen, dashboard_screen, and notification_service. All implementations are genuine, write to local sqlite tables via Drift, verify dependencies, and handle errors properly. No facades, mocks, or hardcoded cheating patterns exist.
+
+PHASE C — INDEPENDENT TEST EXECUTION:
+  Test command: flutter test
+  Your results: 150 tests passed successfully.
+  Claimed results: 150 tests passed successfully.
+  Match: YES
 
 ## 5. Verification Method
-
-To verify these results:
-1. Open a medication that is in use by an active alarm and edit it. Click delete inside the edit page: it will delete successfully without showing the expected blocked dialog.
-2. Run `flutter analyze` to witness the compilation warnings.
-3. Run `flutter test` to verify the test suite.
+1. Run `flutter analyze` to verify the code has 0 errors/warnings.
+2. Run `flutter test` to execute all 150 unit/widget tests and verify they pass.
+3. Verify files at `lib/core/presentation/widgets/standard_stepper.dart` and `lib/core/presentation/widgets/vertical_datetime_selector.dart` to inspect the custom input components.

@@ -1,0 +1,16 @@
+# Worker Alarm Notifications Context
+- Target: Implementing the complete native alarm, sound, and notification integration for Android, iOS, and macOS.
+- Documents to create: docs/integration_plan.md
+- Files to modify:
+  - android/app/src/main/AndroidManifest.xml
+  - android/app/src/main/kotlin/com/medicaixa/medicaixa_app/MainActivity.kt
+  - ios/Runner/Info.plist
+  - ios/Runner/Runner.entitlements (new)
+  - ios/Runner/AppDelegate.swift
+  - macos/Runner/Info.plist
+  - macos/Runner/DebugProfile.entitlements
+  - macos/Runner/Release.entitlements
+  - macos/Runner/AppDelegate.swift (new/modify)
+  - lib/core/services/notification_service.dart
+  - lib/features/alarms/presentation/alarm_active_screen.dart
+  - pubspec.yaml (add sound asset)

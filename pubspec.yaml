@@ -59,4 +59,5 @@ flutter:
   assets:
     - assets/medications_db.json.gz
     - assets/lang/
+    - assets/sounds/
     - test/fixtures/sample_backup.json

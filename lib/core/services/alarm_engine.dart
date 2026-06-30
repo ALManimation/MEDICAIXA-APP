@@ -6,6 +6,8 @@ import '../../features/alarms/data/alarm_repository.dart';
 import 'notification_service.dart';
 import '../../features/history/data/history_repository.dart';
 import '../../features/reminders/data/reminder_repository.dart';
+import 'package:timezone/timezone.dart' as tz;
+import '../../core/providers/core_providers.dart';
 
 part 'alarm_engine.g.dart';
 
@@ -20,6 +22,9 @@ class AlarmEngine extends _$AlarmEngine {
 
   @override
   void build() {
+    // Bind database to NotificationService instance
+    NotificationService.instance.database = ref.read(databaseProvider);
+
     // 1. Listen to alarms to schedule OS notifications on change
     _alarmsSubscription = ref.read(alarmRepositoryProvider).watchAllAlarms().listen((alarms) {
       _rescheduleAllNotifications(alarms);
@@ -93,319 +98,478 @@ class AlarmEngine extends _$AlarmEngine {
     }
   }
 
-  /// The per-minute foreground trigger
   Future<void> _tick() async {
     try {
       final now = DateTime.now();
-      final todayStr = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
-      final currentTotalMinutes = now.hour * 60 + now.minute;
-      final weekday = now.weekday % 7; // 0 = Sun, 1 = Mon, ..., 6 = Sat
+      tz.Location localLocation;
+      try {
+        localLocation = tz.local;
+      } catch (_) {
+        localLocation = tz.UTC;
+      }
+      final localNow = tz.TZDateTime.from(now, localLocation);
+      final todayStr = "${localNow.day.toString().padLeft(2, '0')}/${localNow.month.toString().padLeft(2, '0')}/${localNow.year}";
 
       // Run daily background cleanup of expired alarms and reminders
-      if (_lastCleanupDay != now.day) {
-        _lastCleanupDay = now.day;
-        _runCleanup(now);
+      if (_lastCleanupDay != localNow.day) {
+        _lastCleanupDay = localNow.day;
+        _runCleanup(localNow);
       }
 
       final alarms = await _alarmRepo.getAllAlarms();
 
       for (final a in alarms) {
-        if (!a.enabled) continue;
+        try {
+          if (!a.enabled || a.active != true) continue;
 
-        // --- Pausa Temporária / Suspensão ---
-        if (a.pauseUntil == -1) continue;
-        if (a.pauseUntil != null && a.pauseUntil! > 0) {
-          final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-          if (nowEpoch < a.pauseUntil!) {
-            continue; // Still within pause duration
-          } else {
-            // Pause expired
-            final updated = a.copyWith(pauseUntil: 0);
-            await _alarmRepo.updateAlarm(updated);
-            debugPrint("Temporary pause for alarm '${a.name}' expired. Resuming.");
-          }
-        }
-
-        // --- Daily Tick / Reset of Status from previous days ---
-        if (a.lastStatusDate != null && a.lastStatusDate!.isNotEmpty && a.lastStatusDate != todayStr) {
-          var updated = a.copyWith(
-            status: 'PENDENTE',
-            snoozeMin: 0,
-            lastStatus: '',
-            lastStatusDate: '',
-            prnDosesToday: a.isPrn == true ? 0 : a.prnDosesToday,
-          );
-
-          // 4. Intervalo real "a cada N dias" (intervalDays)
-          if (a.intervalDays != null && a.intervalDays! > 1) {
-            int countdown = a.intervalCountdown ?? 0;
-            if (countdown > 0) {
-              countdown--;
-              debugPrint("Intervalo '${a.name}': countdown decrementado para $countdown");
+          // --- Pausa Temporária / Suspensão ---
+          if (a.pauseUntil == -1) continue;
+          if (a.pauseUntil != null && a.pauseUntil! > 0) {
+            final nowEpoch = localNow.millisecondsSinceEpoch ~/ 1000;
+            if (nowEpoch < a.pauseUntil!) {
+              continue; // Still within pause duration
             } else {
-              countdown = a.intervalDays! - 1;
-              debugPrint("Intervalo '${a.name}': HOJE dispara, proximo em $countdown dias");
+              // Pause expired
+              final updated = a.copyWith(pauseUntil: 0);
+              await _alarmRepo.updateAlarm(updated);
+              debugPrint("Temporary pause for alarm '${a.name}' expired. Resuming.");
             }
-            updated = updated.copyWith(intervalCountdown: countdown);
           }
 
-          final historyRepo = ref.read(historyRepositoryProvider);
-
-          // 1. Ajuste Progressivo Gradual (adjustStep)
-          if (a.adjustStep != null && a.adjustStep != 0.0) {
-            final startStr = a.startDate ?? a.createdDate;
-            if (startStr != null && startStr.isNotEmpty) {
-              try {
-                final start = DateTime.parse(startStr);
-                final startZero = DateTime(start.year, start.month, start.day);
-                final targetZero = DateTime(now.year, now.month, now.day);
-                final diffDays = targetZero.difference(startZero).inDays;
-                final intervalDays = a.adjustIntervalDays ?? 1;
-
-                if (diffDays > 0 && diffDays % intervalDays == 0) {
-                  double newQty = a.quantity + a.adjustStep!;
-                  double adjustStep = a.adjustStep!;
-
-                  // Check if limit reached
-                  final bool reached = (a.adjustStep! > 0 && newQty >= (a.adjustLimit ?? 0.0)) ||
-                                 (a.adjustStep! < 0 && newQty <= (a.adjustLimit ?? 0.0));
-                  if (reached) {
-                    newQty = a.adjustLimit ?? 0.0;
-                    adjustStep = 0.0; // Concluído
-                    debugPrint("Ajuste gradual CONCLUIDO para alarme '${a.name}' qty ${a.quantity} -> $newQty");
-                  } else {
-                    debugPrint("Ajuste gradual aplicado para alarme '${a.name}' qty ${a.quantity} -> $newQty");
+          // --- Daily Tick / Reset of Status from previous days ---
+          bool shouldDelayReset = false;
+          if (a.lastStatusDate != null && a.lastStatusDate!.isNotEmpty && a.lastStatusDate != todayStr) {
+            try {
+              final parts = a.lastStatusDate!.split('/');
+              if (parts.length == 3) {
+                final day = int.tryParse(parts[0]);
+                final month = int.tryParse(parts[1]);
+                final year = int.tryParse(parts[2]);
+                if (day != null && month != null && year != null) {
+                  final lastScheduled = tz.TZDateTime(
+                    localLocation,
+                    year,
+                    month,
+                    day,
+                    a.hour,
+                    a.minute,
+                  );
+                  final lastEffective = lastScheduled.add(Duration(minutes: a.snoozeMin));
+                  final windowEnd = lastEffective.add(const Duration(minutes: 10));
+                  if (localNow.isBefore(windowEnd)) {
+                    shouldDelayReset = true;
                   }
-
-                  updated = updated.copyWith(
-                    quantity: newQty,
-                    adjustStep: adjustStep,
-                  );
-
-                  await historyRepo.addHistoryEvent(
-                    alarmId: a.id,
-                    medName: a.medName.isNotEmpty ? a.medName : a.name,
-                    status: 'Ajuste Progressivo',
-                    type: 'system',
-                  );
                 }
-              } catch (_) {}
-            }
+              }
+            } catch (_) {}
           }
 
-          // 2. Esquema cíclico ON/OFF
-          if (a.cycleOnDays != null && a.cycleOnDays! > 0) {
-            final total = a.cycleOnDays! + (a.cycleOffDays ?? 0);
-            int currentDay = (a.cycleCurrentDay ?? 0) + 1;
-            if (currentDay > total) {
-              currentDay = 1;
-            }
-            final isPaused = currentDay > a.cycleOnDays!;
-
-            updated = updated.copyWith(
-              cycleCurrentDay: currentDay,
-              cycleIsPaused: isPaused,
+          if (a.lastStatusDate != null && a.lastStatusDate!.isNotEmpty && a.lastStatusDate != todayStr && !shouldDelayReset &&
+              (a.lastStatus == 'Tomado' || a.lastStatus == 'Não Tomado' || a.lastStatus == 'Cancelado')) {
+            var updated = a.copyWith(
+              status: 'PENDENTE',
+              snoozeMin: 0,
+              lastStatus: '',
+              lastStatusDate: '',
+              prnDosesToday: a.isPrn == true ? 0 : a.prnDosesToday,
             );
 
-            final wasPaused = a.cycleIsPaused ?? false;
-            if (wasPaused != isPaused) {
-              await historyRepo.addHistoryEvent(
-                alarmId: a.id,
-                medName: a.medName.isNotEmpty ? a.medName : a.name,
-                status: isPaused ? 'Ciclo Pausa' : 'Ciclo Retomado',
-                type: 'system',
-              );
-              await historyRepo.addSystemLog(
-                level: 'INFO',
-                message: "Ciclo do alarme '${a.name}': ${isPaused ? 'PAUSA iniciada' : 'USO retomado'} (dia $currentDay/$total)",
-                source: 'System',
-              );
+            // 4. Intervalo real "a cada N dias" (intervalDays)
+            if (a.intervalDays != null && a.intervalDays! > 1) {
+              int countdown = a.intervalCountdown ?? 0;
+              int daysDiff = 1;
+              if (a.lastStatusDate != null && a.lastStatusDate!.isNotEmpty) {
+                try {
+                  final parts = a.lastStatusDate!.split('/');
+                  if (parts.length == 3) {
+                    final day = int.tryParse(parts[0]);
+                    final month = int.tryParse(parts[1]);
+                    final year = int.tryParse(parts[2]);
+                    if (day != null && month != null && year != null) {
+                      final lastDate = DateTime(year, month, day);
+                      final targetDate = DateTime(localNow.year, localNow.month, localNow.day);
+                      daysDiff = targetDate.difference(lastDate).inDays;
+                      if (daysDiff <= 0) daysDiff = 1;
+                    }
+                  }
+                } catch (_) {}
+              }
+              for (int i = 0; i < daysDiff; i++) {
+                if (countdown > 0) {
+                  countdown--;
+                } else {
+                  countdown = a.intervalDays! - 1;
+                }
+              }
+              debugPrint("Intervalo '${a.name}': countdown atualizado para $countdown (dias decorridos: $daysDiff)");
+              updated = updated.copyWith(intervalCountdown: countdown);
             }
-          }
 
-          // 3. Desmame / Titulação (taper stages)
-          if (a.taperStageCount != null && a.taperStageCount! > 0 && a.taperStages != null && a.taperStages!.isNotEmpty) {
-            final currentStageIndex = a.taperCurrentStage ?? 0;
-            if (currentStageIndex < a.taperStageCount!) {
-              final stage = a.taperStages![currentStageIndex];
-              final int dayInStage = (a.taperDayInStage ?? 0) + 1;
+            final historyRepo = ref.read(historyRepositoryProvider);
 
-              if (dayInStage > stage.durationDays) {
-                final nextStageIndex = currentStageIndex + 1;
+            // 1. Ajuste Progressivo Gradual (adjustStep)
+            if (a.adjustStep != null && a.adjustStep != 0.0) {
+              final startStr = a.startDate ?? a.createdDate;
+              if (startStr != null && startStr.isNotEmpty) {
+                try {
+                  final start = DateTime.parse(startStr);
+                  final startZero = DateTime(start.year, start.month, start.day);
+                  final targetZero = DateTime(localNow.year, localNow.month, localNow.day);
+                  final diffDays = targetZero.difference(startZero).inDays;
+                  final intervalDays = a.adjustIntervalDays ?? 1;
 
-                if (nextStageIndex >= a.taperStageCount!) {
-                  if (a.taperLoop == true) {
-                    final initialQty = a.taperStages![0].quantity;
+                  if (diffDays > 0 && diffDays % intervalDays == 0) {
+                    double newQty = a.quantity + a.adjustStep!;
+                    double adjustStep = a.adjustStep!;
+
+                    // Check if limit reached
+                    final bool reached = (a.adjustStep! > 0 && newQty >= (a.adjustLimit ?? 0.0)) ||
+                                   (a.adjustStep! < 0 && newQty <= (a.adjustLimit ?? 0.0));
+                    if (reached) {
+                      newQty = a.adjustLimit ?? 0.0;
+                      adjustStep = 0.0; // Concluído
+                      debugPrint("Ajuste gradual CONCLUIDO para alarme '${a.name}' qty ${a.quantity} -> $newQty");
+                    } else {
+                      debugPrint("Ajuste gradual aplicado para alarme '${a.name}' qty ${a.quantity} -> $newQty");
+                    }
+
                     updated = updated.copyWith(
-                      taperCurrentStage: 0,
-                      taperDayInStage: 1,
-                      quantity: initialQty,
+                      quantity: newQty,
+                      adjustStep: adjustStep,
                     );
+
                     await historyRepo.addHistoryEvent(
                       alarmId: a.id,
                       medName: a.medName.isNotEmpty ? a.medName : a.name,
-                      status: 'Ciclo Reiniciado',
+                      status: 'Ajuste Progressivo',
                       type: 'system',
                     );
-                  } else {
+                  }
+                } catch (_) {}
+              }
+            }
+
+            // 2. Esquema cíclico ON/OFF
+            if (a.cycleOnDays != null && a.cycleOnDays! > 0) {
+              final total = a.cycleOnDays! + (a.cycleOffDays ?? 0);
+              int currentDay = (a.cycleCurrentDay ?? 0) + 1;
+              if (currentDay > total) {
+                currentDay = 1;
+              }
+              final isPaused = currentDay > a.cycleOnDays!;
+
+              updated = updated.copyWith(
+                cycleCurrentDay: currentDay,
+                cycleIsPaused: isPaused,
+              );
+
+              final wasPaused = a.cycleIsPaused ?? false;
+              if (wasPaused != isPaused) {
+                await historyRepo.addHistoryEvent(
+                  alarmId: a.id,
+                  medName: a.medName.isNotEmpty ? a.medName : a.name,
+                  status: isPaused ? 'Ciclo Pausa' : 'Ciclo Retomado',
+                  type: 'system',
+                );
+                await historyRepo.addSystemLog(
+                  level: 'INFO',
+                  message: "Ciclo do alarme '${a.name}': ${isPaused ? 'PAUSA iniciada' : 'USO retomado'} (dia $currentDay/$total)",
+                  source: 'System',
+                );
+              }
+            }
+
+            // 3. Desmame / Titulação (taper stages)
+            if (a.taperStageCount != null && a.taperStageCount! > 0 && a.taperStages != null && a.taperStages!.isNotEmpty) {
+              final currentStageIndex = a.taperCurrentStage ?? 0;
+              if (currentStageIndex < a.taperStageCount!) {
+                final stage = a.taperStages![currentStageIndex];
+                final int dayInStage = (a.taperDayInStage ?? 0) + 1;
+
+                if (dayInStage > stage.durationDays) {
+                  final nextStageIndex = currentStageIndex + 1;
+
+                  if (nextStageIndex >= a.taperStageCount!) {
+                    // Completed desmame -> disable alarm
                     updated = updated.copyWith(
                       enabled: false,
                       taperCurrentStage: nextStageIndex,
-                      taperDayInStage: 0,
+                      taperDayInStage: dayInStage,
                     );
                     await historyRepo.addHistoryEvent(
                       alarmId: a.id,
                       medName: a.medName.isNotEmpty ? a.medName : a.name,
-                      status: 'Desmame Concluido',
+                      status: 'Desmame Concluído',
                       type: 'system',
+                    );
+                    await historyRepo.addSystemLog(
+                      level: 'INFO',
+                      message: "Desmame do alarme '${a.name}' concluído com sucesso.",
+                      source: 'System',
+                    );
+                  } else {
+                    // Move to next stage
+                    final nextStage = a.taperStages![nextStageIndex];
+                    updated = updated.copyWith(
+                      quantity: nextStage.quantity,
+                      taperCurrentStage: nextStageIndex,
+                      taperDayInStage: 1,
+                    );
+                    await historyRepo.addHistoryEvent(
+                      alarmId: a.id,
+                      medName: a.medName.isNotEmpty ? a.medName : a.name,
+                      status: 'Desmame Avanço',
+                      type: 'system',
+                    );
+                    await historyRepo.addSystemLog(
+                      level: 'INFO',
+                      message: "Desmame do alarme '${a.name}' avançou para estágio ${nextStageIndex + 1}/${a.taperStageCount!} (nova dose: ${nextStage.quantity})",
+                      source: 'System',
                     );
                   }
                 } else {
-                  final nextQty = a.taperStages![nextStageIndex].quantity;
-                  updated = updated.copyWith(
-                    taperCurrentStage: nextStageIndex,
-                    taperDayInStage: 1,
-                    quantity: nextQty,
-                  );
-                  await historyRepo.addHistoryEvent(
-                    alarmId: a.id,
-                    medName: a.medName.isNotEmpty ? a.medName : a.name,
-                    status: 'Desmame Etapa',
-                    type: 'system',
-                  );
+                  // Increment day in current stage
+                  updated = updated.copyWith(taperDayInStage: dayInStage);
                 }
-              } else {
-                updated = updated.copyWith(taperDayInStage: dayInStage);
               }
             }
-          }
 
-          // Salvar alarme atualizado
-          await _alarmRepo.updateAlarm(updated);
+            await _alarmRepo.updateAlarm(updated);
 
-          // 4. Propagação por groupId para os demais alarmes do grupo
-          if (a.groupId != null && a.groupId! > 0) {
-            final groupAlarms = alarms.where((ga) => ga.id != a.id && ga.groupId == a.groupId).toList();
-            for (final ga in groupAlarms) {
-              final updatedGa = ga.copyWith(
-                quantity: updated.quantity,
-                adjustStep: updated.adjustStep,
-                cycleCurrentDay: updated.cycleCurrentDay,
-                cycleIsPaused: updated.cycleIsPaused,
-                taperCurrentStage: updated.taperCurrentStage,
-                taperDayInStage: updated.taperDayInStage,
-                status: updated.status,
-                lastStatus: updated.lastStatus,
-                lastStatusDate: updated.lastStatusDate,
-                intervalCountdown: updated.intervalCountdown,
-              );
-              await _alarmRepo.updateAlarm(updatedGa);
+            // 4. Propagação por groupId para os demais alarmes do grupo
+            if (a.groupId != null && a.groupId! > 0) {
+              final groupAlarms = alarms.where((ga) => ga.id != a.id && ga.groupId == a.groupId).toList();
+              for (final ga in groupAlarms) {
+                final updatedGa = ga.copyWith(
+                  quantity: updated.quantity,
+                  adjustStep: updated.adjustStep,
+                  cycleCurrentDay: updated.cycleCurrentDay,
+                  cycleIsPaused: updated.cycleIsPaused,
+                  taperCurrentStage: updated.taperCurrentStage,
+                  taperDayInStage: updated.taperDayInStage,
+                  status: updated.status,
+                  lastStatus: updated.lastStatus,
+                  lastStatusDate: updated.lastStatusDate,
+                  intervalCountdown: updated.intervalCountdown,
+                );
+                await _alarmRepo.updateAlarm(updatedGa);
+              }
             }
-          }
 
-          debugPrint("Processed daily tick for alarm '${a.name}' and propagated group status.");
-          continue;
-        }
-
-        // Se já foi tomado, cancelado ou perdido hoje, pula (assim como no C++)
-        if (a.lastStatusDate == todayStr &&
-            (a.lastStatus == 'Tomado' ||
-             a.lastStatus == 'Não Tomado' ||
-             a.lastStatus == 'Cancelado')) {
-          if (a.isPrn != true) {
+            debugPrint("Processed daily tick for alarm '${a.name}' and propagated group status.");
             continue;
           }
-        }
 
-        // PRN does not trigger automatically by time
-        if (a.isPrn == true) continue;
+          // PRN does not trigger automatically by time
+          if (a.isPrn == true) continue;
 
-        // Cycle pause check
-        if (a.cycleOnDays != null && a.cycleOnDays! > 0 && a.cycleIsPaused == true) {
-          continue;
-        }
-
-        // Real interval check "a cada N dias"
-        if (a.intervalDays != null && a.intervalDays! > 1) {
-          if (a.intervalCountdown != null && a.intervalCountdown! > 0) {
-            continue; // Not active today!
+          // Cycle pause check
+          if (a.cycleOnDays != null && a.cycleOnDays! > 0 && a.cycleIsPaused == true) {
+            continue;
           }
-        }
 
-        // Check if day active
-        if (a.dayOfMonth != null && a.dayOfMonth! > 0) {
-          if (now.day != a.dayOfMonth) continue;
-        } else if (a.startDate != null && a.startDate!.isNotEmpty) {
-          try {
-            final start = DateTime.parse(a.startDate!);
-            final startZero = DateTime(start.year, start.month, start.day);
-            final targetZero = DateTime(now.year, now.month, now.day);
-            final endZero = startZero.add(Duration(days: (a.durationDays > 0 ? a.durationDays : 1) - 1));
+          // Determine the best active occurrence
+          tz.TZDateTime? bestScheduledDate;
+          int? bestDiff;
+          int? bestCountdown;
 
-            if (targetZero.isBefore(startZero) || targetZero.isAfter(endZero)) {
-              if (targetZero.isAfter(endZero)) {
-                // Treatment completed - disable alarm
-                final updated = a.copyWith(enabled: false);
-                await _alarmRepo.updateAlarm(updated);
-                debugPrint("Alarm '${a.name}' automatically disabled: treatment completed.");
+          for (int d in [-1, 0, 1]) {
+            final targetDate = localNow.add(Duration(days: d));
+
+            bool isActive = false;
+            if (a.dayOfMonth != null && a.dayOfMonth! > 0) {
+              isActive = (targetDate.day == a.dayOfMonth);
+            } else if (a.startDate != null && a.startDate!.isNotEmpty) {
+              try {
+                final start = DateTime.parse(a.startDate!);
+                final startZero = DateTime(start.year, start.month, start.day);
+                final targetZero = DateTime(targetDate.year, targetDate.month, targetDate.day);
+                final endZero = startZero.add(Duration(days: (a.durationDays > 0 ? a.durationDays : 1) - 1));
+
+                if (targetZero.isBefore(startZero) || targetZero.isAfter(endZero)) {
+                  if (d == 0 && targetZero.isAfter(endZero)) {
+                    // Treatment completed - disable alarm
+                    final updated = a.copyWith(enabled: false);
+                    await _alarmRepo.updateAlarm(updated);
+                    debugPrint("Alarm '${a.name}' automatically disabled: treatment completed.");
+                  }
+                  isActive = false;
+                } else {
+                  isActive = true;
+                }
+              } catch (_) {
+                isActive = false;
               }
+            } else {
+              final targetWeekday = targetDate.weekday % 7;
+              isActive = a.days[targetWeekday];
+            }
+
+            if (!isActive) continue;
+
+            // Real interval check "a cada N dias"
+            int currentSimulatedCountdown = a.intervalCountdown ?? 0;
+            if (a.intervalDays != null && a.intervalDays! > 1) {
+              final baseCountdown = a.intervalCountdown ?? 0;
+              int daysDiff = 0;
+              if (a.lastStatusDate != null && a.lastStatusDate!.isNotEmpty) {
+                try {
+                  final parts = a.lastStatusDate!.split('/');
+                  if (parts.length == 3) {
+                    final day = int.tryParse(parts[0]);
+                    final month = int.tryParse(parts[1]);
+                    final year = int.tryParse(parts[2]);
+                    if (day != null && month != null && year != null) {
+                      final lastDate = DateTime(year, month, day);
+                      final targetDateOnly = DateTime(targetDate.year, targetDate.month, targetDate.day);
+                      daysDiff = targetDateOnly.difference(lastDate).inDays;
+                    }
+                  }
+                } catch (_) {}
+              } else {
+                daysDiff = d;
+              }
+
+              int simulatedCountdown = baseCountdown;
+              if (daysDiff > 0) {
+                for (int i = 0; i < daysDiff - 1; i++) {
+                  if (simulatedCountdown > 0) {
+                    simulatedCountdown--;
+                  } else {
+                    simulatedCountdown = a.intervalDays! - 1;
+                  }
+                }
+              } else if (daysDiff < 0) {
+                for (int i = 0; i < -daysDiff; i++) {
+                  if (simulatedCountdown < a.intervalDays! - 1) {
+                    simulatedCountdown++;
+                  } else {
+                    simulatedCountdown = 0;
+                  }
+                }
+              }
+
+              currentSimulatedCountdown = simulatedCountdown;
+              if (simulatedCountdown != 0) continue;
+            }
+
+            final scheduledDate = tz.TZDateTime(
+              localLocation,
+              targetDate.year,
+              targetDate.month,
+              targetDate.day,
+              a.hour,
+              a.minute,
+            );
+
+            final effectiveScheduled = scheduledDate.add(Duration(minutes: a.snoozeMin));
+            final diffForOffset = (localNow.difference(effectiveScheduled).inSeconds / 60.0).floor();
+
+            bool isProcessed = false;
+            final targetDateOnly = DateTime(targetDate.year, targetDate.month, targetDate.day);
+
+            if (a.lastStatusDate != null && a.lastStatusDate!.isNotEmpty) {
+              try {
+                final parts = a.lastStatusDate!.split('/');
+                if (parts.length == 3) {
+                  final day = int.tryParse(parts[0]);
+                  final month = int.tryParse(parts[1]);
+                  final year = int.tryParse(parts[2]);
+                  if (day != null && month != null && year != null) {
+                    final lastStatusDateTime = DateTime(year, month, day);
+                    if (targetDateOnly.isBefore(lastStatusDateTime)) {
+                      isProcessed = true;
+                    } else if (targetDateOnly.isAtSameMomentAs(lastStatusDateTime)) {
+                      isProcessed = (a.lastStatus == 'Tomado' ||
+                                     a.lastStatus == 'Não Tomado' ||
+                                     a.lastStatus == 'Cancelado');
+                    }
+                  }
+                }
+              } catch (_) {}
+            } else {
+              final todayMidnight = DateTime(localNow.year, localNow.month, localNow.day);
+              if (targetDateOnly.isBefore(todayMidnight)) {
+                if (diffForOffset < 0 || diffForOffset > 10) {
+                  isProcessed = true;
+                }
+              }
+            }
+
+            if (!isProcessed || a.isPrn == true) {
+              bestDiff = diffForOffset;
+              bestScheduledDate = scheduledDate;
+              bestCountdown = currentSimulatedCountdown;
+              break;
+            }
+          }
+
+          if (bestDiff == null || bestScheduledDate == null) {
+            continue;
+          }
+
+          final bestScheduledDateStr = "${bestScheduledDate.day.toString().padLeft(2, '0')}/${bestScheduledDate.month.toString().padLeft(2, '0')}/${bestScheduledDate.year}";
+          final diff = bestDiff;
+
+          // Se já foi tomado, cancelado ou perdido para esta ocorrência, pula
+          if (a.lastStatusDate == bestScheduledDateStr &&
+              (a.lastStatus == 'Tomado' ||
+               a.lastStatus == 'Não Tomado' ||
+               a.lastStatus == 'Cancelado')) {
+            if (a.isPrn != true) {
               continue;
             }
-          } catch (_) {
-            continue;
-          }
-        } else {
-          // Recurrent weekly check
-          if (!a.days[weekday]) continue;
-        }
-
-        // Calculate differences in minutes
-        final baseMinutes = a.hour * 60 + a.minute;
-        final effectiveMinutes = baseMinutes + a.snoozeMin;
-        
-        int diff = currentTotalMinutes - effectiveMinutes;
-        // Handle midnight wrap
-        if (diff < -720) {
-          diff += 1440;
-        } else if (diff > 720) {
-          diff -= 1440;
-        }
-
-        // 1. Missed Case: Window of 10 minutes exceeded
-        if (diff > 10) {
-          // If it was already marked as taken/skipped/missed today, skip
-          if (a.lastStatusDate == todayStr && (a.lastStatus == 'Tomado' || a.lastStatus == 'Não Tomado')) {
-            continue;
-          }
-          // Do not mark missed if it was never triggered today
-          if (a.lastStatusDate == null || a.lastStatusDate!.isEmpty) {
-            // New alarm never run, skip marking missed to let it run next time
-            continue;
           }
 
-          final updated = a.copyWith(
-            status: 'PENDENTE',
-            lastStatus: 'Não Tomado',
-            lastStatusDate: todayStr,
-            snoozeMin: 0,
-          );
-          await _alarmRepo.updateAlarm(updated);
-          
-          debugPrint("Alarm '${a.name}' marked missed (past 10 min window, diff: $diff min).");
-          continue;
-        }
+          // 1. Missed Case: Window of 10 minutes exceeded
+          if (diff > 10) {
+            // If it was already marked as taken/skipped/missed for this occurrence, skip
+            if (a.lastStatusDate == bestScheduledDateStr && (a.lastStatus == 'Tomado' || a.lastStatus == 'Não Tomado')) {
+              continue;
+            }
 
-        // 2. Alarm Triggering / Active Case (within the 0 to 10 min window)
-        if (diff >= 0 && diff <= 10) {
-          if (a.status == 'PENDENTE' || a.status == 'SNOOZED') {
             final updated = a.copyWith(
-              status: 'ATIVO',
-              lastStatus: 'Pendente',
-              lastStatusDate: todayStr,
+              status: 'PENDENTE',
+              lastStatus: 'Não Tomado',
+              lastStatusDate: bestScheduledDateStr,
+              snoozeMin: 0,
+              intervalCountdown: a.intervalDays != null && a.intervalDays! > 1 ? bestCountdown : a.intervalCountdown,
             );
             await _alarmRepo.updateAlarm(updated);
-            debugPrint("Alarm '${a.name}' triggered! (diff: $diff min)");
+
+            final historyRepo = ref.read(historyRepositoryProvider);
+            await historyRepo.addHistoryEvent(
+              alarmId: a.id,
+              medName: a.medName.isNotEmpty ? a.medName : a.name,
+              dosage: a.dosage,
+              status: 'PERDIDO',
+              type: 'alarm',
+            );
+            await historyRepo.addSystemLog(
+              level: 'WARNING',
+              message: 'Medicamento "${a.medName.isNotEmpty ? a.medName : a.name}" marcado como Não Tomado (Perdido)',
+              source: 'System',
+            );
+
+            debugPrint("Alarm '${a.name}' marked missed (past 10 min window, diff: $diff min).");
+            continue;
           }
+
+          // 2. Alarm Triggering / Active Case (within the 0 to 10 min window)
+          if (diff >= 0 && diff <= 10) {
+            if (a.status == 'PENDENTE' || a.status == 'SNOOZED') {
+              final updated = a.copyWith(
+                status: 'ATIVO',
+                lastStatus: 'Pendente',
+                lastStatusDate: bestScheduledDateStr,
+                intervalCountdown: a.intervalDays != null && a.intervalDays! > 1 ? bestCountdown : a.intervalCountdown,
+              );
+              await _alarmRepo.updateAlarm(updated);
+              debugPrint("Alarm '${a.name}' triggered! (diff: $diff min)");
+            }
+          }
+        } catch (e) {
+          debugPrint('Error inside AlarmEngine loop for alarm ${a.id}: $e');
         }
       }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/presentation/widgets/standard_stepper.dart';
 import '../wizard_notifier.dart';
 import '../wizard_state.dart';
 
@@ -150,10 +151,10 @@ class WizardStep4Days extends ConsumerWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          _buildLargeStepper(
-            value: state.intervalDays, // Usado no state para armazenar o intervalo em horas
+          StandardStepper(
+            value: state.intervalDays.toDouble(),
             onChanged: (v) {
-              notifier.updateState((s) => s.copyWith(intervalDays: v));
+              notifier.updateState((s) => s.copyWith(intervalDays: v.toInt()));
             },
             min: 2,
             max: 24,
@@ -271,10 +272,10 @@ class WizardStep4Days extends ConsumerWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          _buildLargeStepper(
-            value: state.alternatingDays,
+          StandardStepper(
+            value: state.alternatingDays.toDouble(),
             onChanged: (v) {
-              notifier.updateState((s) => s.copyWith(alternatingDays: v));
+              notifier.updateState((s) => s.copyWith(alternatingDays: v.toInt()));
             },
             min: 2,
             max: 90,
@@ -320,10 +321,10 @@ class WizardStep4Days extends ConsumerWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          _buildLargeStepper(
-            value: state.cycleOnDays,
+          StandardStepper(
+            value: state.cycleOnDays.toDouble(),
             onChanged: (v) {
-              notifier.updateState((s) => s.copyWith(cycleOnDays: v));
+              notifier.updateState((s) => s.copyWith(cycleOnDays: v.toInt()));
             },
             min: 1,
             max: 120,
@@ -351,10 +352,10 @@ class WizardStep4Days extends ConsumerWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          _buildLargeStepper(
-            value: state.cycleOffDays,
+          StandardStepper(
+            value: state.cycleOffDays.toDouble(),
             onChanged: (v) {
-              notifier.updateState((s) => s.copyWith(cycleOffDays: v));
+              notifier.updateState((s) => s.copyWith(cycleOffDays: v.toInt()));
             },
             min: 1,
             max: 120,
@@ -403,10 +404,10 @@ class WizardStep4Days extends ConsumerWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          _buildLargeStepper(
-            value: state.monthlyDay,
+          StandardStepper(
+            value: state.monthlyDay.toDouble(),
             onChanged: (v) {
-              notifier.updateState((s) => s.copyWith(monthlyDay: v));
+              notifier.updateState((s) => s.copyWith(monthlyDay: v.toInt()));
             },
             min: 1,
             max: 31,
@@ -427,80 +428,5 @@ class WizardStep4Days extends ConsumerWidget {
     );
   }
 
-  // --- STEPS WIDGET HELPER ---
-  Widget _buildLargeStepper({
-    required int value,
-    required Function(int) onChanged,
-    required int min,
-    required int max,
-    required int step,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: () {
-            if (value > min) onChanged(value - step);
-          },
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 2),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '-',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Container(
-          constraints: const BoxConstraints(minWidth: 80),
-          alignment: Alignment.center,
-          child: Text(
-            '$value',
-            style: TextStyle(
-              color: AppColors.text,
-              fontSize: 38,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          // Sem const pois depende de AppColors nas cores ao redor se aplicadas,
-          // porém como Text aqui não usa AppColors, mantemos padrão seguro.
-        ),
-        const SizedBox(width: 16),
-        GestureDetector(
-          onTap: () {
-            if (value < max) onChanged(value + step);
-          },
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 2),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '+',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+
 }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/database/database.dart';
-import '../../../core/providers/core_providers.dart';
 import '../../pairing/domain/connection_state.dart';
 import '../../pairing/presentation/pairing_notifier.dart';
 import '../../pairing/presentation/pairing_screen.dart';
@@ -14,6 +12,7 @@ import '../../reminders/data/reminder_repository.dart';
 import '../../reminders/data/reminder_model.dart';
 import 'dashboard_notifier.dart';
 import '../../reminders/presentation/reminder_form_screen.dart';
+import '../../settings/data/settings_repository.dart';
 import 'package:medicaixa_app/features/reminders/presentation/widgets/reminder_action_modal.dart';
 import 'package:intl/intl.dart';
 import '../../history/presentation/history_screen.dart';
@@ -35,7 +34,6 @@ DateTime Function() currentDateOverride = () => DateTime.now();
 /// - Health Banner (adherence indicator)
 /// - Reminders section (above alarms, like Web UI)
 /// - Alarms grouped by period: Manhã / Tarde / Noite
-/// - Desktop sidebar: Weekly Rhythm
 /// - FAB: create new alarm
 final dashboardCollapseProvider = StateProvider<Map<String, bool>>((ref) => const {});
 
@@ -55,13 +53,8 @@ class DashboardScreen extends ConsumerWidget {
     final state = ref.watch(dashboardNotifierProvider);
     final notifier = ref.read(dashboardNotifierProvider.notifier);
     final connState = ref.watch(pairingNotifierProvider);
-    final db = ref.watch(databaseProvider);
-    final settingsStream = db.select(db.settings).watchSingleOrNull();
-
-    return StreamBuilder<Setting?>(
-      stream: settingsStream,
-      builder: (context, snapshot) {
-        final patientName = snapshot.data?.patientName ?? t('tab_patient');
+    final settingsAsync = ref.watch(watchSettingsProvider);
+    final patientName = settingsAsync.valueOrNull?.patientName ?? t('tab_patient');
 
         // Time-based greeting (replicates updateGreeting from Web UI)
         final now = currentDateOverride();
@@ -312,8 +305,6 @@ class DashboardScreen extends ConsumerWidget {
             child: const Icon(Icons.add_rounded),
           ),
         );
-      },
-    );
   }
 
   /// Builds the main alarms body with reminders on top and 3 period groups.

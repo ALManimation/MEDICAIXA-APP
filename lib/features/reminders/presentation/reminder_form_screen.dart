@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:medicaixa_app/features/dashboard/presentation/dashboard_notifier.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/presentation/widgets/vertical_datetime_selector.dart';
 import '../data/reminder_model.dart';
 import '../data/reminder_repository.dart';
 
@@ -44,7 +45,7 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
       }
       _selectedPeriod = r.period;
       _notifyDaysBefore = r.notifyDaysBefore;
-      _selectedColor = r.color;
+      _selectedColor = AppColors.alarmColors.containsKey(r.color.toLowerCase()) ? r.color : 'blue';
       try {
         _selectedStartDate = DateTime.parse(r.startDate);
       } catch (_) {
@@ -62,24 +63,9 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
   }
 
   void _selectStartDate() async {
-    final picked = await showDatePicker(
-      context: context,
+    final picked = await showVerticalDatePicker(
+      context,
       initialDate: _selectedStartDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: AppColors.surface,
-              onSurface: AppColors.text,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) {
       setState(() {
@@ -89,22 +75,9 @@ class _ReminderFormScreenState extends ConsumerState<ReminderFormScreen> {
   }
 
   void _selectTime() async {
-    final picked = await showTimePicker(
-      context: context,
+    final picked = await showVerticalTimePicker(
+      context,
       initialTime: _selectedTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
-              onPrimary: Colors.white,
-              surface: AppColors.surface,
-              onSurface: AppColors.text,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) {
       setState(() {

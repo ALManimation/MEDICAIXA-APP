@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/presentation/widgets/standard_stepper.dart';
 import '../wizard_notifier.dart';
 import '../wizard_state.dart';
 import '../../../data/alarm_model.dart'; // For TaperStage
@@ -205,7 +206,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          _buildLargeStepper(
+          StandardStepper(
             value: qty,
             onChanged: (v) {
               notifier.updateState((s) => s.copyWith(fixedQuantity: v));
@@ -213,16 +214,8 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
             min: 0.5,
             max: 50.0,
             step: 0.5,
+            hasFractionButton: isComp,
           ),
-          if (isComp) ...[
-            const SizedBox(height: 12),
-            _buildFractionButton(
-              value: qty,
-              onChanged: (v) {
-                notifier.updateState((s) => s.copyWith(fixedQuantity: v));
-              },
-            ),
-          ],
         ],
       ),
     );
@@ -256,7 +249,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
               children: List.generate(7, (i) {
                 final val = doses[i];
                 return Container(
-                  width: 130,
+                  width: 178,
                   margin: const EdgeInsets.only(right: 12),
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   decoration: BoxDecoration(
@@ -276,7 +269,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _buildMiniStepper(
+                      StandardStepper(
                         value: val,
                         onChanged: (v) {
                           final newDoses = List<double>.from(doses);
@@ -286,17 +279,8 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                         min: 0,
                         max: 50,
                         step: 1.0,
+                        hasFractionButton: isComp,
                       ),
-                      if (isComp)
-                        _buildFractionButton(
-                          value: val,
-                          onChanged: (v) {
-                            final newDoses = List<double>.from(doses);
-                            newDoses[i] = v;
-                            notifier.updateState((s) => s.copyWith(asymmetricDoses: newDoses));
-                          },
-                          mini: true,
-                        ),
                       const SizedBox(height: 6),
                       Text(
                         '$typeLabel(s)',
@@ -465,7 +449,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
 
                   limitWidget = Column(
                     children: [
-                      _buildMiniStepper(
+                      StandardStepper(
                         value: sysVal,
                         onChanged: (v) {
                           final newLimit = '${v.toInt()}/$diaStr';
@@ -476,7 +460,6 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                         min: 50,
                         max: 250,
                         step: 10,
-                        minWidth: 40,
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 2.0),
@@ -489,7 +472,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                           ),
                         ),
                       ),
-                      _buildMiniStepper(
+                      StandardStepper(
                         value: diaVal,
                         onChanged: (v) {
                           final newLimit = '$sysStr/${v.toInt()}';
@@ -500,13 +483,12 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                         min: 30,
                         max: 150,
                         step: 10,
-                        minWidth: 40,
                       ),
                     ],
                   );
                 } else {
                   final val = double.tryParse(rule.limit) ?? 150.0;
-                  limitWidget = _buildMiniStepper(
+                  limitWidget = StandardStepper(
                     value: val,
                     onChanged: (v) {
                       final newLimit = v.toInt().toString();
@@ -517,12 +499,11 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                     min: 1,
                     max: 999,
                     step: 10,
-                    minWidth: 40,
                   );
                 }
 
                 return Container(
-                  width: 145,
+                  width: 178,
                   margin: const EdgeInsets.only(right: 12),
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   decoration: BoxDecoration(
@@ -581,7 +562,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          _buildMiniStepper(
+                          StandardStepper(
                             value: rule.dose,
                             onChanged: (v) {
                               final newRules = List<WizardDynamicRule>.from(rules);
@@ -591,17 +572,8 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                             min: 0,
                             max: 50,
                             step: 1.0,
+                            hasFractionButton: isComp,
                           ),
-                          if (isComp)
-                            _buildFractionButton(
-                              value: rule.dose,
-                              onChanged: (v) {
-                                final newRules = List<WizardDynamicRule>.from(rules);
-                                newRules[index] = rule.copyWith(dose: v);
-                                notifier.updateState((s) => s.copyWith(dynamicRules: newRules));
-                              },
-                              mini: true,
-                            ),
                           const SizedBox(height: 4),
                           Text(
                             '$typeLabel(s)',
@@ -719,7 +691,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                 final stage = stages[index];
 
                 return Container(
-                  width: 135,
+                  width: 178,
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
@@ -740,7 +712,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          _buildMiniStepper(
+                          StandardStepper(
                             value: stage.quantity,
                             onChanged: (v) {
                               final newStages = List<TaperStage>.from(stages);
@@ -750,17 +722,8 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                             min: 0,
                             max: 50,
                             step: 1.0,
+                            hasFractionButton: isComp,
                           ),
-                          if (isComp)
-                            _buildFractionButton(
-                              value: stage.quantity,
-                              onChanged: (v) {
-                                final newStages = List<TaperStage>.from(stages);
-                                newStages[index] = stage.copyWith(quantity: v);
-                                notifier.updateState((s) => s.copyWith(taperStages: newStages));
-                              },
-                              mini: true,
-                            ),
                           const SizedBox(height: 4),
                           Text(
                             '$typeLabel(s)',
@@ -772,7 +735,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
                             style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                           ),
                           const SizedBox(height: 6),
-                          _buildMiniStepper(
+                          StandardStepper(
                             value: stage.durationDays.toDouble(),
                             onChanged: (v) {
                               final newStages = List<TaperStage>.from(stages);
@@ -855,200 +818,7 @@ class _WizardStep3QtyState extends ConsumerState<WizardStep3Qty> {
     );
   }
 
-  // --- REUSABLE CONTROL WIDGETS ---
 
-  Widget _buildLargeStepper({
-    required double value,
-    required Function(double) onChanged,
-    required double min,
-    required double max,
-    required double step,
-  }) {
-    final displayVal = value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 1);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: () {
-            if (value > min) onChanged(value - step);
-          },
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 2),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '-',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Container(
-          constraints: const BoxConstraints(minWidth: 80),
-          alignment: Alignment.center,
-          child: Text(
-            displayVal,
-            style: TextStyle(
-              color: AppColors.text,
-              fontSize: 38,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        GestureDetector(
-          onTap: () {
-            if (value < max) onChanged(value + step);
-          },
-          child: Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 2),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '+',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMiniStepper({
-    required double value,
-    required Function(double) onChanged,
-    required double min,
-    required double max,
-    required double step,
-    double minWidth = 32,
-  }) {
-    final displayVal = value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 1);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: () {
-            if (value > min) onChanged(value - step);
-          },
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 1.5),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '-',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Container(
-          constraints: BoxConstraints(minWidth: minWidth),
-          alignment: Alignment.center,
-          child: Text(
-            displayVal,
-            style: TextStyle(
-              color: AppColors.text,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(width: 6),
-        GestureDetector(
-          onTap: () {
-            if (value < max) onChanged(value + step);
-          },
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 1.5),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '+',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFractionButton({
-    required double value,
-    required Function(double) onChanged,
-    bool mini = false,
-  }) {
-    final hasHalf = value % 1 != 0;
-    final borderSide = hasHalf
-        ? BorderSide(color: AppColors.primary, width: mini ? 1.2 : 2.0)
-        : BorderSide(
-            color: AppColors.primary.withValues(alpha: 0.4),
-            width: mini ? 1.0 : 1.5,
-          );
-
-    return GestureDetector(
-      onTap: () {
-        final newQty = hasHalf ? value.truncateToDouble() : value.truncateToDouble() + 0.5;
-        onChanged(newQty);
-      },
-      child: Container(
-        margin: const EdgeInsets.only(top: 8),
-        padding: EdgeInsets.symmetric(
-          vertical: mini ? 4.0 : 6.0,
-          horizontal: mini ? 8.0 : 12.0,
-        ),
-        decoration: BoxDecoration(
-          color: hasHalf ? AppColors.primary : AppColors.surface,
-          borderRadius: BorderRadius.circular(mini ? 4 : 8),
-          border: Border.fromBorderSide(borderSide),
-        ),
-        child: Text(
-          mini ? '+ ½ (Meio)' : '+ ½ (Meio Comprimido)',
-          style: TextStyle(
-            color: hasHalf ? Colors.white : AppColors.primary,
-            fontSize: mini ? 9 : 11,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildOpButton({
     required String label,

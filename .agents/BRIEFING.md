@@ -1,13 +1,13 @@
-# BRIEFING — 2026-06-29T10:53:00-03:00
+# BRIEFING — 2026-06-29T21:16:29-03:00
 
 ## Mission
-Refinar o layout e a usabilidade do MediCaixa App para melhorar a estética em telas largas (Desktop/macOS) e simplificar a tela inicial (Dashboard).
+Padronizar os inputs numéricos (160px-180px, stepper horizontal com ½ opcional) e os seletores de data/hora verticais reativos (+ acima, - abaixo, aceleração no long press) do aplicativo Flutter.
 
 ## 🔒 My Identity
 - Archetype: sentinel
 - Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/.agents/
-- Orchestrator: 00167e46-fd46-42e1-a3fd-0b235ec53da9
-- Victory Auditor: 11ca6ea8-b904-41f3-a1b5-79f73ef81821
+- Orchestrator: 029a1eef-d733-44a3-946e-2753a9878d0a
+- Victory Auditor: d3df7a0f-9134-433b-9a36-309520a8da02
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -19,13 +19,12 @@ Refinar o layout e a usabilidade do MediCaixa App para melhorar a estética em t
 - Rule 59: Drift NativeDatabase synchronous connection on iOS/macOS.
 
 ## User Context
-- **Last user request**: Refinar o layout e usabilidade no Desktop (setas da calendar strip, semanal, grids responsivos).
+- **Last user request**: Padronizar inputs numéricos e seletores de data/hora com base no design fornecido, incluindo formato vertical para data/hora e incremento acelerado no LongPress.
 - **Pending clarifications**: none
 - **Delivered results**:
-  - Remoção de setas na Calendar Strip (chevron_left/right).
-  - Remoção do card "Ritmo Semanal" e integrações do Dashboard.
-  - Layout Grid responsivo de alarmes e lembretes no Dashboard (>= 800px).
-  - Layout Grid responsivo na lista de Medicamentos (>= 800px).
+  - Inputs numéricos padronizados (com stepper horizontal de +/- e "+ ½ Comprimido" opcional) com largura fixa de 170px.
+  - Novo seletor vertical reativo de data e hora com botões (+) em cima e (-) embaixo para cada campo, incluindo aceleração suave no LongPress (>2s).
+  - Substituição completa de todos os seletores antigos nas telas do aplicativo (wizard de alarmes, cadastro de lembretes, modal de soneca, ajustes).
 
 ## Project Status
 - **Phase**: complete
@@ -38,5 +37,4 @@ Refinar o layout e a usabilidade do MediCaixa App para melhorar a estética em t
 ## Artifact Index
 - ORIGINAL_REQUEST.md — Verbatim user request.
 - .agents/BRIEFING.md — Sentinel persistent memory.
-- .agents/orchestrator_layout/progress.md — Orchestrator's progress.
-- .agents/victory_auditor_layout/handoff.md — Victory Auditor's report.
+- .agents/victory_auditor/handoff.md — Victory Auditor handoff.

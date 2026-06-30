@@ -94,7 +94,7 @@ class DashboardNotifier extends _$DashboardNotifier {
   }
 
   void selectDate(DateTime date) {
-    state = state.copyWith(selectedDate: date, isLoading: true);
+    state = state.copyWith(selectedDate: date);
     _updateData();
     
     _resetInactivityTimer();
@@ -105,7 +105,7 @@ class DashboardNotifier extends _$DashboardNotifier {
   void resetToToday() {
     _inactivityTimer?.cancel();
     _inactivityTimer = null;
-    state = state.copyWith(selectedDate: DateTime.now(), isLoading: true);
+    state = state.copyWith(selectedDate: DateTime.now());
     _updateData();
   }
 

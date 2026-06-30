@@ -4,11 +4,17 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:audioplayers/audioplayers.dart';
+import 'package:medicaixa_app/core/database/database.dart';
 
 class NotificationService {
   static final NotificationService instance = NotificationService._internal();
   factory NotificationService() => instance;
   NotificationService._internal();
+
+  AppDatabase? _db;
+  set database(AppDatabase db) => _db = db;
+  AppDatabase get database => _db ??= AppDatabase();
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -31,6 +37,7 @@ class NotificationService {
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
+      requestCriticalPermission: true,
     );
 
     // 4. Combine Initialization Settings
@@ -47,12 +54,25 @@ class NotificationService {
       onDidReceiveBackgroundNotificationResponse: _onDidReceiveBackgroundNotificationResponse,
     );
 
-    // 6. Request Android permissions if Android 13+
+    // 6. Request Android permissions if Android 13+ and create channel
     if (Platform.isAndroid) {
-      await _notificationsPlugin
+      final androidImplementation = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.requestNotificationsPermission();
+              AndroidFlutterLocalNotificationsPlugin>();
+              
+      await androidImplementation?.requestNotificationsPermission();
+      
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'medicaixa_alarms_channel',
+        'MediCaixa Alarmes',
+        description: 'Canal de notificações para alarmes de medicamentos',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+      );
+      
+      await androidImplementation?.createNotificationChannel(channel);
     }
 
     _initialized = true;
@@ -106,33 +126,96 @@ class NotificationService {
     // Cancel any existing notifications for this base alarm ID first
     await cancelAlarmNotifications(id);
 
+    // Retrieve local settings
+    int soundIndex = 0;
+    bool vibration = true;
+    try {
+      final db = database;
+      final settingsList = await db.select(db.settings).get();
+      if (settingsList.isNotEmpty) {
+        soundIndex = settingsList.first.localAlarmSound;
+        vibration = settingsList.first.localVibrationEnabled;
+      }
+    } catch (e) {
+      debugPrint('Error loading settings in scheduleWeeklyAlarm: $e');
+    }
+
+    String resolvedSound = 'alarm_alerta';
+    switch (soundIndex) {
+      case 0: resolvedSound = 'alarm_gentile'; break;
+      case 1: resolvedSound = 'alarm_alerta'; break;
+      case 2: resolvedSound = 'alarm_melodia'; break;
+      case 3: resolvedSound = 'alarm_urgente'; break;
+      case 4: resolvedSound = 'alarm_musical'; break;
+    }
+
+    final String darwinSound = '$resolvedSound.wav';
+    final String androidSound = resolvedSound;
+
+    final String channelId = 'medicaixa_alarms_v${soundIndex}_${vibration ? 'y' : 'n'}';
+
+    if (Platform.isAndroid) {
+      final androidImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      
+      final channel = AndroidNotificationChannel(
+        channelId,
+        'MediCaixa Alarmes ($soundIndex)',
+        description: 'Canal de notificações para alarmes de medicamentos',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: vibration,
+        sound: RawResourceAndroidNotificationSound(androidSound),
+        audioAttributesUsage: AudioAttributesUsage.alarm,
+      );
+      
+      await androidImplementation?.createNotificationChannel(channel);
+    }
+
     final androidDetails = AndroidNotificationDetails(
-      'medicaixa_alarms_channel',
+      channelId,
       'MediCaixa Alarmes',
       channelDescription: 'Canal de notificações para alarmes de medicamentos',
       importance: Importance.max,
-      priority: Priority.high,
-      sound: soundName != null && soundName.isNotEmpty
-          ? RawResourceAndroidNotificationSound(soundName)
-          : null,
+      priority: Priority.max,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      sound: RawResourceAndroidNotificationSound(androidSound),
       playSound: true,
-      enableVibration: true,
+      enableVibration: vibration,
       fullScreenIntent: true,
       category: AndroidNotificationCategory.alarm,
     );
 
-    final darwinDetails = DarwinNotificationDetails(
+    // iOS Critical Alerts: bypasses Ring/Silent switch and Do Not Disturb.
+    // Requires the critical-alerts entitlement.
+    final iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentSound: true,
       presentBadge: true,
-      sound: soundName != null && soundName.isNotEmpty ? '$soundName.caf' : null,
+      sound: darwinSound,
       categoryIdentifier: 'medicaixa_alarm_category',
+      interruptionLevel: InterruptionLevel.critical,
+    );
+
+    // macOS Time-Sensitive Notifications:
+    // macOS does not support standard iOS Critical Alerts during local development
+    // without special provisioning profiles. Thus, macOS uses `InterruptionLevel.timeSensitive`
+    // which allows the alarm to bypass Focus Modes/Do Not Disturb cleanly, ensuring
+    // the user is notified even when macOS is in a quiet/work state.
+    final macosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: true,
+      presentBadge: true,
+      sound: darwinSound,
+      categoryIdentifier: 'medicaixa_alarm_category',
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
     final notificationDetails = NotificationDetails(
       android: androidDetails,
-      iOS: darwinDetails,
-      macOS: darwinDetails,
+      iOS: iosDetails,
+      macOS: macosDetails,
     );
 
     final now = tz.TZDateTime.now(tz.local);
@@ -142,18 +225,22 @@ class NotificationService {
     if (!hasActiveDays) {
       // Schedule once or daily
       final scheduleTime = _nextInstanceOfTime(hour, minute, now);
-      await _notificationsPlugin.zonedSchedule(
-        id, // Single notification
-        title,
-        body,
-        scheduleTime,
-        notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.alarmClock,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-      );
-      debugPrint('Scheduled daily/once alarm notification for $hour:$minute with ID: $id');
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          id, // Single notification
+          title,
+          body,
+          scheduleTime,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.alarmClock,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+        debugPrint('Scheduled daily/once alarm notification for $hour:$minute with ID: $id');
+      } catch (e, stackTrace) {
+        debugPrint('Error scheduling daily/once notification for $id: $e\n$stackTrace');
+      }
       return;
     }
 
@@ -166,20 +253,24 @@ class NotificationService {
         final int isoWeekday = dayIndex == 0 ? 7 : dayIndex; 
         
         final scheduleTime = _nextInstanceOfWeekdayTime(isoWeekday, hour, minute, now);
-        final notificationId = id * 10 + dayIndex;
+        final notificationId = 100000 + id * 7 + dayIndex;
 
-        await _notificationsPlugin.zonedSchedule(
-          notificationId,
-          title,
-          body,
-          scheduleTime,
-          notificationDetails,
-          androidScheduleMode: AndroidScheduleMode.alarmClock,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-        );
-        debugPrint('Scheduled weekly alarm notification for weekday $dayIndex at $hour:$minute with ID: $notificationId');
+        try {
+          await _notificationsPlugin.zonedSchedule(
+            notificationId,
+            title,
+            body,
+            scheduleTime,
+            notificationDetails,
+            androidScheduleMode: AndroidScheduleMode.alarmClock,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+          );
+          debugPrint('Scheduled weekly alarm notification for weekday $dayIndex at $hour:$minute with ID: $notificationId');
+        } catch (e, stackTrace) {
+          debugPrint('Error scheduling notification for weekday $dayIndex: $e\n$stackTrace');
+        }
       }
     }
   }
@@ -192,7 +283,7 @@ class NotificationService {
     
     // Cancel weekly day-specific notifications
     for (int dayIndex = 0; dayIndex < 7; dayIndex++) {
-      await _notificationsPlugin.cancel(alarmId * 10 + dayIndex);
+      await _notificationsPlugin.cancel(100000 + alarmId * 7 + dayIndex);
     }
     debugPrint('Cancelled all scheduled notifications for alarm ID: $alarmId');
   }
@@ -208,7 +299,14 @@ class NotificationService {
     tz.TZDateTime scheduledDate =
         tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
     if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+      scheduledDate = tz.TZDateTime(
+        tz.local,
+        scheduledDate.year,
+        scheduledDate.month,
+        scheduledDate.day + 1,
+        scheduledDate.hour,
+        scheduledDate.minute,
+      );
     }
     return scheduledDate;
   }
@@ -217,8 +315,41 @@ class NotificationService {
       int weekday, int hour, int minute, tz.TZDateTime now) {
     tz.TZDateTime scheduledDate = _nextInstanceOfTime(hour, minute, now);
     while (scheduledDate.weekday != weekday) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+      scheduledDate = tz.TZDateTime(
+        tz.local,
+        scheduledDate.year,
+        scheduledDate.month,
+        scheduledDate.day + 1,
+        scheduledDate.hour,
+        scheduledDate.minute,
+      );
     }
     return scheduledDate;
+  }
+
+  /// Configure iOS AVAudioSession to playback and force sound to speaker
+  Future<void> configureAudioSessionForPlayback() async {
+    try {
+      await AudioPlayer.global.setAudioContext(
+        AudioContext(
+          iOS: AudioContextIOS(
+            category: AVAudioSessionCategory.playback,
+            options: {
+              AVAudioSessionOptions.mixWithOthers,
+            },
+          ),
+          android: const AudioContextAndroid(
+            isSpeakerphoneOn: true,
+            stayAwake: true,
+            contentType: AndroidContentType.music,
+            usageType: AndroidUsageType.alarm,
+            audioFocus: AndroidAudioFocus.gainTransient,
+          ),
+        ),
+      );
+      debugPrint('Global AudioContext configured successfully (playback).');
+    } catch (e) {
+      debugPrint('Error configuring AudioContext: $e');
+    }
   }
 }
