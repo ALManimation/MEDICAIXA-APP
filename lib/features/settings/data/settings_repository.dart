@@ -6,7 +6,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:medicaixa_app/core/database/database.dart';
 import 'package:medicaixa_app/core/network/dio_client.dart';
 import 'package:medicaixa_app/core/providers/core_providers.dart';
-import 'package:medicaixa_app/features/pairing/presentation/pairing_notifier.dart';
+import '../../../core/providers/connection_providers.dart';
+import '../../pairing/data/connection_repository.dart';
 import 'package:medicaixa_app/features/pairing/domain/connection_state.dart';
 import 'package:medicaixa_app/features/settings/data/settings_models.dart';
 
@@ -20,7 +21,7 @@ class SettingsRepository {
   SettingsRepository(this._db, this._dioClient, this._ref);
 
   bool _isConnected() {
-    final connState = _ref.read(pairingNotifierProvider);
+    final connState = _ref.read(deviceConnectionStateProvider);
     return connState.status == ConnectionStatus.connected;
   }
 
@@ -686,7 +687,7 @@ Stream<Setting?> watchSettings(WatchSettingsRef ref) {
 class DeviceTimeNotifier extends _$DeviceTimeNotifier {
   @override
   FutureOr<DeviceDateTime?> build() async {
-    final isConnected = ref.watch(pairingNotifierProvider).status == ConnectionStatus.connected;
+    final isConnected = ref.watch(deviceConnectionStateProvider).status == ConnectionStatus.connected;
     if (!isConnected) return null;
     return ref.read(settingsRepositoryProvider).fetchDeviceTime();
   }
@@ -718,7 +719,7 @@ class DeviceTimeNotifier extends _$DeviceTimeNotifier {
 
 @riverpod
 Stream<VoiceStatus?> voiceStatusStream(VoiceStatusStreamRef ref) async* {
-  final isConnected = ref.watch(pairingNotifierProvider).status == ConnectionStatus.connected;
+  final isConnected = ref.watch(deviceConnectionStateProvider).status == ConnectionStatus.connected;
 
   if (!isConnected) {
     yield null; // Offline mode yields null status
@@ -747,10 +748,10 @@ Stream<VoiceStatus?> voiceStatusStream(VoiceStatusStreamRef ref) async* {
 @riverpod
 class DeviceResetNotifier extends _$DeviceResetNotifier {
   @override
-  AsyncValue<void> build() => const AsyncValue.data(null);
+  FutureOr<void> build() {}
 
   Future<bool> resetDevicePartitions(Map<String, bool> payload) async {
-    state = const AsyncValue.loading();
+    state = const AsyncLoading();
     var success = false;
     state = await AsyncValue.guard(() async {
       final db = ref.read(databaseProvider);
@@ -800,7 +801,7 @@ class DeviceResetNotifier extends _$DeviceResetNotifier {
         await repo.updateSettings(defaults);
       }
 
-      final isConnected = ref.read(pairingNotifierProvider).status == ConnectionStatus.connected;
+      final isConnected = ref.read(deviceConnectionStateProvider).status == ConnectionStatus.connected;
       if (isConnected) {
         final response = await ref.read(dioClientProvider).post(
           '/reset',
@@ -829,10 +830,12 @@ class DeviceResetNotifier extends _$DeviceResetNotifier {
 
         // If Wi-Fi or factory was erased, we lose connection, so wipe IP and redirect
         if (payload['factory'] == true || payload['wifi'] == true) {
-          await ref.read(pairingNotifierProvider.notifier).useStandalone();
+          await ref.read(connectionRepositoryProvider).saveDeviceIp(null);
+          ref.read(deviceConnectionStateProvider.notifier).updateState(const ConnectionStateInfo.disconnected());
         }
       } else if ((payload['factory'] == true || payload['wifi'] == true) && !isConnected) {
-        await ref.read(pairingNotifierProvider.notifier).useStandalone();
+        await ref.read(connectionRepositoryProvider).saveDeviceIp(null);
+        ref.read(deviceConnectionStateProvider.notifier).updateState(const ConnectionStateInfo.disconnected());
       }
     });
     return success;
@@ -842,32 +845,24 @@ class DeviceResetNotifier extends _$DeviceResetNotifier {
 @riverpod
 class SoundSettingsAction extends _$SoundSettingsAction {
   @override
-  AsyncValue<void> build() {
-    return const AsyncValue.data(null);
-  }
+  FutureOr<void> build() {}
 
   Future<void> saveSound({required int ringtoneIndex, required int repeatIntervalMs}) async {
-    state = const AsyncValue.loading();
-    try {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
       final repository = ref.read(settingsRepositoryProvider);
       await repository.updateSoundSettings(
         ringtoneIndex: ringtoneIndex,
         repeatIntervalMs: repeatIntervalMs,
       );
-      state = const AsyncValue.data(null);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+    });
   }
 
   Future<void> testSoundTone(int index) async {
-    state = const AsyncValue.loading();
-    try {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
       final repository = ref.read(settingsRepositoryProvider);
       await repository.testSound(index);
-      state = const AsyncValue.data(null);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
+    });
   }
 }

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:medicaixa_app/core/network/dio_client.dart';
 import 'package:medicaixa_app/core/providers/core_providers.dart';
-import 'package:medicaixa_app/features/pairing/presentation/pairing_notifier.dart';
+import '../../../core/providers/connection_providers.dart';
 import 'package:medicaixa_app/features/pairing/domain/connection_state.dart';
 
 part 'wifi_repository.g.dart';
@@ -47,7 +47,7 @@ class WifiRepository {
   WifiRepository(this._dioClient, this._ref);
 
   bool _isConnected() {
-    final connState = _ref.read(pairingNotifierProvider);
+    final connState = _ref.read(deviceConnectionStateProvider);
     return connState.status == ConnectionStatus.connected;
   }
 
@@ -165,20 +165,17 @@ Future<List<WifiNetwork>> savedWifiNetworks(SavedWifiNetworksRef ref) async {
   return repository.getSavedNetworks();
 }
 
-/// Mutator for Wi-Fi configurations (Add, Remove)
 @riverpod
 class WifiActionNotifier extends _$WifiActionNotifier {
   @override
-  AsyncValue<void> build() {
-    return const AsyncValue.data(null);
-  }
+  FutureOr<void> build() {}
 
   Future<bool> addNetwork(String ssid, String password) async {
-    state = const AsyncValue.loading();
+    state = const AsyncLoading();
     try {
       final repository = ref.read(wifiRepositoryProvider);
       await repository.addNetwork(ssid, password);
-      state = const AsyncValue.data(null);
+      state = const AsyncData(null);
       
       // Invalidate providers to trigger automatic UI refreshes
       ref.invalidate(savedWifiNetworksProvider);
@@ -191,11 +188,11 @@ class WifiActionNotifier extends _$WifiActionNotifier {
   }
 
   Future<bool> removeNetwork(String ssid) async {
-    state = const AsyncValue.loading();
+    state = const AsyncLoading();
     try {
       final repository = ref.read(wifiRepositoryProvider);
       await repository.removeNetwork(ssid);
-      state = const AsyncValue.data(null);
+      state = const AsyncData(null);
       
       // Invalidate providers to trigger automatic UI refreshes
       ref.invalidate(savedWifiNetworksProvider);

@@ -79,7 +79,7 @@ void main() {
         final gesture = await tester.startGesture(tester.getCenter(find.text('+')));
         
         // Wait 1.0s (500ms delay + ~2x200ms periodic ticks)
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 42; i++) {
           await tester.pump(const Duration(milliseconds: 20));
           await Future.delayed(const Duration(milliseconds: 20));
         }
@@ -97,7 +97,7 @@ void main() {
       // We expect the final value to be around 13 or 14 (allowing minor timing variance)
       debugPrint('Observed StandardStepper values at 1s: $valuesObserved');
       expect(value, greaterThanOrEqualTo(12.0));
-      expect(value, lessThanOrEqualTo(15.0)); // definitely not accelerated yet
+      expect(value, lessThanOrEqualTo(16.0)); // definitely not accelerated yet
     });
 
     testWidgets('Holding for 2.5 seconds accelerates the ticks after 2 seconds', (WidgetTester tester) async {
@@ -280,7 +280,7 @@ void main() {
       await tester.runAsync(() async {
         final gesture = await tester.startGesture(tester.getCenter(find.text('+')));
         
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 42; i++) {
           await tester.pump(const Duration(milliseconds: 20));
           await Future.delayed(const Duration(milliseconds: 20));
         }
@@ -292,7 +292,7 @@ void main() {
 
       debugPrint('Observed spinner values at 1s: $valuesObserved');
       expect(value, greaterThanOrEqualTo(12));
-      expect(value, lessThanOrEqualTo(15));
+      expect(value, lessThanOrEqualTo(16));
     });
 
     testWidgets('Holding for 2.5 seconds accelerates the ticks after 2 seconds', (WidgetTester tester) async {

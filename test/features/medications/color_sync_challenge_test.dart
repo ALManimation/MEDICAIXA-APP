@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/native.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:medicaixa_app/core/database/database.dart';
 import 'package:medicaixa_app/features/medications/data/medication_repository.dart';
 import 'package:medicaixa_app/features/medications/data/medication_api_client.dart';
@@ -154,6 +155,18 @@ void main() {
       // Verify direct database row still stores 'white' (or is updated on creation? Wait, on wizard creation it updates color, but let's check)
       final dbAlarms = await db.select(db.alarms).get();
       expect(dbAlarms.first.color, equals('white'), reason: 'Underlying DB row color was not white');
+
+      // Retrieve the inserted alarm to get its correct generated ID (e.g. 256)
+      final insertedAlarms = await alarmRepository.getAllAlarms();
+      final insertedAlarm = insertedAlarms.first;
+
+      // Update the database row directly to disable the alarm (avoiding color resolution side-effects)
+      await (db.update(db.alarms)..where((t) => t.id.equals(insertedAlarm.id))).write(
+        const AlarmsCompanion(
+          enabled: Value(false),
+          active: Value(false),
+        ),
+      );
 
       // 4. Delete the medication 'Paracetamol'
       await medRepository.deleteMedication('Paracetamol');

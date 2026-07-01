@@ -349,7 +349,7 @@ class AlarmCardWidget extends ConsumerWidget {
 
   double _getCurrentQuantity(WidgetRef ref) {
     // Watch or read the selected date from notifier to determine current weekday
-    final selectedDate = ref.watch(dashboardNotifierProvider).selectedDate;
+    final selectedDate = ref.watch(dashboardNotifierProvider.select((s) => s.value?.selectedDate ?? DateTime.now()));
     final wday = selectedDate.weekday % 7;
     final hasAsymmetric = alarm.daysQuantity.any((q) => q > 0);
     if (hasAsymmetric && wday < alarm.daysQuantity.length && alarm.daysQuantity[wday] > 0) {

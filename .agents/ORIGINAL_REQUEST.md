@@ -616,3 +616,64 @@ Estender a interface da tela `SettingsScreen` para incluir uma nova seção vis�
 - [ ] Se o alarme não for atendido pelo usuário dentro da duração limite selecionada (ex: 1, 2 ou 5 minutos), ele deve entrar em Soneca/Perdido e fechar a tela automaticamente.
 - [ ] A vibração na tela de alarme ativo deve respeitar a chave de ativação configurada.
 - [ ] O projeto modificado deve compilar com sucesso e passar na análise estática (`flutter analyze` e `flutter test`).
+
+## Follow-up — 2026-07-01T12:01:43Z
+
+Conduct a comprehensive code review of the Medicaixa Flutter application. The goal is to analyze the codebase for logical flaws, unfinished implementations, inconsistencies, and potential performance or stability issues, providing a detailed audit report.
+
+Working directory: `/Users/almanimation/Downloads/Caixa Remedios/medicaixa_app`
+Integrity mode: benchmark
+
+## Requirements
+
+### R1. Deep Codebase Analysis
+Analyze the Flutter app architecture, specifically focusing on Riverpod state management, Drift (SQLite) database interactions, and background alarm engine logic for race conditions, memory leaks, or unhandled exceptions.
+
+### R2. Feature-First Architecture Consistency
+Verify that the codebase adheres to the defined feature-first clean architecture (data/domain/presentation separation) and identify any code smells or logic bleeding across layers.
+
+### R3. Performance & Stability Audit
+Identify performance bottlenecks (e.g., inefficient UI rebuilds, heavy isolate usage issues, unnecessary network polling) and stability risks in the communication with the ESP32 hardware.
+
+## Acceptance Criteria
+
+### Audit Report
+- [ ] A final markdown artifact (`audit_report.md`) is generated containing categorized issues (Critical, High, Medium, Low).
+- [ ] Each issue includes a clear description of the flaw, the file/line number, and a concrete recommendation for fixing it.
+- [ ] The report explicitly covers the `AlarmEngine`, Drift Database repositories, and Riverpod Notifiers.
+- [ ] The review focuses purely on generating the report; the agents do not write new implementation code or automated tests, but they may use linters and reference the existing tests/firmware C++ to validate their findings.
+
+## Follow-up — 2026-07-01T12:21:31Z
+
+<USER_REQUEST>
+# Teamwork Project Prompt — Draft
+
+> Status: Launched
+
+Implement all the required code fixes and refactorings for the 14 issues identified in the recent `audit_report.md` codebase audit.
+
+Working directory: `/Users/almanimation/Downloads/Caixa Remedios/medicaixa_app`
+Integrity mode: development
+
+## Requirements
+
+### R1. Resolve Critical Issues (Hot Reload & Data Integrity)
+Refactor `AlarmWizardNotifier` and `PairingNotifier` to eliminate `late final` variables (Rule 28 violation). Update `MedicationRepository.deleteMedication` to query the `AlarmRepository` and block deletion if the medication is currently used by an active alarm (Rule 35 violation).
+
+### R2. Resolve High & Medium Issues (State, Architecture & Memory Leaks)
+Convert `DashboardNotifier` to `AsyncNotifier` to eliminate manual `isLoading` flags (Rule 3 violation). Fix layer bleeding where repositories directly import presentation notifiers. Cancel the `_inactivityTimer` in `DashboardNotifier` on dispose. Correct the sound labeling mismatch for option 0 (from "Beep" to "Gentil"). Ensure `DashboardScreen` only counts missed alarms if they are actually enabled/active.
+
+### R3. Resolve Low Severity Issues
+Refactor model `copyWith` methods to handle null overrides cleanly. Consolidate ANVISA database loading to a single isolate-backed service. Move synchronous JSON decoding of backups off the UI thread via `compute`. Optimize `AlarmCardWidget` to select only the required state properties to avoid unnecessary rebuilds. Ensure timezone initialization failures do not silently fall back to UTC.
+
+## Acceptance Criteria
+
+### Testing & Compilation
+- [ ] All 14 issues documented in `audit_report.md` are resolved in the codebase.
+- [ ] The application compiles successfully for iOS and macOS (`flutter build ios --simulator`, etc).
+- [ ] `flutter test` completes successfully without regressions (specifically dashboard, alarm, and medication tests).
+- [ ] No `LateInitializationError` is thrown when Hot Reloading any screen.
+
+---
+*Next: when approved → delegate via invoke_subagent*
+</USER_REQUEST>

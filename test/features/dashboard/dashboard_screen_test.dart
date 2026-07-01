@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,12 +15,22 @@ import 'package:medicaixa_app/features/pairing/presentation/pairing_notifier.dar
 import 'package:medicaixa_app/features/dashboard/presentation/widgets/health_banner_widget.dart';
 import 'package:medicaixa_app/features/dashboard/presentation/widgets/calendar_strip_widget.dart';
 
+import 'package:medicaixa_app/core/providers/connection_providers.dart';
+
 class FakePairingNotifier extends PairingNotifier {
   FakePairingNotifier(this._initialState);
   final ConnectionStateInfo _initialState;
 
   @override
   ConnectionStateInfo build() {
+    listenSelf((previous, next) {
+      Future.microtask(() {
+        ref.read(deviceConnectionStateProvider.notifier).updateState(next);
+      });
+    });
+    Future.microtask(() {
+      ref.read(deviceConnectionStateProvider.notifier).updateState(_initialState);
+    });
     return _initialState;
   }
 }
@@ -30,13 +41,13 @@ class FakeDashboardNotifier extends DashboardNotifier {
   FakeDashboardNotifier(this._initialState);
 
   @override
-  DashboardState build() {
+  FutureOr<DashboardState> build() {
     return _initialState;
   }
 
   @override
   void selectDate(DateTime date) {
-    state = state.copyWith(selectedDate: date);
+    state = AsyncValue.data(state.requireValue.copyWith(selectedDate: date));
   }
 
   @override
@@ -44,7 +55,7 @@ class FakeDashboardNotifier extends DashboardNotifier {
 
   @override
   void resetToToday() {
-    state = state.copyWith(selectedDate: DateTime.now());
+    state = AsyncValue.data(state.requireValue.copyWith(selectedDate: DateTime.now()));
   }
 
   @override
@@ -89,7 +100,7 @@ void main() {
       takenCount: 0,
       pendingCount: 0,
       missedCount: 0,
-      isLoading: false,
+
     );
 
     await tester.pumpWidget(
@@ -157,7 +168,7 @@ void main() {
       takenCount: 0,
       pendingCount: 1,
       missedCount: 0,
-      isLoading: false,
+
     );
 
     await tester.pumpWidget(
@@ -235,7 +246,7 @@ void main() {
       takenCount: 0,
       pendingCount: 0,
       missedCount: 1,
-      isLoading: false,
+
     );
 
     await tester.pumpWidget(
@@ -321,7 +332,7 @@ void main() {
       takenCount: 0,
       pendingCount: 1, // Afternoon Med is pending (time is 13:00, alarm is 14:00)
       missedCount: 1,  // Morning Med is missed (time passed 8:00 < 13:00)
-      isLoading: false,
+
     );
 
     await tester.pumpWidget(
@@ -388,7 +399,7 @@ void main() {
       takenCount: 1,
       pendingCount: 0,
       missedCount: 0,
-      isLoading: false,
+
     );
 
     await tester.pumpWidget(
@@ -451,7 +462,7 @@ void main() {
       takenCount: 0,
       pendingCount: 1,
       missedCount: 0,
-      isLoading: false,
+
     );
 
     await tester.pumpWidget(
@@ -513,7 +524,7 @@ void main() {
       takenCount: 0,
       pendingCount: 1,
       missedCount: 0,
-      isLoading: false,
+
     );
 
     final dashboardNotifier = FakeDashboardNotifier(stateToday);
@@ -611,7 +622,7 @@ void main() {
       takenCount: 1,
       pendingCount: 1,
       missedCount: 0,
-      isLoading: false,
+
     );
 
     await tester.pumpWidget(
@@ -656,7 +667,7 @@ void main() {
       takenCount: 0,
       pendingCount: 0,
       missedCount: 0,
-      isLoading: false,
+
     );
 
     await tester.pumpWidget(

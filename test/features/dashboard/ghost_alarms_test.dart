@@ -127,7 +127,7 @@ void main() {
     await _waitForDashboardUpdate(container, yesterdayMid);
 
     // Verify it is reconstructed as a Ghost Alarm on yesterday
-    var state = container.read(dashboardNotifierProvider);
+    var state = container.read(dashboardNotifierProvider).requireValue;
     expect(state.alarms.length, 1);
     final ghostPast = state.alarms.first;
     expect(ghostPast.id, createdId);
@@ -161,7 +161,7 @@ void main() {
     await _waitForDashboardUpdate(container, todayMid);
 
     // Verify it is reconstructed as a Ghost Alarm on today
-    state = container.read(dashboardNotifierProvider);
+    state = container.read(dashboardNotifierProvider).requireValue;
     expect(state.alarms.length, 1);
     final ghostToday = state.alarms.first;
     expect(ghostToday.id, createdIdToday);
@@ -201,7 +201,6 @@ void main() {
       takenCount: 1,
       pendingCount: 0,
       missedCount: 0,
-      isLoading: false,
     );
 
     await tester.pumpWidget(
@@ -292,7 +291,7 @@ void main() {
     notifier.refresh();
     await _waitForDashboardUpdate(container, DateTime.now());
 
-    final state = container.read(dashboardNotifierProvider);
+    final state = container.read(dashboardNotifierProvider).requireValue;
     expect(state.alarms, isEmpty);
   });
 
@@ -349,20 +348,20 @@ void main() {
     // 1. Load dashboard on yesterday -> Ghost Alarm should appear
     notifier.selectDate(yesterdayMid);
     await _waitForDashboardUpdate(container, yesterdayMid);
-    var state = container.read(dashboardNotifierProvider);
+    var state = container.read(dashboardNotifierProvider).requireValue;
     expect(state.alarms.length, 1);
     expect(state.alarms.first.id, createdId);
 
     // 2. Load dashboard on today -> Ghost Alarm should NOT appear
     notifier.selectDate(todayMid);
     await _waitForDashboardUpdate(container, todayMid);
-    state = container.read(dashboardNotifierProvider);
+    state = container.read(dashboardNotifierProvider).requireValue;
     expect(state.alarms, isEmpty);
 
     // 3. Load dashboard on tomorrow -> Ghost Alarm should NOT appear
     notifier.selectDate(tomorrowMid);
     await _waitForDashboardUpdate(container, tomorrowMid);
-    state = container.read(dashboardNotifierProvider);
+    state = container.read(dashboardNotifierProvider).requireValue;
     expect(state.alarms, isEmpty);
   });
 }

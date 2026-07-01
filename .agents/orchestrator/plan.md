@@ -1,57 +1,50 @@
-# Plan — MediCaixa App Comprehensive Bugfixes & New Features
+# Ghost Alarms & Deletion Logic Plan
 
-## Objective
-Implement all bug fixes, layout enhancements, advanced native notification configurations, color synchronization, and custom standardized input controls as requested in `ORIGINAL_REQUEST.md`.
+This document outlines the step-by-step plan to implement alarm deletion logic and display past alarms (Ghost Alarms) in the calendar, matching the C++ original behavior.
 
 ## Milestones
 
-### Milestone 1: Exploratory Analysis & Technical Design
-- Explore all screens, dialogs, wizard steps, database files, and native configuration files.
-- Understand the existing code for:
-  - AlarmActiveScreen snooze button.
-  - SnoozeModal (RenderFlex overflow).
-  - Dashboard screen state loading / calendar strip chevrons / WeeklyRhythmWidget.
-  - Color palettes and DB mapping in drift.
-  - Native config files: AndroidManifest, Info.plist, entitlements.
-  - NotificationService setup.
-  - Steppers and Date/Time picker dialogs.
-- Outputs: Detailed investigation report and layout/code analysis.
+| # | Name | Scope | Dependencies | Status |
+|---|------|-------|-------------|--------|
+| 7 | Codebase Investigation & Technical Design | Analyze C++ original code and current Dart database schema, repositories, and UI controllers. | None | IN_PROGRESS |
+| 8 | Core Deletion & Ghost Reconstruction Logic | Implement Drift/Repository changes to support alarm deletion, history tracking, and Ghost Alarm reconstruction in memory. | M7 | PLANNED |
+| 9 | Dashboard UI & Calendar Integration | Update Dashboard/Calendar widgets to render Ghost Alarms correctly (gray color, 0.55 opacity, badge, disabled clicks). | M8 | PLANNED |
+| 10 | Testing, Hardening & Verification | Write unit/widget tests for all scenarios, verify all tests pass, ensure no static analysis errors, and audit codebase. | M9 | PLANNED |
 
-### Milestone 2: Basic Bug Fixes and UI Tweaks
-- **R1 (Active Alarm Screen)**: Ensure "Adiar 10 min" pops/dismisses the alarm active screen.
-- **R2 (Snooze Modal)**: Wrap `SnoozeModal` contents in a `SingleChildScrollView` or adjust padding/SafeArea to fix RenderFlex overflow.
-- **R3 (Dashboard loading flicker)**: Update `dashboard_screen.dart` loading state to preserve existing layout (or use a subtle progress indicator) instead of a full screen loading widget.
-- **R4 (Dashboard FAB)**: Configure `shape: const CircleBorder()` on the Dashboard FAB.
-- **R5 (Calendar Strip arrows)**: Remove lateral Positioned chevrons and return the `ListView.builder` cleanly.
-- **R6 (Weekly Rhythm removal)**: Remove `WeeklyRhythmWidget` and related database/history calls from the Dashboard.
+---
 
-### Milestone 3: Color Sync & Palettes
-- Update the colors grid in both medication screens and alarm wizard steps to display all 15 official hardware colors.
-- Implement bidirectional synchronization:
-  - If a medication is chosen in the wizard, pre-select its database color in the alarm wizard colors step.
-  - Changing the color of an alarm or choosing a color for a new medication updates/synchronizes the medication color in the DB.
-  - Ensure reminder color assignment uses only the 15 official colors.
+## Technical Tasks breakdown
 
-### Milestone 4: Responsive Grid Layouts
-- Implement GridView layouts (when screen width >= 800px) with `SliverGridDelegateWithMaxCrossAxisExtent` (max 400px width) for:
-  - Dashboard alarms and reminders.
-  - Medications list screen.
-- Ensure smooth scaling and zero overflow on window resize.
+### Milestone 7: Codebase Investigation & Technical Design
+- Spawn an Explorer to:
+  1. Inspect C++ project (`../Versoes/08.90 C++ Xiaozhi/littlefs_data/www/index.html` and `components/`) to understand how alarms are deleted and how history is tracked for them.
+  2. Inspect Dart Drift database file (`lib/core/database/database.dart`) and `AlarmRepository` (`lib/features/alarms/data/alarm_repository.dart`) to check if/how alarm history logs are stored (e.g. logs table, historical statuses).
+  3. Inspect `lib/features/dashboard/presentation/dashboard_notifier.dart` to see how the dashboard loads alarms and historical logs.
+  4. Write an architectural and technical strategy.
 
-### Milestone 5: Advanced Native Notifications & OS Configuration
-- Document integration design in `docs/integration_plan.md`.
-- Configure `AndroidManifest.xml` with permissions: `USE_FULL_SCREEN_INTENT`, `SCHEDULE_EXACT_ALARM`, `USE_EXACT_ALARM`, `WAKE_LOCK`, `RECEIVE_BOOT_COMPLETED`.
-- Configure iOS `Info.plist` and entitlements for Critical Alerts and Background Modes (audio, fetch).
-- Configure macOS entitlements for networking/notifications.
-- Update `NotificationService` for Android `fullScreenIntent` (loading `AlarmActiveScreen`), iOS critical notifications with audio session playback initialization, and macOS Time-Sensitive documentation/support.
+### Milestone 8: Core Deletion & Ghost Reconstruction Logic
+- Spawn a Worker to implement the core deletion/reconstruction logic:
+  1. Update `AlarmRepository` delete method. If an alarm has historical logs (taken or missed status) recorded in the database, do not delete it completely or mark it deleted (or rebuild it in-memory from logs). Let's see how C++ does it. (For example, we might mark it soft-deleted or rebuild it as a "ghost" in memory based on the logs table).
+  2. Implement the in-memory reconstruction logic as requested by Rule 47: "if the history of events contains the taking of an alarm that has already been deleted from the main database, the system must recreate it in memory with the property `isGhost: true`".
+  3. Ensure that if an alarm is deleted with NO history/status, it is fully removed from the database and not recreated.
 
-### Milestone 6: Custom Steppers and Vertical DateTime Selectors
-- Implement standardized stepper widget (width 160px-180px, (+/-) buttons, option for "+ ½" sub-button).
-- Implement vertical DateTime selector (+ on top, - at bottom) with fast touch and accelerated long-press (>2s).
-- Integrate new widgets in all screens: alarm wizard steps, snooze modal, reminders form, settings screen, etc.
+### Milestone 9: Dashboard UI & Calendar Integration
+- Spawn a Worker to update the UI:
+  1. Add `isGhost` property to the Alarm model / entity if it doesn't exist, or handle it in the UI representation.
+  2. Update `DashboardNotifier` to fetch deleted alarms that have history on past days (up to their last status date) and reconstruct them as ghost alarms.
+  3. Update `AlarmCardWidget` to check `isGhost`. If true:
+     - Render gray borders and icons.
+     - Apply opacity of 0.55.
+     - Add an "Excluído" badge.
+     - Disable click interactions.
+  4. Ensure Ghost Alarms do not appear in the calendar/dashboard on days subsequent to the last status date, and do not appear on future days.
+  5. Check dot calculations in `CalendarStripWidget` (Rule 50).
 
-### Milestone 7: Testing and Integrity Audit
-- Run static analysis (`flutter analyze`) and tests (`flutter test`).
-- Ensure no warnings, errors, or lints.
-- Run a Forensic Audit to verify integrity compliance.
-- Final verify that 100% of features work standalone and with proper alignment to C++ specs.
+### Milestone 10: Testing, Hardening & Verification
+- Spawn a Challenger to:
+  1. Write widget/unit tests verifying ghost alarm rendering on corresponding dates.
+  2. Write tests verifying no ghost alarm is displayed if deleted without history.
+  3. Write tests verifying no ghost alarm is displayed after its last status date.
+  4. Verify all tests in the project (`flutter test`) pass.
+- Spawn a Forensic Auditor to:
+  1. Run integrity checks to ensure no cheats, hardcoded results, or bypasses are present in the implementation.

@@ -13,6 +13,9 @@ import 'package:medicaixa_app/features/settings/data/settings_repository.dart';
 import 'package:medicaixa_app/features/settings/data/wifi_repository.dart';
 import 'package:fake_async/fake_async.dart';
 
+import 'package:medicaixa_app/core/providers/connection_providers.dart';
+
+
 // Fake Pairing Notifier to control the connection state
 class FakePairingNotifier extends PairingNotifier {
   final ConnectionStatus initialStatus;
@@ -20,12 +23,26 @@ class FakePairingNotifier extends PairingNotifier {
 
   @override
   ConnectionStateInfo build() {
-    return ConnectionStateInfo(
+    final stateInfo = ConnectionStateInfo(
       status: initialStatus,
       ip: initialStatus == ConnectionStatus.connected ? 'http://192.168.4.1' : null,
       deviceName: initialStatus == ConnectionStatus.connected ? 'MediCaixa' : null,
       firmwareVersion: initialStatus == ConnectionStatus.connected ? 'v0.90' : null,
     );
+    listenSelf((previous, next) {
+      Future.microtask(() {
+        ref.read(deviceConnectionStateProvider.notifier).updateState(next);
+      });
+    });
+    ref.listen(deviceConnectionStateProvider, (previous, next) {
+      if (next.status == ConnectionStatus.disconnected && state.status != ConnectionStatus.disconnected) {
+        state = const ConnectionStateInfo.disconnected();
+      }
+    });
+    Future.microtask(() {
+      ref.read(deviceConnectionStateProvider.notifier).updateState(stateInfo);
+    });
+    return stateInfo;
   }
 
   @override
@@ -118,7 +135,7 @@ void main() {
     late SettingsRepository settingsRepo;
     late WifiRepository wifiRepo;
 
-    setUp(() {
+    setUp(() async {
       db = AppDatabase.connect(NativeDatabase.memory());
       dioClient = RobustFakeDioClient();
       container = ProviderContainer(
@@ -128,6 +145,8 @@ void main() {
           pairingNotifierProvider.overrideWith(() => FakePairingNotifier(ConnectionStatus.connected)),
         ],
       );
+      container.read(pairingNotifierProvider);
+      await Future.delayed(Duration.zero);
       settingsRepo = SettingsRepository(db, dioClient, FakeRef(container));
       wifiRepo = WifiRepository(dioClient, FakeRef(container));
     });
@@ -404,6 +423,7 @@ void main() {
 
           // Listen to the provider to keep it active during fakeAsync execution
           final subscription = container.listen(pairingNotifierProvider, (_, __) {});
+          final subscriptionReset = container.listen(deviceResetNotifierProvider, (_, __) {});
 
           final notifier = container.read(deviceResetNotifierProvider.notifier);
           
@@ -414,6 +434,7 @@ void main() {
 
           // Fast forward time by 9 seconds to skip the 8 seconds restart delay
           async.elapse(const Duration(seconds: 9));
+          async.flushMicrotasks();
 
           expect(success, isTrue);
           expect(restartCalled, isTrue);
@@ -422,6 +443,7 @@ void main() {
           expect(connState.status, ConnectionStatus.disconnected);
 
           subscription.close();
+          subscriptionReset.close();
         });
       });
 

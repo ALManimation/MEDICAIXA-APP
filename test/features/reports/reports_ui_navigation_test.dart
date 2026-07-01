@@ -12,9 +12,19 @@ import 'package:medicaixa_app/features/history/presentation/history_screen.dart'
 import 'package:medicaixa_app/features/pairing/domain/connection_state.dart';
 import 'package:medicaixa_app/features/pairing/presentation/pairing_notifier.dart';
 
+import 'package:medicaixa_app/core/providers/connection_providers.dart';
+
 class FakePairingNotifier extends PairingNotifier {
   @override
   ConnectionStateInfo build() {
+    listenSelf((previous, next) {
+      Future.microtask(() {
+        ref.read(deviceConnectionStateProvider.notifier).updateState(next);
+      });
+    });
+    Future.microtask(() {
+      ref.read(deviceConnectionStateProvider.notifier).updateState(const ConnectionStateInfo.disconnected());
+    });
     return const ConnectionStateInfo.disconnected();
   }
 }

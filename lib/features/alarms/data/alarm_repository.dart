@@ -7,7 +7,7 @@ import '../../../core/database/database.dart';
 import '../../../core/providers/core_providers.dart';
 import 'alarm_api_client.dart';
 import 'alarm_model.dart';
-import '../../pairing/presentation/pairing_notifier.dart';
+import '../../../core/providers/connection_providers.dart';
 import '../../pairing/domain/connection_state.dart';
 
 import '../../history/data/history_repository.dart';
@@ -22,7 +22,7 @@ class AlarmRepository {
   AlarmRepository(this._db, this._apiClient, this._ref);
 
   bool _isConnected() {
-    final connState = _ref.read(pairingNotifierProvider);
+    final connState = _ref.read(deviceConnectionStateProvider);
     return connState.status == ConnectionStatus.connected;
   }
 
@@ -944,116 +944,4 @@ AlarmRepository alarmRepository(AlarmRepositoryRef ref) {
     ref.watch(alarmApiClientProvider),
     ref,
   );
-}
-
-extension AlarmModelCopyWith on AlarmModel {
-  AlarmModel copyWith({
-    int? id,
-    int? hour,
-    int? minute,
-    String? name,
-    String? medName,
-    bool? enabled,
-    bool? active,
-    List<bool>? days,
-    String? status,
-    String? color,
-    double? quantity,
-    List<double>? daysQuantity,
-    String? type,
-    String? dosage,
-    String? lastStatus,
-    String? lastStatusDate,
-    int? snoozeMin,
-    String? startDate,
-    int? durationDays,
-    String? createdDate,
-    int? cycleOnDays,
-    int? cycleOffDays,
-    int? cycleCurrentDay,
-    bool? cycleIsPaused,
-    bool? isPrn,
-    int? prnMinIntervalHours,
-    int? prnMaxDailyDoses,
-    int? prnDosesToday,
-    int? pauseUntil,
-    bool? isDynamic,
-    String? dynamicInstruction,
-    int? taperStageCount,
-    int? taperCurrentStage,
-    int? taperDayInStage,
-    List<TaperStage>? taperStages,
-    bool? taperLoop,
-    String? specialInstruction,
-    double? adjustStep,
-    int? adjustIntervalDays,
-    double? adjustLimit,
-    bool? requiresRemoval,
-    int? removalDelayMins,
-    String? siteRotationList,
-    int? currentSiteIndex,
-    int? dayOfMonth,
-    int? groupId,
-    int? intervalHours,
-    int? intervalDays,
-    int? intervalCountdown,
-    int? lastModified,
-    bool? pendingSync,
-    bool? isGhost,
-  }) {
-    return AlarmModel(
-      id: id ?? this.id,
-      hour: hour ?? this.hour,
-      minute: minute ?? this.minute,
-      name: name ?? this.name,
-      medName: medName ?? this.medName,
-      enabled: enabled ?? this.enabled,
-      active: active ?? this.active,
-      days: days ?? this.days,
-      status: status ?? this.status,
-      color: color ?? this.color,
-      quantity: quantity ?? this.quantity,
-      daysQuantity: daysQuantity ?? this.daysQuantity,
-      type: type ?? this.type,
-      dosage: dosage ?? this.dosage,
-      lastStatus: lastStatus ?? this.lastStatus,
-      lastStatusDate: lastStatusDate ?? this.lastStatusDate,
-      snoozeMin: snoozeMin ?? this.snoozeMin,
-      startDate: startDate ?? this.startDate,
-      durationDays: durationDays ?? this.durationDays,
-      createdDate: createdDate ?? this.createdDate,
-      cycleOnDays: cycleOnDays ?? this.cycleOnDays,
-      cycleOffDays: cycleOffDays ?? this.cycleOffDays,
-      cycleCurrentDay: cycleCurrentDay ?? this.cycleCurrentDay,
-      cycleIsPaused: cycleIsPaused ?? this.cycleIsPaused,
-      isPrn: isPrn ?? this.isPrn,
-      prnMinIntervalHours: prnMinIntervalHours ?? this.prnMinIntervalHours,
-      prnMaxDailyDoses: prnMaxDailyDoses ?? this.prnMaxDailyDoses,
-      prnDosesToday: prnDosesToday ?? this.prnDosesToday,
-      pauseUntil: pauseUntil ?? this.pauseUntil,
-      isDynamic: isDynamic ?? this.isDynamic,
-      dynamicInstruction: dynamicInstruction ?? this.dynamicInstruction,
-      taperStageCount: taperStageCount ?? this.taperStageCount,
-      taperCurrentStage: taperCurrentStage ?? this.taperCurrentStage,
-      taperDayInStage: taperDayInStage ?? this.taperDayInStage,
-      taperStages: taperStages ?? this.taperStages,
-      taperLoop: taperLoop ?? this.taperLoop,
-      specialInstruction: specialInstruction ?? this.specialInstruction,
-      adjustStep: adjustStep ?? this.adjustStep,
-      adjustIntervalDays: adjustIntervalDays ?? this.adjustIntervalDays,
-      adjustLimit: adjustLimit ?? this.adjustLimit,
-      requiresRemoval: requiresRemoval ?? this.requiresRemoval,
-      removalDelayMins: removalDelayMins ?? this.removalDelayMins,
-      siteRotationList: siteRotationList ?? this.siteRotationList,
-      currentSiteIndex: currentSiteIndex ?? this.currentSiteIndex,
-      dayOfMonth: dayOfMonth ?? this.dayOfMonth,
-      groupId: groupId ?? this.groupId,
-      intervalHours: intervalHours ?? this.intervalHours,
-      intervalDays: intervalDays ?? this.intervalDays,
-      intervalCountdown: intervalCountdown ?? this.intervalCountdown,
-      lastModified: lastModified ?? this.lastModified,
-      pendingSync: pendingSync ?? this.pendingSync,
-      isGhost: isGhost ?? this.isGhost,
-    );
-  }
 }

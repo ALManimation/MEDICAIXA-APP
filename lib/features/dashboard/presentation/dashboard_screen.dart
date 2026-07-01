@@ -43,14 +43,24 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<DateTime>(
-      dashboardNotifierProvider.select((s) => s.selectedDate),
+    ref.listen<DateTime?>(
+      dashboardNotifierProvider.select((s) => s.value?.selectedDate),
       (previous, next) {
-        ref.read(dashboardCollapseProvider.notifier).state = const {};
+        if (next != null) {
+          ref.read(dashboardCollapseProvider.notifier).state = const {};
+        }
       },
     );
 
-    final state = ref.watch(dashboardNotifierProvider);
+    final asyncState = ref.watch(dashboardNotifierProvider);
+    final state = asyncState.valueOrNull;
+    if (state == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     final notifier = ref.read(dashboardNotifierProvider.notifier);
     final connState = ref.watch(pairingNotifierProvider);
     final settingsAsync = ref.watch(watchSettingsProvider);
@@ -179,10 +189,10 @@ class DashboardScreen extends ConsumerWidget {
                               icon: Icon(
                                 Icons.sync_rounded,
                                 size: 20,
-                                color: state.isLoading ? AppColors.border : AppColors.textMuted,
+                                color: asyncState.isLoading ? AppColors.border : AppColors.textMuted,
                               ),
                               tooltip: t('dash_sync'),
-                              onPressed: state.isLoading ? null : () => notifier.sync(),
+                              onPressed: asyncState.isLoading ? null : () => notifier.sync(),
                             ),
                             IconButton(
                               icon: Icon(
@@ -276,7 +286,7 @@ class DashboardScreen extends ConsumerWidget {
               fixedHeader,
               SizedBox(
                 height: 4,
-                child: state.isLoading
+                child: asyncState.isLoading
                     ? LinearProgressIndicator(
                         color: AppColors.primary,
                         backgroundColor: Colors.transparent,
@@ -285,7 +295,7 @@ class DashboardScreen extends ConsumerWidget {
               ),
               Expanded(
                 child: AnimatedOpacity(
-                  opacity: state.isLoading ? 0.65 : 1.0,
+                  opacity: asyncState.isLoading ? 0.65 : 1.0,
                   duration: const Duration(milliseconds: 150),
                   child: scrollableBody,
                 ),
@@ -400,6 +410,9 @@ class DashboardScreen extends ConsumerWidget {
   ) {
     int missedCount = 0;
     for (final alarm in alarms) {
+      if (!alarm.enabled || !alarm.active) {
+        continue;
+      }
       final isTakenToday = alarm.lastStatusDate == dateFormatted && alarm.lastStatus == 'Tomado';
       if (isTakenToday) {
         continue;

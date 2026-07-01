@@ -337,7 +337,10 @@ class _CalendarStripWidgetState extends ConsumerState<CalendarStripWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(dashboardNotifierProvider);
+    final asyncState = ref.watch(dashboardNotifierProvider);
+    final state = asyncState.valueOrNull;
+    if (state == null) return const SizedBox.shrink();
+    
     final selectedDate = state.selectedDate;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);

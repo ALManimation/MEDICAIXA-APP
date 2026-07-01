@@ -26,6 +26,10 @@ import 'package:medicaixa_app/features/settings/data/settings_repository.dart';
 import 'package:medicaixa_app/features/settings/data/wifi_repository.dart';
 import 'package:medicaixa_app/features/medications/data/medication_repository.dart';
 
+Map<String, dynamic> _decodeJson(String source) {
+  return json.decode(source) as Map<String, dynamic>;
+}
+
 const Map<String, Map<String, dynamic>> restoreKeysConfig = {
   'meds': {'label': 'Medicamentos', 'default': true, 'restart': false},
   'alarms': {'label': 'Alarmes', 'default': true, 'restart': false},
@@ -155,7 +159,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final jsonContent = await rootBundle.loadString('test/fixtures/sample_backup.json');
       await ref.read(dashboardNotifierProvider.notifier).loadSampleData(jsonContent);
 
-      final Map<String, dynamic> data = json.decode(jsonContent);
+      final Map<String, dynamic> data = await compute(_decodeJson, jsonContent);
       if (data.containsKey('meds') && data['meds'] is List) {
         final medsList = data['meds'] as List;
         await ref.read(medicationRepositoryProvider).loadBackupFixture(medsList);
@@ -241,7 +245,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final path = result.files.single.path!;
       final file = File(path);
       final content = await file.readAsString();
-      final Map<String, dynamic> rawMap = json.decode(content);
+      final Map<String, dynamic> rawMap = await compute(_decodeJson, content);
 
       final availableKeys = restoreKeysConfig.keys.where((k) => rawMap.containsKey(k)).toList();
       if (availableKeys.isEmpty) {
@@ -784,7 +788,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
       items: [
-        DropdownMenuItem(value: 0, child: Text('Beep', style: TextStyle(color: AppColors.text))),
+        DropdownMenuItem(value: 0, child: Text('Gentil', style: TextStyle(color: AppColors.text))),
         DropdownMenuItem(value: 1, child: Text('Alerta', style: TextStyle(color: AppColors.text))),
         DropdownMenuItem(value: 2, child: Text('Melodia', style: TextStyle(color: AppColors.text))),
         DropdownMenuItem(value: 3, child: Text('Urgente', style: TextStyle(color: AppColors.text))),

@@ -8,6 +8,7 @@ import 'package:drift/native.dart';
 import 'package:intl/intl.dart';
 
 import 'package:medicaixa_app/core/database/database.dart';
+import 'package:medicaixa_app/core/providers/connection_providers.dart';
 import 'package:medicaixa_app/core/network/dio_client.dart';
 import 'package:medicaixa_app/core/providers/core_providers.dart';
 import 'package:medicaixa_app/core/localization/app_localizations.dart';
@@ -41,6 +42,14 @@ class FakeRef implements Ref {
 class FakePairingNotifier extends PairingNotifier {
   @override
   ConnectionStateInfo build() {
+    listenSelf((previous, next) {
+      Future.microtask(() {
+        ref.read(deviceConnectionStateProvider.notifier).updateState(next);
+      });
+    });
+    Future.microtask(() {
+      ref.read(deviceConnectionStateProvider.notifier).updateState(const ConnectionStateInfo.disconnected());
+    });
     return const ConnectionStateInfo.disconnected();
   }
 }

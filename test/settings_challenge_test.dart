@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:dio/dio.dart';
+import 'package:medicaixa_app/core/providers/connection_providers.dart';
 import 'package:audioplayers_platform_interface/audioplayers_platform_interface.dart';
 import 'package:flutter_local_notifications_platform_interface/flutter_local_notifications_platform_interface.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -76,6 +77,14 @@ class FakePairingNotifier extends PairingNotifier {
 
   @override
   ConnectionStateInfo build() {
+    listenSelf((previous, next) {
+      Future.microtask(() {
+        ref.read(deviceConnectionStateProvider.notifier).updateState(next);
+      });
+    });
+    Future.microtask(() {
+      ref.read(deviceConnectionStateProvider.notifier).updateState(_initialState);
+    });
     return _initialState;
   }
 

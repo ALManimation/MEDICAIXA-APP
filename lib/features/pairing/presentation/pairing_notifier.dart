@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/providers/connection_providers.dart';
 import '../data/connection_repository.dart';
 import '../domain/connection_state.dart';
 
@@ -6,11 +7,20 @@ part 'pairing_notifier.g.dart';
 
 @riverpod
 class PairingNotifier extends _$PairingNotifier {
-  late final ConnectionRepository _repo;
+  ConnectionRepository get _repo => ref.read(connectionRepositoryProvider);
 
   @override
   ConnectionStateInfo build() {
-    _repo = ref.watch(connectionRepositoryProvider);
+    listenSelf((previous, next) {
+      Future.microtask(() {
+        ref.read(deviceConnectionStateProvider.notifier).updateState(next);
+      });
+    });
+    ref.listen(deviceConnectionStateProvider, (previous, next) {
+      if (next.status == ConnectionStatus.disconnected && state.status != ConnectionStatus.disconnected) {
+        state = const ConnectionStateInfo.disconnected();
+      }
+    });
     _autoConnect();
     return const ConnectionStateInfo.disconnected();
   }

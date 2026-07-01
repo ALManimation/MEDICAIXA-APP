@@ -7,7 +7,7 @@ import '../../../core/providers/core_providers.dart';
 import 'reminder_api_client.dart';
 import 'reminder_model.dart';
 import 'dart:convert';
-import '../../pairing/presentation/pairing_notifier.dart';
+import '../../../core/providers/connection_providers.dart';
 import '../../pairing/domain/connection_state.dart';
 
 import '../../history/data/history_repository.dart';
@@ -22,7 +22,7 @@ class ReminderRepository {
   ReminderRepository(this._db, this._apiClient, this._ref);
 
   bool _isConnected() {
-    final connState = _ref.read(pairingNotifierProvider);
+    final connState = _ref.read(deviceConnectionStateProvider);
     return connState.status == ConnectionStatus.connected;
   }
 
@@ -401,42 +401,4 @@ ReminderRepository reminderRepository(ReminderRepositoryRef ref) {
     ref.watch(reminderApiClientProvider),
     ref,
   );
-}
-
-extension ReminderModelCopyWith on ReminderModel {
-  ReminderModel copyWith({
-    int? id,
-    String? title,
-    String? description,
-    bool? enabled,
-    bool? hasTime,
-    int? hour,
-    int? minute,
-    String? period,
-    int? interval,
-    String? startDate,
-    int? notifyDaysBefore,
-    String? lastCompletedDate,
-    String? color,
-    int? lastModified,
-    bool? pendingSync,
-  }) {
-    return ReminderModel(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      enabled: enabled ?? this.enabled,
-      hasTime: hasTime ?? this.hasTime,
-      hour: hour ?? this.hour,
-      minute: minute ?? this.minute,
-      period: period ?? this.period,
-      interval: interval ?? this.interval,
-      startDate: startDate ?? this.startDate,
-      notifyDaysBefore: notifyDaysBefore ?? this.notifyDaysBefore,
-      lastCompletedDate: lastCompletedDate ?? this.lastCompletedDate,
-      color: color ?? this.color,
-      lastModified: lastModified ?? this.lastModified,
-      pendingSync: pendingSync ?? this.pendingSync,
-    );
-  }
 }

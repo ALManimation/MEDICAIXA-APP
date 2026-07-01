@@ -79,16 +79,65 @@ class NotificationService {
     debugPrint('NotificationService initialized successfully.');
   }
 
+  String _guessTimeZoneNameFromOffset(Duration offset) {
+    final hours = offset.inHours;
+    switch (hours) {
+      case -3: return 'America/Sao_Paulo';
+      case -4: return 'America/Manaus';
+      case -5: return 'America/New_York';
+      case -6: return 'America/Chicago';
+      case -7: return 'America/Denver';
+      case -8: return 'America/Los_Angeles';
+      case -10: return 'Pacific/Honolulu';
+      case 0: return 'UTC';
+      case 1: return 'Europe/London';
+      case 2: return 'Europe/Paris';
+      case 3: return 'Europe/Moscow';
+      case 4: return 'Asia/Dubai';
+      case 5:
+        if (offset.inMinutes == 330) { // +5:30
+          return 'Asia/Kolkata';
+        }
+        return 'Asia/Karachi';
+      case 6: return 'Asia/Dhaka';
+      case 7: return 'Asia/Bangkok';
+      case 8: return 'Asia/Singapore';
+      case 9: return 'Asia/Tokyo';
+      case 10: return 'Australia/Sydney';
+      case 11: return 'Pacific/Guadalcanal';
+      case 12: return 'Pacific/Auckland';
+      default:
+        return 'America/Sao_Paulo';
+    }
+  }
+
   Future<void> _configureLocalTimeZone() async {
     tz.initializeTimeZones();
+    String? timeZoneName;
     try {
       final timezoneInfo = await FlutterTimezone.getLocalTimezone();
-      final String timeZoneName = timezoneInfo.identifier;
+      timeZoneName = timezoneInfo.identifier;
+    } catch (e) {
+      debugPrint('Could not get local timezone: $e. Guessing based on offset...');
+    }
+
+    if (timeZoneName == null) {
+      final offset = DateTime.now().timeZoneOffset;
+      timeZoneName = _guessTimeZoneNameFromOffset(offset);
+    }
+
+    try {
       tz.setLocalLocation(tz.getLocation(timeZoneName));
       debugPrint('Local timezone configured to: $timeZoneName');
     } catch (e) {
-      debugPrint('Could not get local timezone: $e. Falling back to UTC.');
-      tz.setLocalLocation(tz.UTC);
+      debugPrint('Error setting location $timeZoneName: $e. Trying default America/Sao_Paulo');
+      try {
+        tz.setLocalLocation(tz.getLocation('America/Sao_Paulo'));
+        debugPrint('Local timezone configured to default: America/Sao_Paulo');
+      } catch (e2) {
+        debugPrint('Error setting default America/Sao_Paulo: $e2. Falling back to UTC.');
+        tz.setLocalLocation(tz.UTC);
+      }
     }
   }
 

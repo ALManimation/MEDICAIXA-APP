@@ -220,7 +220,7 @@ void main() {
       expect(textWidget.data, isEmpty);
     });
 
-    test('Verify DashboardNotifier does not automatically react to reminder updates in repository', () async {
+    test('Verify DashboardNotifier automatically reacts to reminder updates in repository', () async {
       final container = ProviderContainer(
         overrides: [
           databaseProvider.overrideWith((ref) => db),
@@ -236,14 +236,11 @@ void main() {
       );
       addTearDown(keepAliveLink.close);
 
-      // Trigger initial build and loading
-      final notifier = container.read(dashboardNotifierProvider.notifier);
-      
       // Let initial async loading complete
-      await Future.delayed(Duration.zero);
+      await Future.delayed(const Duration(milliseconds: 50));
       
       // Verify initial state
-      expect(container.read(dashboardNotifierProvider).reminders.length, 0);
+      expect(container.read(dashboardNotifierProvider).requireValue.reminders.length, 0);
 
       // Obtain repository
       final repo = container.read(reminderRepositoryProvider);
@@ -268,25 +265,11 @@ void main() {
       await repo.createReminder(newReminder);
 
       // Wait a short moment for database microtasks to flush
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 150));
 
-      // Verify that DashboardNotifier state remains STALE (still shows 0 reminders)
-      // because it does not watch database streams reactively, and `ref.listen` on `reminderRepositoryProvider` is a no-op
-      expect(container.read(dashboardNotifierProvider).reminders.length, 0);
-
-      // Now call refresh() manually
-      notifier.refresh();
-      
-      // Dynamically wait for the state to update (polling)
-      int retries = 0;
-      while (container.read(dashboardNotifierProvider).reminders.isEmpty && retries < 20) {
-        await Future.delayed(const Duration(milliseconds: 50));
-        retries++;
-      }
-
-      // Now the dashboard state updates and shows the new reminder
-      expect(container.read(dashboardNotifierProvider).reminders.length, 1);
-      expect(container.read(dashboardNotifierProvider).reminders.first.title, 'Lembrete Reactivo Teste');
+      // Verify that DashboardNotifier state updates and shows the new reminder reactively
+      expect(container.read(dashboardNotifierProvider).requireValue.reminders.length, 1);
+      expect(container.read(dashboardNotifierProvider).requireValue.reminders.first.title, 'Lembrete Reactivo Teste');
     });
   });
 }

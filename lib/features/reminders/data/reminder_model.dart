@@ -84,4 +84,42 @@ class ReminderModel {
 
     return data;
   }
+
+  static const Object _sentinel = Object();
+
+  ReminderModel copyWith({
+    Object? id = _sentinel,
+    Object? title = _sentinel,
+    Object? description = _sentinel,
+    Object? enabled = _sentinel,
+    Object? hasTime = _sentinel,
+    Object? hour = _sentinel,
+    Object? minute = _sentinel,
+    Object? period = _sentinel,
+    Object? interval = _sentinel,
+    Object? startDate = _sentinel,
+    Object? notifyDaysBefore = _sentinel,
+    Object? lastCompletedDate = _sentinel,
+    Object? color = _sentinel,
+    Object? lastModified = _sentinel,
+    Object? pendingSync = _sentinel,
+  }) {
+    return ReminderModel(
+      id: id == _sentinel ? this.id : id as int,
+      title: title == _sentinel ? this.title : title as String,
+      description: description == _sentinel ? this.description : description as String,
+      enabled: enabled == _sentinel ? this.enabled : enabled as bool,
+      hasTime: hasTime == _sentinel ? this.hasTime : hasTime as bool,
+      hour: hour == _sentinel ? this.hour : hour as int?,
+      minute: minute == _sentinel ? this.minute : minute as int?,
+      period: period == _sentinel ? this.period : period as String,
+      interval: interval == _sentinel ? this.interval : interval as int,
+      startDate: startDate == _sentinel ? this.startDate : startDate as String,
+      notifyDaysBefore: notifyDaysBefore == _sentinel ? this.notifyDaysBefore : notifyDaysBefore as int,
+      lastCompletedDate: lastCompletedDate == _sentinel ? this.lastCompletedDate : lastCompletedDate as String?,
+      color: color == _sentinel ? this.color : color as String,
+      lastModified: lastModified == _sentinel ? this.lastModified : lastModified as int?,
+      pendingSync: pendingSync == _sentinel ? this.pendingSync : pendingSync as bool,
+    );
+  }
 }

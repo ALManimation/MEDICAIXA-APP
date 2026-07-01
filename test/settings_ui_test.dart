@@ -7,6 +7,7 @@ import 'package:drift/native.dart';
 import 'package:medicaixa_app/core/database/database.dart';
 import 'package:medicaixa_app/core/network/dio_client.dart';
 import 'package:medicaixa_app/core/providers/core_providers.dart';
+import 'package:medicaixa_app/core/providers/connection_providers.dart';
 import 'package:medicaixa_app/features/pairing/domain/connection_state.dart';
 import 'package:medicaixa_app/features/pairing/presentation/pairing_notifier.dart';
 import 'package:medicaixa_app/features/settings/presentation/settings_screen.dart';
@@ -90,7 +91,16 @@ class FakePairingNotifier extends PairingNotifier {
 
   @override
   ConnectionStateInfo build() {
-    return _stateOverride ?? _initialState;
+    final stateInfo = _stateOverride ?? _initialState;
+    listenSelf((previous, next) {
+      Future.microtask(() {
+        ref.read(deviceConnectionStateProvider.notifier).updateState(next);
+      });
+    });
+    Future.microtask(() {
+      ref.read(deviceConnectionStateProvider.notifier).updateState(stateInfo);
+    });
+    return stateInfo;
   }
 
   void setConnectionState(ConnectionStateInfo stateInfo) {

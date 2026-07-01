@@ -1,22 +1,25 @@
-# BRIEFING — 2026-06-30T00:18:00Z
+# BRIEFING — 2026-07-01T10:15:30Z
 
 ## Mission
-Coordinate the implementation of MediCaixa App bug fixes (alarm screen close, RenderFlex overflow), layout improvements (rounded FAB, remove chevrons/WeeklyRhythm, responsive grid), advanced notifications (permissions, audio session, fullScreenIntent), and standardized stepper & vertical DateTime selectors.
+Implement the alarm deletion logic and display past alarms (Ghost Alarms) in the calendar, matching the C++ original behavior.
 
 ## 🔒 My Identity
 - Archetype: teamwork_preview_orchestrator
 - Roles: orchestrator, user_liaison, human_reporter, successor
 - Working directory: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/.agents/orchestrator
 - Original parent: parent
-- Original parent conversation ID: 0c4d4925-12ee-46d2-b066-c645265aaf5a
+- Original parent conversation ID: 6f777697-d763-4c2b-bbd2-65be5eccbf70
 
 ## 🔒 My Workflow
 - **Pattern**: Project Pattern
 - **Scope document**: /Users/almanimation/Downloads/Caixa Remedios/medicaixa_app/PROJECT.md
-1. **Decompose**: Decompose the task into milestones (exploratory, basic fixes, color sync, responsive grids, advanced notifications, custom steppers, and verification/audits).
+1. **Decompose**: Decompose the validation into:
+   - Verification of E2E and unit/widget tests (ensure 216 tests run and pass)
+   - Static analysis check (`flutter analyze` is clean)
+   - Integrity forensics audit (ensure no cheats or bypasses are present in codebase)
 2. **Dispatch & Execute** (pick ONE):
-   - **Delegate (sub-orchestrator)**: When an item is too large, spawn a sub-orchestrator.
-   - **Direct (iteration loop)**: For this task, we will run the iteration loop by spawning specialists.
+   - **Direct (iteration loop)**: Dispatch tasks to worker/challenger/auditor to build/test and audit the project.
+   - **Delegate (sub-orchestrator)**: [TBD]
 3. **On failure** (in this order):
    - Retry: nudge stuck agent or re-send task
    - Replace: spawn fresh agent with partial progress
@@ -25,16 +28,18 @@ Coordinate the implementation of MediCaixa App bug fixes (alarm screen close, Re
    - Redesign: re-partition decomposition
    - Escalate: report to parent (sub-orchestrators only, last resort)
 4. **Succession**: Self-succeed at 16 spawns, write handoff.md, spawn successor.
+5. **New Task Decomposition (2026-07-01)**: Decompose the Alarm Deletion & Ghost Alarms into 4 milestones:
+   - Milestone 7: Codebase Investigation & Technical Design [done]
+   - Milestone 8: Core Deletion & Ghost Reconstruction Logic [done]
+   - Milestone 9: Dashboard UI & Calendar Integration [done]
+   - Milestone 10: Testing, Hardening & Verification [done]
 - **Work items**:
-  1. Milestone 1: Exploratory Analysis & Technical Design [pending]
-  2. Milestone 2: Basic Bug Fixes and UI Tweaks [pending]
-  3. Milestone 3: Color Sync & Palettes [pending]
-  4. Milestone 4: Responsive Grid Layouts [pending]
-  5. Milestone 5: Advanced Native Notifications & OS Configuration [pending]
-  6. Milestone 6: Custom Steppers and Vertical DateTime Selectors [pending]
-  7. Milestone 7: Testing and Integrity Audit [pending]
-- **Current phase**: 7
-- **Current focus**: Project Completed and Verified
+  - Milestone 7: Codebase Investigation & Technical Design [done]
+  - Milestone 8: Core Deletion & Ghost Reconstruction Logic [done]
+  - Milestone 9: Dashboard UI & Calendar Integration [done]
+  - Milestone 10: Testing, Hardening & Verification [done]
+- **Current phase**: 10
+- **Current focus**: All Milestones Completed and Verified
 
 ## 🔒 Key Constraints
 - Never write, modify, or create source code files directly (DISPATCH-ONLY).
@@ -46,41 +51,29 @@ Coordinate the implementation of MediCaixa App bug fixes (alarm screen close, Re
 - Connections must use synchronous NativeDatabase on iOS/macOS.
 
 ## Current Parent
-- Conversation ID: 0c4d4925-12ee-46d2-b066-c645265aaf5a
-- Updated: 2026-06-30T00:49:00Z
+- Conversation ID: 677a018a-68bd-4133-a305-97d8e81bac72
+- Updated: 2026-07-01T10:15:30Z
 
 ## Key Decisions Made
-- Plan and progress fully completed.
-- Verification and Quality Remediation fully performed.
-- Standard stepper and Vertical pickers fully integrated and tested.
+- Start Milestone 7: Spawn an Explorer to analyze the C++ code and local Dart/Drift codebase to understand the requirements, structures, and plan the technical design.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
 |-------|------|-----------|--------|---------|
-| explorer_1 | teamwork_preview_explorer | UI & Basic Bug Fixes exploration | completed | 501ac430-4b85-406b-a8a7-5b94658ab149 |
-| explorer_2 | teamwork_preview_explorer | Color & Dashboard state exploration | completed | af079fec-a6a6-4097-ac76-b4a0cd7506df |
-| explorer_3 | teamwork_preview_explorer | Grid, Notifications & Inputs exploration | completed | 24d73075-0844-4922-a627-885ffc456ae2 |
-| worker_1 | teamwork_preview_worker | UI, Colors, & Notifications implementation | completed | bbd9feb1-6d42-43b9-b991-9ab19fe30bb8 |
-| worker_2 | teamwork_preview_worker | Custom Steppers and Selectors implementation | completed | 3ef18c1d-fdf7-4e87-bb26-f8b216540ca3 |
-| reviewer_3 | teamwork_preview_reviewer | Core Bug Fixes review | completed | 4db2c57a-b4b2-46cb-bc82-b9ff16520879 |
-| reviewer_4 | teamwork_preview_reviewer | Custom Steppers & Selectors review | completed | e78ad432-2d21-434c-8a2c-45ee87b0b3c3 |
-| challenger_3 | teamwork_preview_challenger | Gesture Acceleration & Timers challenge | completed | 571b69cd-2273-4c50-9d36-3c73a4b06118 |
-| challenger_4 | teamwork_preview_challenger | Date Boundaries & DB Sync challenge | completed | 48d1dd29-4062-47d6-ae2c-c59add032e04 |
-| auditor_2 | teamwork_preview_auditor | Forensic Integrity Audit | completed | 5afd3940-98d0-45c2-b61c-e7b61c6cb455 |
-| worker_remediation | teamwork_preview_worker | Quality Remediation | completed | eda3b36d-e9a2-4ff5-aec4-0e8878b8080a |
-| reviewer_final | teamwork_preview_reviewer | Quality Remediation review | completed | 3f101e83-7bf1-4f77-9cc9-68cb0619631d |
-| worker_final | teamwork_preview_worker | Final Layout Fix | completed | b87e09f2-e05a-4c74-aac1-28aad090ddd1 |
-| reviewer_final_2 | teamwork_preview_reviewer | Final Layout Fix review | completed | ca8790b3-eb2c-4192-9c69-8448865b4d46 |
+| explorer_m7 | teamwork_preview_explorer | Investigate alarm deletion and ghost logic | completed | 9bebdc7f-348d-4f9b-82f1-92a941e53e32 |
+| worker_test_run | teamwork_preview_worker | Run baseline test suite and inspect tests | completed | b1c65fe4-04a6-46e8-a80e-34b0590194ed |
+| worker_ghost_alarms | teamwork_preview_worker | Implement Ghost Alarms logic and testing | completed | 6a0aea34-8d81-4390-b2f3-b31ad97be5f0 |
+| auditor_ghost_alarms | teamwork_preview_auditor | Run forensic integrity audit | completed | 54a9ddd9-8b2c-41ec-9551-6487b27d2f08 |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 14 / 16
+- Spawn count: 4 / 16
 - Pending subagents: none
 - Predecessor: none
 - Successor: not yet spawned
 
 ## Active Timers
-- Heartbeat cron: none
+- Heartbeat cron: task-33
 - Safety timer: none
 - On succession: kill all timers before spawning successor
 - On context truncation: run `manage_task(Action="list")` — re-create if missing

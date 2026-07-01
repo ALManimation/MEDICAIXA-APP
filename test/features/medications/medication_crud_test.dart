@@ -10,6 +10,8 @@ import 'package:medicaixa_app/features/alarms/data/alarm_repository.dart';
 import 'package:medicaixa_app/features/alarms/data/alarm_api_client.dart';
 import 'package:medicaixa_app/features/alarms/data/alarm_model.dart';
 import 'package:medicaixa_app/core/providers/core_providers.dart';
+import 'package:medicaixa_app/core/providers/connection_providers.dart';
+import 'package:medicaixa_app/features/pairing/domain/connection_state.dart';
 import 'package:medicaixa_app/features/medications/presentation/medications_list_screen.dart';
 import 'package:medicaixa_app/features/medications/presentation/medication_form_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -99,6 +101,95 @@ void main() {
       // Verify deletion
       list = await medRepository.getAllMedications();
       expect(list, isEmpty);
+    });
+
+    test('Verify Rule 35: Exception thrown when deleting medication in use by active/enabled alarm', () async {
+      // 1. Create medication
+      const med = Medication(
+        name: 'Aspirina',
+        color: 'yellow',
+        type: 'comprimido',
+        dosage: '100mg',
+        pendingSync: false,
+      );
+      await medRepository.createMedication(med);
+
+      // 2. Create an active alarm referencing it
+      final alarm = AlarmModel(
+        id: 10,
+        hour: 8,
+        minute: 0,
+        name: 'Aspirina',
+        medName: 'Aspirina',
+        enabled: true,
+        active: true,
+        days: List.filled(7, true),
+        status: 'PENDENTE',
+        color: 'yellow',
+        quantity: 1.0,
+        daysQuantity: List.filled(7, 0.0),
+        type: 'comprimido',
+        snoozeMin: 0,
+        durationDays: 0,
+      );
+      await alarmRepository.createAlarm(alarm);
+
+      // 3. Try to delete medication and expect Exception
+      expect(
+        () => medRepository.deleteMedication('Aspirina'),
+        throwsA(isA<Exception>()),
+      );
+
+      // Verify medication is still in DB
+      final list = await medRepository.getAllMedications();
+      expect(list.any((m) => m.name == 'Aspirina'), isTrue);
+    });
+
+    test('Verify Rule 35 during syncWithDevice: medication in use by active/enabled alarm is skipped during cleanup', () async {
+      // Set connection state to connected
+      container.read(deviceConnectionStateProvider.notifier).updateState(
+        const ConnectionStateInfo(
+          status: ConnectionStatus.connected,
+          ip: '192.168.4.1',
+        ),
+      );
+
+      // 1. Create medication
+      const med = Medication(
+        name: 'Dipirona',
+        color: 'green',
+        type: 'comprimido',
+        dosage: '500mg',
+        pendingSync: false,
+      );
+      await medRepository.createMedication(med);
+
+      // 2. Create active alarm referencing Dipirona
+      final alarm = AlarmModel(
+        id: 11,
+        hour: 10,
+        minute: 0,
+        name: 'Dipirona',
+        medName: 'Dipirona',
+        enabled: true,
+        active: true,
+        days: List.filled(7, true),
+        status: 'PENDENTE',
+        color: 'green',
+        quantity: 1.0,
+        daysQuantity: List.filled(7, 0.0),
+        type: 'comprimido',
+        snoozeMin: 0,
+        durationDays: 0,
+      );
+      await alarmRepository.createAlarm(alarm);
+
+      // 3. Run sync cleanup loop
+      await medRepository.syncWithDevice();
+
+      // Verify that Dipirona was NOT deleted because of the active alarm check
+      final list = await medRepository.getAllMedications();
+      expect(list.any((m) => m.name == 'Dipirona'), isTrue);
     });
 
     testWidgets('Verify Rule 35: Blocking medication deletion if linked to an active alarm', (WidgetTester tester) async {
