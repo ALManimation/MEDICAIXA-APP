@@ -105,7 +105,12 @@ class AlarmEngine extends _$AlarmEngine {
       try {
         localLocation = tz.local;
       } catch (_) {
-        localLocation = tz.UTC;
+        // Se a timezone local ainda não foi configurada, dispara a inicialização
+        // em background e aborta o tick atual para evitar corrupção de datas
+        NotificationService.instance.init().then((_) {
+          debugPrint('NotificationService fallback initialization complete.');
+        });
+        return;
       }
       final localNow = tz.TZDateTime.from(now, localLocation);
       final todayStr = "${localNow.day.toString().padLeft(2, '0')}/${localNow.month.toString().padLeft(2, '0')}/${localNow.year}";
@@ -363,6 +368,14 @@ class AlarmEngine extends _$AlarmEngine {
           // PRN does not trigger automatically by time
           if (a.isPrn == true) continue;
 
+          // Se já foi tomado, cancelado ou perdido hoje, pula para evitar re-disparos no mesmo minuto/janela
+          if (a.lastStatusDate == todayStr &&
+              (a.lastStatus == 'Tomado' ||
+               a.lastStatus == 'Não Tomado' ||
+               a.lastStatus == 'Cancelado')) {
+            continue;
+          }
+
           // Cycle pause check
           if (a.cycleOnDays != null && a.cycleOnDays! > 0 && a.cycleIsPaused == true) {
             continue;
@@ -379,7 +392,7 @@ class AlarmEngine extends _$AlarmEngine {
             bool isActive = false;
             if (a.dayOfMonth != null && a.dayOfMonth! > 0) {
               isActive = (targetDate.day == a.dayOfMonth);
-            } else if (a.startDate != null && a.startDate!.isNotEmpty) {
+            } else if (a.startDate != null && a.startDate!.isNotEmpty && a.durationDays > 0) {
               try {
                 final start = DateTime.parse(a.startDate!);
                 final startZero = DateTime(start.year, start.month, start.day);

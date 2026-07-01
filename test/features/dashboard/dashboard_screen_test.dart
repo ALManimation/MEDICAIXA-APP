@@ -40,7 +40,7 @@ class FakeDashboardNotifier extends DashboardNotifier {
   }
 
   @override
-  void refresh() {}
+  Future<void> refresh() async {}
 
   @override
   void resetToToday() {

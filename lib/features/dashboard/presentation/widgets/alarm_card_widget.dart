@@ -388,6 +388,9 @@ class AlarmCardWidget extends ConsumerWidget {
   }
 
   String _formatFrequency(AlarmModel alarm) {
+    if (alarm.isGhost) {
+      return t('alarm_removed');
+    }
     if (alarm.startDate != null && alarm.startDate!.isNotEmpty && alarm.durationDays > 0) {
       return t('duration_days_fmt', [alarm.durationDays]);
     }

@@ -11,6 +11,7 @@ import '../../features/medications/presentation/medication_form_screen.dart';
 import 'widgets/multi_action_fab.dart';
 import '../../features/medications/presentation/medications_list_screen.dart';
 import 'package:medicaixa_app/features/reports/presentation/reports_screen.dart';
+import '../../features/chat/presentation/widgets/voice_assistant_sheet.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key});
@@ -21,6 +22,9 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   int _currentIndex = 0;
+  double? _voiceFabX;
+  double? _voiceFabY;
+  bool? _lastIsDesktop;
 
   final List<Widget> _screens = [
     const DashboardScreen(),
@@ -66,6 +70,13 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
     ref.watch(appThemeNotifierProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 800;
+
+    final defaultBottom = isDesktop ? 16.0 : 80.0;
+    if (_lastIsDesktop != isDesktop) {
+      _lastIsDesktop = isDesktop;
+      _voiceFabX = 16.0;
+      _voiceFabY = defaultBottom;
+    }
 
     if (isDesktop) {
       // Desktop Layout: 2 Columns (NavigationRail + Content)
@@ -116,6 +127,27 @@ class _AppShellState extends ConsumerState<AppShell> {
                     onAddMedication: () => _openMedicationForm(context),
                     onScanQr: () => _scanQrCode(context),
                   ),
+                  Positioned(
+                    left: _voiceFabX!,
+                    bottom: _voiceFabY!,
+                    child: GestureDetector(
+                      onPanUpdate: (details) {
+                        final size = MediaQuery.of(context).size;
+                        final limitBottom = isDesktop ? 16.0 : 80.0;
+                        setState(() {
+                          _voiceFabX = (_voiceFabX! + details.delta.dx).clamp(16.0, size.width - 72.0);
+                          _voiceFabY = (_voiceFabY! - details.delta.dy).clamp(limitBottom, size.height - 150.0);
+                        });
+                      },
+                      child: FloatingActionButton(
+                        key: const ValueKey('voice_assistant_fab'),
+                        heroTag: null,
+                        onPressed: () => VoiceAssistantSheet.show(context),
+                        backgroundColor: AppColors.primary,
+                        child: Icon(Icons.mic_rounded, color: Theme.of(context).colorScheme.onPrimary),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -133,6 +165,27 @@ class _AppShellState extends ConsumerState<AppShell> {
               onAddReminder: () => _openReminderForm(context),
               onAddMedication: () => _openMedicationForm(context),
               onScanQr: () => _scanQrCode(context),
+            ),
+            Positioned(
+              left: _voiceFabX!,
+              bottom: _voiceFabY!,
+              child: GestureDetector(
+                onPanUpdate: (details) {
+                  final size = MediaQuery.of(context).size;
+                  final limitBottom = isDesktop ? 16.0 : 80.0;
+                  setState(() {
+                    _voiceFabX = (_voiceFabX! + details.delta.dx).clamp(16.0, size.width - 72.0);
+                    _voiceFabY = (_voiceFabY! - details.delta.dy).clamp(limitBottom, size.height - 150.0);
+                  });
+                },
+                child: FloatingActionButton(
+                  key: const ValueKey('voice_assistant_fab'),
+                  heroTag: null,
+                  onPressed: () => VoiceAssistantSheet.show(context),
+                  backgroundColor: AppColors.primary,
+                  child: Icon(Icons.mic_rounded, color: Theme.of(context).colorScheme.onPrimary),
+                ),
+              ),
             ),
           ],
         ),

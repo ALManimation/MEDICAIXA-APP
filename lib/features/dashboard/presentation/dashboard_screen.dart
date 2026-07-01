@@ -292,18 +292,6 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AlarmWizardScreen()),
-              );
-            },
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            shape: const CircleBorder(),
-            tooltip: t('new_alarm_title'),
-            child: const Icon(Icons.add_rounded),
-          ),
         );
   }
 
@@ -386,13 +374,10 @@ class DashboardScreen extends ConsumerWidget {
       return false;
     }
 
-    if (alarm.snoozeMin > 0) {
-      return true; // Adiado está pendente de tomada e mantém a seção expandida
-    }
-
     if (isToday) {
       final alarmTime = DateTime(now.year, now.month, now.day, alarm.hour, alarm.minute);
-      if (now.isAfter(alarmTime)) {
+      final limitTime = alarmTime.add(Duration(minutes: alarm.snoozeMin + 10));
+      if (now.isAfter(limitTime)) {
         return false; // missed, so not pending
       }
     } else {
@@ -425,7 +410,8 @@ class DashboardScreen extends ConsumerWidget {
       } else {
         if (isToday) {
           final alarmTime = DateTime(now.year, now.month, now.day, alarm.hour, alarm.minute);
-          if (now.isAfter(alarmTime)) {
+          final limitTime = alarmTime.add(Duration(minutes: alarm.snoozeMin + 10));
+          if (now.isAfter(limitTime)) {
             missedCount++;
           }
         } else {

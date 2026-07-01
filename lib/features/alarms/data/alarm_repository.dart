@@ -416,6 +416,8 @@ class AlarmRepository {
       pendingSync: !_isConnected(),
     );
 
+    await _db.update(_db.alarms).replace(_toCompanion(updated));
+
     if (_isConnected()) {
       try {
         await _apiClient.toggleAlarm(id, enabled);
@@ -423,8 +425,6 @@ class AlarmRepository {
         debugPrint('Error toggling alarm on ESP32: $e');
       }
     }
-
-    await _db.update(_db.alarms).replace(_toCompanion(updated));
   }
 
   Future<void> markTaken(int id, {double? customQty}) async {
@@ -529,14 +529,6 @@ class AlarmRepository {
       pendingSync: !_isConnected(),
     );
 
-    if (_isConnected()) {
-      try {
-        await _apiClient.markTaken(id, qty: customQty);
-      } catch (e) {
-        debugPrint('Error marking taken on ESP32: $e');
-      }
-    }
-
     await _db.update(_db.alarms).replace(_toCompanion(updated));
 
     final historyRepo = _ref.read(historyRepositoryProvider);
@@ -552,6 +544,14 @@ class AlarmRepository {
       message: 'Medicamento "${alarm.medName.isNotEmpty ? alarm.medName : alarm.name}" ($loggedDosage) marcado como $logText',
       source: 'System',
     );
+
+    if (_isConnected()) {
+      try {
+        await _apiClient.markTaken(id, qty: customQty);
+      } catch (e) {
+        debugPrint('Error marking taken on ESP32: $e');
+      }
+    }
   }
 
   Future<void> markSkipped(int id) async {
@@ -613,14 +613,6 @@ class AlarmRepository {
       pendingSync: !_isConnected(),
     );
 
-    if (_isConnected()) {
-      try {
-        await _apiClient.markSkipped(id);
-      } catch (e) {
-        debugPrint('Error marking skipped on ESP32: $e');
-      }
-    }
-
     await _db.update(_db.alarms).replace(_toCompanion(updated));
 
     final historyRepo = _ref.read(historyRepositoryProvider);
@@ -636,6 +628,14 @@ class AlarmRepository {
       message: 'Medicamento "${alarm.medName.isNotEmpty ? alarm.medName : alarm.name}" marcado como Não Tomado (Perdido)',
       source: 'System',
     );
+
+    if (_isConnected()) {
+      try {
+        await _apiClient.markSkipped(id);
+      } catch (e) {
+        debugPrint('Error marking skipped on ESP32: $e');
+      }
+    }
   }
 
   // Bidirectional Synchronization
@@ -770,14 +770,6 @@ class AlarmRepository {
       pendingSync: !_isConnected(),
     );
 
-    if (_isConnected()) {
-      try {
-        await _apiClient.snoozeAlarm(id, minutes);
-      } catch (e) {
-        debugPrint('Error snoozing alarm on ESP32: $e');
-      }
-    }
-
     await _db.update(_db.alarms).replace(_toCompanion(updated));
 
     if (minutes > 0) {
@@ -794,6 +786,14 @@ class AlarmRepository {
         message: 'Alarme do medicamento "${alarm.medName.isNotEmpty ? alarm.medName : alarm.name}" adiado por $minutes minutos',
         source: 'System',
       );
+    }
+
+    if (_isConnected()) {
+      try {
+        await _apiClient.snoozeAlarm(id, minutes);
+      } catch (e) {
+        debugPrint('Error snoozing alarm on ESP32: $e');
+      }
     }
   }
 

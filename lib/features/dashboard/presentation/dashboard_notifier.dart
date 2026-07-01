@@ -67,12 +67,15 @@ class DashboardNotifier extends _$DashboardNotifier {
   @override
   DashboardState build() {
 
-    // Watch alarms and reminders reactively
-    ref.listen(alarmRepositoryProvider, (_, __) {
-      _updateData();
-    });
-    ref.listen(reminderRepositoryProvider, (_, __) {
-      _updateData();
+    // Watch database streams reactively
+    final alarmSub = _alarmRepo.watchAllAlarms().listen((_) => _updateData());
+    final reminderSub = _reminderRepo.watchAllReminders().listen((_) => _updateData());
+    final historySub = ref.read(historyRepositoryProvider).watchAllHistoryEvents().listen((_) => _updateData());
+
+    ref.onDispose(() {
+      alarmSub.cancel();
+      reminderSub.cancel();
+      historySub.cancel();
     });
 
     // Run initial data fetch
@@ -100,7 +103,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     _resetInactivityTimer();
   }
 
-  void refresh() => _updateData();
+  Future<void> refresh() => _updateData();
 
   void resetToToday() {
     _inactivityTimer?.cancel();
@@ -138,7 +141,31 @@ class DashboardNotifier extends _$DashboardNotifier {
     await _updateData();
   }
 
+  Future<void>? _updateTask;
+  bool _pendingUpdate = false;
+
   Future<void> _updateData() async {
+    if (_updateTask != null) {
+      _pendingUpdate = true;
+      return _updateTask;
+    }
+    
+    final completer = Completer<void>();
+    _updateTask = completer.future;
+    
+    try {
+      do {
+        _pendingUpdate = false;
+        await _performUpdate();
+      } while (_pendingUpdate);
+    } finally {
+      completer.complete();
+      _updateTask = null;
+    }
+    return completer.future;
+  }
+
+  Future<void> _performUpdate() async {
     final date = state.selectedDate;
 
     // Get all alarms and filter for selected date
@@ -152,7 +179,7 @@ class DashboardNotifier extends _$DashboardNotifier {
     final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
     final dateFormatted = "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
     
-    if (targetZero.isBefore(todayZero)) {
+    if (targetZero.isBefore(todayZero) || isToday) {
       try {
         final historyRepo = ref.read(historyRepositoryProvider);
         final allHistory = await historyRepo.getAllHistoryEvents();
@@ -161,29 +188,43 @@ class DashboardNotifier extends _$DashboardNotifier {
           return dt.year == date.year && dt.month == date.month && dt.day == date.day;
         }).toList();
 
-        // Update existing alarms with historical status
-        for (int i = 0; i < filteredAlarms.length; i++) {
-          final alarm = filteredAlarms[i];
-          HistoryEvent? event;
-          for (final e in dateEvents) {
-            if (e.alarmId == alarm.id && e.type == 'alarm') {
-              event = e;
-              break;
+        if (targetZero.isBefore(todayZero)) {
+          // Update existing alarms with historical status
+          for (int i = 0; i < filteredAlarms.length; i++) {
+            final alarm = filteredAlarms[i];
+            HistoryEvent? event;
+            for (final e in dateEvents) {
+              if (e.alarmId == alarm.id && e.type == 'alarm') {
+                event = e;
+                break;
+              }
+            }
+            if (event != null) {
+              final isTaken = event.status == 'TOMADO' || event.status == 'TOMADO FORA HORA' || event.status == 'TOMADO PRN';
+              final isMissed = event.status == 'PERDIDO';
+              filteredAlarms[i] = alarm.copyWith(
+                lastStatus: isTaken ? 'Tomado' : (isMissed ? 'Não Tomado' : ''),
+                lastStatusDate: dateFormatted,
+              );
+            } else {
+              // Past date, no event recorded = not taken (missed)
+              filteredAlarms[i] = alarm.copyWith(
+                lastStatus: '',
+                lastStatusDate: '',
+              );
             }
           }
-          if (event != null) {
-            final isTaken = event.status == 'TOMADO' || event.status == 'TOMADO FORA HORA' || event.status == 'TOMADO PRN';
-            final isMissed = event.status == 'PERDIDO';
-            filteredAlarms[i] = alarm.copyWith(
-              lastStatus: isTaken ? 'Tomado' : (isMissed ? 'Não Tomado' : ''),
-              lastStatusDate: dateFormatted,
-            );
-          } else {
-            // Past date, no event recorded = not taken (missed)
-            filteredAlarms[i] = alarm.copyWith(
-              lastStatus: '',
-              lastStatusDate: '',
-            );
+        } else if (isToday) {
+          // For today: if the status saved in database is from a previous day,
+          // it should be displayed as pending (empty status) today.
+          for (int i = 0; i < filteredAlarms.length; i++) {
+            final alarm = filteredAlarms[i];
+            if (alarm.lastStatusDate != dateFormatted) {
+              filteredAlarms[i] = alarm.copyWith(
+                lastStatus: '',
+                lastStatusDate: '',
+              );
+            }
           }
         }
 
@@ -232,6 +273,15 @@ class DashboardNotifier extends _$DashboardNotifier {
         }
       } catch (err) {
         debugPrint('Error loading ghost alarms: $err');
+      }
+    } else {
+      // For future dates: status is always pending (empty status).
+      for (int i = 0; i < filteredAlarms.length; i++) {
+        final alarm = filteredAlarms[i];
+        filteredAlarms[i] = alarm.copyWith(
+          lastStatus: '',
+          lastStatusDate: '',
+        );
       }
     }
 
@@ -291,9 +341,10 @@ class DashboardNotifier extends _$DashboardNotifier {
       } else {
         // Not taken or skipped yet
         if (isToday) {
-          // Check if alarm time has passed today
+          // Check if alarm time has passed today (including snooze + 10 min window)
           final alarmTime = DateTime(now.year, now.month, now.day, alarm.hour, alarm.minute);
-          if (now.isAfter(alarmTime)) {
+          final limitTime = alarmTime.add(Duration(minutes: alarm.snoozeMin + 10));
+          if (now.isAfter(limitTime)) {
             missedCount++; // Missed since time passed and not marked taken
           } else {
             pendingCount++;
@@ -308,8 +359,7 @@ class DashboardNotifier extends _$DashboardNotifier {
       }
     }
 
-    state = DashboardState(
-      selectedDate: date,
+    state = state.copyWith(
       alarms: filteredAlarms,
       allAlarms: allAlarms,
       reminders: filteredReminders,

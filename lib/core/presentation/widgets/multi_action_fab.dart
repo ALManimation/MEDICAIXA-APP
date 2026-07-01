@@ -26,6 +26,9 @@ class _MultiActionFabState extends State<MultiActionFab> with SingleTickerProvid
   late Animation<double> _animateIcon;
   late Animation<double> _translateButton;
 
+  double _x = 16.0;
+  double _y = 16.0;
+
   @override
   void initState() {
     super.initState();
@@ -89,8 +92,8 @@ class _MultiActionFabState extends State<MultiActionFab> with SingleTickerProvid
 
         // Menu Options (Vertical layout above the main FAB)
         Positioned(
-          right: 16,
-          bottom: 16,
+          right: _x,
+          bottom: _y,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -148,6 +151,13 @@ class _MultiActionFabState extends State<MultiActionFab> with SingleTickerProvid
               // Main FAB Button
               GestureDetector(
                 onTap: _toggle,
+                onPanUpdate: (details) {
+                  final screenSize = MediaQuery.of(context).size;
+                  setState(() {
+                    _x = (_x - details.delta.dx).clamp(16.0, screenSize.width - 72.0);
+                    _y = (_y - details.delta.dy).clamp(16.0, screenSize.height - 120.0);
+                  });
+                },
                 child: RotationTransition(
                   turns: _animateIcon,
                   child: Container(

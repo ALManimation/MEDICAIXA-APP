@@ -30,5 +30,9 @@
 	<string>NSApplication</string>
 	<key>NSUserNotificationAlertStyle</key>
 	<string>alert</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>MediCaixa precisa acessar o microfone para comandos de voz</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>MediCaixa precisa de permissão de reconhecimento de fala para o chat por voz</string>
 </dict>
 </plist>
